@@ -48,8 +48,8 @@ class AMQP implements \Lysine\Service\IService {
 
         $connection = $this->connect();
 
-        if (!$connection->isConnected())
-            $connection->connect();
+        if (!$connection->isConnected() && !$connection->connect())
+            throw new \Lysine\Service\ConnectionError('Cannot connect to the broker');
 
         return $this->channel = new AMQPChannel($connection);
     }

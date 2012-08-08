@@ -31,7 +31,8 @@ class Memcached extends \Lysine\Service\IService {
                  : array(array('127.0.0.1', 11211));
 
         $handler = new \Memcached;
-        $handler->addServers($servers);
+        if (!$handler->addServers($servers))
+            throw new \Lysine\Service\ConnectionError('Cannot connect memcached');
 
         if (isset($config['options'])) {
             foreach ($config['options'] as $key => $val)

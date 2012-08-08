@@ -50,13 +50,13 @@ class Redis implements \Lysine\Service\IService {
               : call_user_func_array(array($handler, 'connect'), $conn_args);
 
         if (!$conn)
-            throw new \Lysine\Service\RuntimeError('Connect redis server failed');
+            throw new \Lysine\Service\ConnectionError('Cannot connect redis');
 
         if (isset($config['password']) && !$handler->auth($config['password']))
-            throw new \Lysine\Service\RuntimeError('Invalid redis password');
+            throw new \Lysine\Service\ConnectionError('Invalid redis password');
 
         if (isset($config['database']) && !$handler->select($config['database']))
-            throw new \Lysine\Service\RuntimeError('Select redis database['.$config['database'].'] failed');
+            throw new \Lysine\Service\ConnectionError('Select redis database['.$config['database'].'] failed');
 
         if (isset($config['prefix']))
             $handler->setOption(\Redis::OPT_PREFIX, $config['prefix']);
