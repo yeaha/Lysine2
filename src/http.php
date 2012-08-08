@@ -112,7 +112,7 @@ class Request {
         if ($method != 'POST') return $this->method = $method;
 
         // 某些js库的ajax封装使用这种方式
-        $method = post('_method', $method);
+        $method = post('_method') ?: $method;
         unset($_POST['_method']);
         return $this->method = strtoupper($method);
     }
