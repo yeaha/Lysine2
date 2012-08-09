@@ -10,6 +10,7 @@ abstract class Adapter implements \Lysine\Service\IService {
 
     abstract public function qtab($table);
     abstract public function qcol($column);
+    abstract public function lastId($table = null, $column = null);
 
     public function __construct(array $config = array()) {
         $this->config = static::prepareConfig($config);
