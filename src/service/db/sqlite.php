@@ -23,7 +23,7 @@ class Sqlite extends \Lysine\Service\DB\Adapter {
         if ($column instanceof Expr)
             return $column;
 
-        $column = '"'. trim($col_name, '"') .'"';
+        $column = '"'. trim($column, '"') .'"';
 
         return new Expr($column);
     }

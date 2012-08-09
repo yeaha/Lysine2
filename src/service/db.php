@@ -281,7 +281,7 @@ class Select {
     }
 
     public function __toString() {
-        list($sql, $params) = $this->compile();
+        list($sql,) = $this->compile();
         return $sql;
     }
 

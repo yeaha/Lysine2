@@ -72,7 +72,7 @@ abstract class Data {
     }
 
     public function id() {
-        $prop = static::getMapper()->getMeta()->getPrimaryKey($as_prop = true);
+        $prop = static::getMapper()->getMeta()->getPrimaryKey(true);
         return $this->getProp($prop);
     }
 
@@ -312,7 +312,7 @@ abstract class Mapper {
             $data = new $this->class;
 
         $props = $this->recordToProps($record);
-        $data->__merge($props, $is_fresh = false);
+        $data->__merge($props, false);
 
         Registry::set($data);
         return $data;
@@ -323,7 +323,7 @@ abstract class Mapper {
             return false;
 
         $field = $this->getMeta()->getPrimaryKey();
-        $record = array($filed => $id);
+        $record = array($field => $id);
 
         return $this->package($record, $data);
     }
@@ -382,7 +382,7 @@ class Meta {
     private $primary_key;
     private $props_meta;
     private $prop_field = array();
-    private $filed_prop = array();
+    private $field_prop = array();
 
     private function __construct($class) {
         $meta = $class::getMeta();
@@ -400,7 +400,7 @@ class Meta {
             if ($prop_meta['primary_key'])
                 $this->primary_key = $prop_meta['field'];
 
-            $this->prop_field[$prop] = $field;
+            $this->prop_field[$prop] = $prop_meta['field'];
         }
 
         if (!$this->primary_key)
@@ -496,7 +496,7 @@ class DBMapper extends Mapper {
         $select = new DBSelect($storage, $collection);
 
         $mapper = $this;
-        $select->setProcessor(function($row) use ($mapper) {
+        $select->setProcessor(function($record) use ($mapper) {
             return $record ? $mapper->package($record) : false;
         });
 

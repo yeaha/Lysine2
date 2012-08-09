@@ -36,7 +36,7 @@ class Memcached extends \Lysine\Service\IService {
 
         if (isset($config['options'])) {
             foreach ($config['options'] as $key => $val)
-                $memcache->setOption($key, $val);
+                $handler->setOption($key, $val);
         }
 
         return $this->handler = $handler;

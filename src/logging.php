@@ -74,7 +74,7 @@ class Logging {
             'Message: '. $exception->getMessage(),
         );
 
-        foreach (explode("\n", $exception->getTraceAsString()) as $idx => $trace)
+        foreach (explode("\n", $exception->getTraceAsString()) as $trace)
             $messages[] = $trace;
 
         if ($exception instanceof \Lysine\Error && ($more = $exception->getMore()))

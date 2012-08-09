@@ -33,7 +33,7 @@ class Application {
 
         $uri = $uri ?: req()->requestUri();
         $uri = parse_url(strtolower($uri), PHP_URL_PATH);
-        $url = rtrim($uri, '/') ?: '/';
+        $uri = rtrim($uri, '/') ?: '/';
 
         $response = $this->getRouter()->dispatch($uri, $method);
 
