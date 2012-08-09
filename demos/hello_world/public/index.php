@@ -2,20 +2,15 @@
 use Lysine\HTTP;
 
 $__start__ = microtime(true);
-$app = require __DIR__ .'/../config/boot.php';
 
 try {
+    $app = require __DIR__ .'/../config/boot.php';
     $response = $app->execute();
 } catch (HTTP\Error $exception) {
     $response = __exception_response($exception->getCode(), $exception);
 } catch (\Exception $exception) {
     Lysine\logger()->exception($exception);
-
-    if ($exception instanceof \Lysine\Service\ConnectionError) {
-        $response = __exception_response(HTTP::SERVICE_UNAVAILABLE, $exception);
-    } else {
-        $response = __exception_response(HTTP::INTERNAL_SERVER_ERROR, $exception);
-    }
+    $response = __exception_response(HTTP::INTERNAL_SERVER_ERROR, $exception);
 }
 
 $__runtime__ = round(microtime(true) - $__start__, 6);
@@ -30,15 +25,16 @@ if (!DEBUG && PHP_SAPI == 'fpm-fcgi')
 function __exception_response($code, $exception) {
     $resp = resp()->reset()->setCode($code);
 
-    if (!req()->isAjax()) {
-        $body = \Controller::view()->render('_error', array('exception' => $exception));
-        $resp->setBody($body);
-    }
-
     if (DEBUG) {
         foreach (__exception_header($exception) as $header)
             $resp->setHeader($header);
     }
+
+    if (req()->isAjax())
+        return $resp;
+
+    $body = \Controller::view()->render('_error', array('exception' => $exception));
+    $resp->setBody($body);
 
     return $resp;
 }
