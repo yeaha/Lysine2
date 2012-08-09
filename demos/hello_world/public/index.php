@@ -5,32 +5,43 @@ $__start__ = microtime(true);
 $app = require __DIR__ .'/../config/boot.php';
 
 try {
-    $resp = $app->execute();
-} catch (\Exception $ex) {
-    $resp = resp()->reset();
+    $response = $app->execute();
+} catch (HTTP\Error $exception) {
+    $response = __exception_response($exception->getCode(), $exception);
+} catch (\Exception $exception) {
+    Lysine\logger()->exception($exception);
 
-    if ($ex instanceof HTTP\Error) {
-        $resp->setCode($ex->getCode());
+    if ($exception instanceof \Lysine\Service\ConnectionError) {
+        $response = __exception_response(HTTP::SERVICE_UNAVAILABLE, $exception);
     } else {
-        $resp->setCode(HTTP::INTERNAL_SERVER_ERROR);
-        Lysine\logger()->exception($ex);
-    }
-
-    $body = \Controller::view()->render('_error', array('exception' => $ex));
-    $resp->setBody($body);
-
-    if (DEBUG) {
-        foreach (__exception_header($ex) as $header)
-            $resp->setHeader($header);
+        $response = __exception_response(HTTP::INTERNAL_SERVER_ERROR, $exception);
     }
 }
 
 $__runtime__ = round(microtime(true) - $__start__, 6);
-$resp->setHeader('X-Runtime: '.$__runtime__.'s')
-     ->execute();
+$response->setHeader('X-Runtime: '.$__runtime__.'s')
+         ->execute();
 
 if (!DEBUG && PHP_SAPI == 'fpm-fcgi')
     fastcgi_finish_request();
+
+////////////////////////////////////////////////////////////////////////////////
+
+function __exception_response($code, $exception) {
+    $resp = resp()->reset()->setCode($code);
+
+    if (!req()->isAjax()) {
+        $body = \Controller::view()->render('_error', array('exception' => $exception));
+        $resp->setBody($body);
+    }
+
+    if (DEBUG) {
+        foreach (__exception_header($exception) as $header)
+            $resp->setHeader($header);
+    }
+
+    return $resp;
+}
 
 function __exception_header($exception) {
     $header = array();
@@ -39,6 +50,7 @@ function __exception_header($exception) {
     if ($pos = strpos($message, "\n"))
         $message = substr($message, 0, $pos);
 
+    $header[] = 'X-Exception-Class: '. get_class($exception);
     $header[] = 'X-Exception-Message: '. $message;
     $header[] = 'X-Exception-Code: '. $exception->getCode();
 
