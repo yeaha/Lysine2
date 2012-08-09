@@ -135,7 +135,7 @@ abstract class Data {
     protected function getProp($prop, array $prop_meta = null) {
         $prop_meta = $prop_meta ?: static::getMapper()->getMeta()->getPropMeta($prop);
         if (!$prop_meta)
-            throw new RuntimeError(get_class() .": Undefined property {$prop}");
+            throw new UndefinedPropertyError(get_class() .": Undefined property {$prop}");
 
         return isset($this->props[$prop])
              ? $this->props[$prop]
@@ -145,13 +145,13 @@ abstract class Data {
     protected function setProp($prop, $val, array $prop_meta = null) {
         $prop_meta = $prop_meta ?: static::getMapper()->getMeta()->getPropMeta($prop);
         if (!$prop_meta)
-            throw new RuntimeError(get_class() .": Undefined property {$prop}");
+            throw new UndefinedPropertyError(get_class() .": Undefined property {$prop}");
 
         if (!$this->is_fresh && ($prop_meta['refuse_update'] || $prop_meta['primary_key']))
             throw new RuntimeError(get_class() .": Property {$prop} refuse update");
 
         if ($prop_meta['pattern'] && !preg_match($prop_meta['patterm'], $val))
-            throw new RuntimeError(get_class() .": Property {$prop} mismatching pattern {$prop_meta['pattern']}");
+            throw new UnexpectedValueError(get_class() .": Property {$prop} mismatching pattern {$prop_meta['pattern']}");
 
         $val = $this->formatProp($prop, $val, $prop_meta);
 

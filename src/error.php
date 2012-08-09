@@ -47,7 +47,14 @@ class ConnectionError extends \Lysine\RuntimeError {
 class RuntimeError extends \Lysine\RuntimeError {
 }
 
+////////////////////////////////////////////////////////////////////////////////
 namespace Lysine\DataMapper;
 
-class RuntimeError extends \Lysine\RuntimeError {
+class RuntimeError extends \Lysine\InvalidArgumentError {
+}
+
+class UndefinedPropertyError extends \Lysine\InvalidArgumentError {
+}
+
+class UnexpectedValueError extends \Lysine\UnexpectedValueError {
 }
