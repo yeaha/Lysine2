@@ -1,6 +1,8 @@
 <?php
 return array(
     'lysine\config' => 'config.php',
+    'lysine\curl' => 'curl.php',
+    'lysine\curl\http' => 'curl.php',
     'lysine\datamapper\cachedbmapper' => 'datamapper.php',
     'lysine\datamapper\dbdata' => 'datamapper.php',
     'lysine\datamapper\dbmapper' => 'datamapper.php',
