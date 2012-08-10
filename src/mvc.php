@@ -34,7 +34,7 @@ class Application {
         $uri = $uri ?: req()->requestUri();
 
         \Lysine\logger()->debug($method .' '. $uri);
-        if (!req()->isGET && ($params = post() ?: put()))
+        if (!req()->isGET() && ($params = post() ?: put()))
             \Lysine\logger()->debug('Parameters: '. http_build_query($params));
 
         $uri = parse_url(strtolower($uri), PHP_URL_PATH);
