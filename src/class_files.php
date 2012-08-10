@@ -48,5 +48,6 @@ return array(
     'lysine\service\memcached' => 'service/memcached.php',
     'lysine\service\redis' => 'service/redis.php',
     'lysine\service\runtimeerror' => 'error.php',
+    'lysine\session' => 'session.php',
     'lysine\unexpectedvalueerror' => 'error.php',
 );

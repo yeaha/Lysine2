@@ -19,6 +19,8 @@ Lysine\logger()
     ->setLevel(DEBUG ? Lysine\Logging::DEBUG : Lysine\Logging::ERROR)
     ->addHandler(new Lysine\Logging\FileHandler(Config::get('logging')));
 
+Lysine\Session::initialize();
+
 $app = new MVC\Application(Config::get('application'));
 $app->setRouter( new MVC\Router(Config::get('router')) );
 

@@ -211,6 +211,8 @@ class Response {
     public function execute() {
         list($header, $body) = $this->compile();
 
+        \Lysine\Session::instance()->commit();
+
         foreach ($header as $h)
             header($h);
 
@@ -264,6 +266,8 @@ class Response {
         $this->header = array();
         $this->cookie = array();
         $this->body = null;
+
+        \Lysine\Session::instance()->reset();
 
         return $this;
     }
