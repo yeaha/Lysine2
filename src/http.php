@@ -203,18 +203,19 @@ class Response {
     protected function __construct() {
     }
 
-    public function __toString() {
-        list($header, $body) = $this->compile();
-        return implode("\n", $header) ."\n\n". $body;
-    }
-
     public function execute() {
         list($header, $body) = $this->compile();
 
         \Lysine\Session::instance()->commit();
 
-        foreach ($header as $h)
-            header($h);
+        array_map('header', $header);
+        $this->header = array();
+
+        foreach ($this->cookie as $config) {
+            list($name, $value, $expire, $path, $domain, $secure, $httponly) = $config;
+            setCookie($name, $value, $expire, $path, $domain, $secure, $httponly);
+        }
+        $this->cookie = array();
 
         echo $body;
     }
@@ -229,7 +230,7 @@ class Response {
     }
 
     public function setCookie($name, $value, $expire = 0, $path = '/', $domain = null, $secure = false, $httponly = true) {
-        $key = sprintf('%s@%s%s', $name, $domain, $path);
+        $key = sprintf('%s@%s:%s', $name, $domain, $path);
         $this->cookie[$key] = array($name, $value, $expire, $path, $domain, $secure, $httponly);
         return $this;
     }
@@ -291,9 +292,6 @@ class Response {
                       : $key .': '. $val;
 
         return $header;
-    }
-
-    protected function compileCookie() {
     }
 
     //////////////////// static method ////////////////////

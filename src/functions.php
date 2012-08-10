@@ -76,6 +76,10 @@ namespace {
     function resp() {
         return \Lysine\HTTP\Response::instance();
     }
+
+    function set_cookie($name, $value, $expire = 0, $path = '/', $domain = null, $secure = false, $httponly = true) {
+        return req()->setCookie($name, $value, $expire, $path, $domain, $secure, $httponly);
+    }
 }
 
 namespace Lysine {
