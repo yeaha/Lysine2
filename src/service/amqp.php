@@ -54,7 +54,7 @@ class AMQP implements \Lysine\Service\IService {
         return $this->channel = new AMQPChannel($connection);
     }
 
-    public function exchange_declare($name, $type = null, $flag = null, $arguments = null) {
+    public function declareExchange($name, $type = null, $flag = null, $arguments = null) {
         $exchange = new AMQPExchange($this->channel());
         $exchange->setName($name);
 
@@ -70,7 +70,7 @@ class AMQP implements \Lysine\Service\IService {
         return $exchange;
     }
 
-    public function queue_declare($name, $flag = null, $arguments = null) {
+    public function declareQueue($name, $flag = null, $arguments = null) {
         $queue = new AMQPQueue($this->channel());
         $queue->setName($name);
 
