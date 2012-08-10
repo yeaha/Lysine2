@@ -32,6 +32,11 @@ class Application {
             throw HTTP\Error::factory(HTTP::NOT_IMPLEMENTED);
 
         $uri = $uri ?: req()->requestUri();
+
+        \Lysine\logger()->debug($method .' '. $uri);
+        if (!req()->isGET && ($params = post() ?: put()))
+            \Lysine\logger()->debug('Parameters: '. http_build_query($params));
+
         $uri = parse_url(strtolower($uri), PHP_URL_PATH);
         $uri = rtrim($uri, '/') ?: '/';
 
@@ -77,10 +82,9 @@ class Router {
     }
 
     public function dispatch($uri, $method) {
-        DEBUG && \Lysine\logger()->debug($method .' '. $uri);
-
         list($class, $params) = $this->matchClass($uri);
-        DEBUG && \Lysine\logger()->debug('Dispatch to controller: '. $class);
+
+        \Lysine\logger()->debug('Dispatch to controller: '. $class);
 
         if (!$class || !class_exists($class))
             throw HTTP\Error::factory(HTTP::NOT_FOUND);

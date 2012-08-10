@@ -26,43 +26,23 @@ class Logging {
     }
 
     public function critical($message) {
-        $this->log($message, self::CRITICAL);
+        return $this->log($message, self::CRITICAL);
     }
 
     public function error($message) {
-        $this->log($message, self::ERROR);
+        return $this->log($message, self::ERROR);
     }
 
     public function warning($message) {
-        $this->log($message, self::WARNING);
+        return $this->log($message, self::WARNING);
     }
 
     public function info($message) {
-        $this->log($message, self::INFO);
+        return $this->log($message, self::INFO);
     }
 
     public function debug($message) {
-        $this->log($message, self::DEBUG);
-    }
-
-    public function log($message, $level = null) {
-        if (!$this->handler)
-            return false;
-
-        if ($level === null)
-            $level = $this->level;
-
-        if ($level < $this->level)
-            return false;
-
-        $record = array(
-            'message' => $message,
-            'level' => $level,
-            'pid' => $this->getPid(),
-        );
-
-        foreach ($this->handler as $handler)
-            $handler->emit($record);
+        return $this->log($message, self::DEBUG);
     }
 
     public function exception(\Exception $exception) {
@@ -81,7 +61,28 @@ class Logging {
             $message[] = 'More: '. serialize($more);
 
         foreach ($messages as $message)
-            $this->critical($message);
+            $this->error($message);
+    }
+
+    //////////////////// protected method ////////////////////
+
+    protected function log($message, $level) {
+        if (!$this->handler)
+            return false;
+
+        if ($level < $this->level)
+            return false;
+
+        $record = array(
+            'message' => $message,
+            'level' => $level,
+            'pid' => $this->getPid(),
+        );
+
+        foreach ($this->handler as $handler)
+            $handler->emit($record);
+
+        return true;
     }
 
     protected function getPid() {
