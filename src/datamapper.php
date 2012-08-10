@@ -111,7 +111,7 @@ abstract class Data {
             return $this->props;
 
         $props = array();
-        foreach ($this->dirty_props as $prop)
+        foreach (array_keys($this->dirty_props) as $prop)
             $props[$prop] = $this->props[$prop];
 
         return $props;
@@ -149,6 +149,9 @@ abstract class Data {
 
         if (!$this->is_fresh && ($prop_meta['refuse_update'] || $prop_meta['primary_key']))
             throw new RuntimeError(get_class() .": Property {$prop} refuse update");
+
+        if (!$prop_meta['allow_null'] && $val === null)
+            throw new NullNotAllowedError(get_class() .": Property {$prop} not allow null");
 
         if ($prop_meta['pattern'] && !preg_match($prop_meta['patterm'], $val))
             throw new UnexpectedValueError(get_class() .": Property {$prop} mismatching pattern {$prop_meta['pattern']}");
@@ -262,22 +265,37 @@ abstract class Mapper {
             throw new RuntimeError("{$this->class} is readonly");
 
         $is_fresh = $data->isFresh();
-        $is_dirty = $data->isDirty();
 
-        if (!$is_fresh && !$is_dirty)
+        if (!$is_fresh && !$data->isDirty())
             return true;
 
         if ($is_fresh) {
             $data->__triggerEvent(Data::BEFORE_INSERT_EVENT);
-        } elseif ($is_dirty) {
+        } else {
             $data->__triggerEvent(Data::BEFORE_UPDATE_EVENT);
         }
         $data->__triggerEvent(Data::BEFORE_SAVE_EVENT);
 
+        // 如果是新对象，就要检查所有的属性
+        // 否则就只检查修改过的属性
+        $props_meta = $this->getMeta()->getPropMeta();
+        if ($is_fresh) {
+            $props_data = $data->toArray();
+            $props = array_keys($props_meta);
+        } else {
+            $props_data = $data->toArray(true);
+            $props = array_keys($props_data);
+        }
+
+        foreach ($props as $prop) {
+            if (!$props_meta[$prop]['allow_null'] && !isset($props_data[$prop]))
+                throw new NullNotAllowedError($this->class .": Property {$prop} not allow null");
+        }
+
         if ($is_fresh) {
             if ($result = $this->insert($data))
                 $data->__triggerEvent(Data::AFTER_INSERT_EVENT);
-        } elseif ($is_dirty) {
+        } else {
             if ($result = $this->update($data))
                 $data->__triggerEvent(Data::AFTER_UPDATE_EVENT);
         }
@@ -534,7 +552,7 @@ class DBMapper extends Mapper {
     }
 
     protected function doUpdate(Data $data, IService $storage = null, $collection = null) {
-        $record = $this->propsToRecord($data->toArray());
+        $record = $this->propsToRecord($data->toArray(true));
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
         $primary_key = $this->getMeta()->getPrimaryKey();
