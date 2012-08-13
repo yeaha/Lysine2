@@ -29,10 +29,6 @@ class UnexpectedValueError extends Error {
 namespace Lysine\HTTP;
 
 class Error extends \Lysine\Error {
-    public function getStatusLine() {
-        return sprintf('HTTP\1.1 %d %s', $this->getCode(), $this->getMessage());
-    }
-
     static public function factory($code) {
         return new static(\Lysine\HTTP::getStatusMessage($code), $code);
     }

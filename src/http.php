@@ -75,6 +75,14 @@ class HTTP {
     static public function getStatusMessage($code) {
         return self::$status[$code];
     }
+
+    static public function getStatusHeader($code) {
+        $message = self::$status[$code];
+
+        return PHP_SAPI == 'cgi'
+             ? sprintf('Status: %d %s', $code, $message)
+             : sprintf('HTTP/1.1 %d %s', $code, $message);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -284,7 +292,7 @@ class Response {
     //////////////////// protected method ////////////////////
     protected function compileHeader() {
         $header = array();
-        $header[] = sprintf('HTTP/1.1 %d %s', $this->code, \Lysine\HTTP::getStatusMessage($this->code ?: 200));
+        $header[] = \Lysine\HTTP::getStatusHeader($this->code ?: 200);
 
         foreach ($this->header as $key => $val)
             $header[] = $val === null

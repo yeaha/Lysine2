@@ -7,7 +7,7 @@ try {
     $app = require __DIR__ .'/../config/boot.php';
     $response = $app->execute();
 } catch (HTTP\Error $exception) {
-    Lysine\logger()->debug($exception->getStatusLine());
+    Lysine\logger()->debug( HTTP::getStatusHeader($exception->getCode()) );
     $response = __exception_response($exception->getCode(), $exception);
 } catch (\Exception $exception) {
     Lysine\logger()->exception($exception);
