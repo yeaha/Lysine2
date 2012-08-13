@@ -15,9 +15,9 @@ function showException($exception) {
     $output = '<h1>'. $exception->getMessage() .'</h1>';
     $output .= '<p>'. nl2br($exception->getTraceAsString()) .'</p>';
 
-    if ($exception instanceof \Lysine\Error) {
+    if ($exception instanceof \Lysine\Error && ($more = $exception->getMore())) {
         $output .= '<h2>More Information</h2>';
-        $output .= '<pre>'. var_export($exception->getMore(), true) .'</pre>';
+        $output .= '<pre>'. var_export($more, true) .'</pre>';
     }
 
     if ($previous = $exception->getPrevious())
