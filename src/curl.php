@@ -12,12 +12,6 @@ class Curl {
         $this->close();
     }
 
-    public function reset() {
-        $this->close();
-        $this->options = array();
-        return $this;
-    }
-
     public function close() {
         if ($this->handler) {
             curl_close($this->handler);
@@ -26,7 +20,15 @@ class Curl {
         return $this;
     }
 
+    public function setOptions(array $options) {
+        $this->options = array_merge($this->options, $options);
+        return $this;
+    }
+
     public function execute($url, array $options = array()) {
+        $this->close();
+
+        $options = $options ? array_merge($this->options, $options) : $this->options;
         $options[CURLOPT_URL] = $url;
 
         $handler = curl_init();
@@ -60,14 +62,6 @@ namespace Lysine\Curl;
 class Http extends \Lysine\Curl {
     static public $method_emulate = true;
 
-    public function setAuth($user, $password, $type = CURLAUTH_ANY) {
-        $this->setOptions(array(
-            CURLOPT_USERPWD => $user .':'. $password,
-            CURLOPT_HTTPAUTH => $type,
-        ));
-        return $this;
-    }
-
     public function head($url, array $params = array()) {
         return $this->send($url, 'HEAD', $params);
     }
@@ -90,13 +84,18 @@ class Http extends \Lysine\Curl {
 
     protected function send($url, $method, array $params) {
         $method = strtoupper($method);
+
+        // 数组必须用http_build_query转换为字符串
+        // 否则会使用multipart/form-data而不是application/x-www-form-urlencoded
+        $params = http_build_query($params) ?: null;
+
         $options = array();
 
         if ($method == 'GET' || $method == 'HEAD') {
             if ($params)
                 $url = strpos($url, '?')
-                     ? $url .'&'. http_build_query($params)
-                     : $url .'?'. http_build_query($params);
+                     ? $url .'&'. $params
+                     : $url .'?'. $params;
 
             if ($method == 'GET') {
                 $options[CURLOPT_HTTPGET] = true;
@@ -104,20 +103,19 @@ class Http extends \Lysine\Curl {
                 $options[CURLOPT_CUSTOMREQUEST] = 'HEAD';
                 $options[CURLOPT_NOBODY] = true;
             }
-        } elseif ($method == 'POST') {
-            $options[CURLOPT_POST] = true;
-            $options[CURLOPT_POSTFIELDS] = http_build_query($params);
         } else {
-            if (static::$method_emulate) {
+            if ($method == 'POST') {
+                $options[CURLOPT_POST] = true;
+            } elseif (static::$method_emulate) {
                 $options[CURLOPT_POST] = true;
                 $options[CURLOPT_HTTPHEADER][] = 'X-HTTP-METHOD-OVERRIDE: '. $method;
                 $options[CURLOPT_POSTFIELDS] = $params;
             } else {
                 $options[CURLOPT_CUSTOMREQUEST] = $method;
-                // 数组必须用http_build_query转换为字符串
-                // 否则会使用multipart/form-data而不是application/x-www-form-urlencoded
-                if ($params) $options[CURLOPT_POSTFIELDS] = http_build_query($params);
             }
+
+            if ($params)
+                $options[CURLOPT_POSTFIELDS] = $params;
         }
 
         $options[CURLOPT_RETURNTRANSFER] = true;
