@@ -7,7 +7,6 @@ class Session implements \ArrayAccess {
     protected $start;
     protected $data = array();
     protected $snapshot = array();
-    protected $is_dirty = false;
 
     protected function __construct() {
         $this->start = session_status() === PHP_SESSION_ACTIVE;
@@ -31,32 +30,25 @@ class Session implements \ArrayAccess {
     public function offsetSet($offset, $value) {
         $this->start();
         $this->data[$offset] = $value;
-        $this->is_dirty = true;
     }
 
     public function offsetUnset($offset) {
         $this->start();
         unset($this->data[$offset]);
-        $this->is_dirty = true;
     }
 
     public function commit() {
         if (!$this->start)
             return false;
 
-        if (!$this->is_dirty)
-            return true;
-
         $_SESSION = $this->data;
         session_write_close();
 
         $this->snapshot = $this->data;
-        $this->is_dirty = false;
     }
 
     public function reset() {
         $this->data = $this->snapshot;
-        $this->is_dirty = false;
     }
 
     public function destroy() {
@@ -89,6 +81,6 @@ class Session implements \ArrayAccess {
 
     static public function instance() {
         return self::$instance
-            ?: (self::$instance = $_SESSION = new static);
+            ?: (self::$instance = $GLOBALS['_SESSION'] = new static);
     }
 }
