@@ -156,7 +156,7 @@ abstract class Data {
         if ($prop_meta['pattern'] && !preg_match($prop_meta['patterm'], $val))
             throw new UnexpectedValueError(get_class() .": Property {$prop} mismatching pattern {$prop_meta['pattern']}");
 
-        $val = $this->formatProp($prop, $val, $prop_meta);
+        $val = $this->formatProp($val, $prop_meta);
 
         if ($val !== $this->getProp($prop, $prop_meta)) {
             $this->props[$prop] = $val;
