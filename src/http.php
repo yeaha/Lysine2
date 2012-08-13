@@ -79,7 +79,7 @@ class HTTP {
     static public function getStatusHeader($code) {
         $message = self::$status[$code];
 
-        return PHP_SAPI == 'cgi'
+        return strpos(PHP_SAPI, 'cgi') === 0
              ? sprintf('Status: %d %s', $code, $message)
              : sprintf('HTTP/1.1 %d %s', $code, $message);
     }
