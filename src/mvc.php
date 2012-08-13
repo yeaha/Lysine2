@@ -37,9 +37,6 @@ class Application {
         if (!req()->isGET() && ($params = post() ?: put()))
             \Lysine\logger()->debug('Parameters: '. http_build_query($params));
 
-        $uri = parse_url(strtolower($uri), PHP_URL_PATH);
-        $uri = rtrim($uri, '/') ?: '/';
-
         $response = $this->getRouter()->dispatch($uri, $method);
 
         return $response instanceof \Lysine\HTTP\Response
@@ -67,6 +64,7 @@ class Router {
     const BEFORE_DISPATCH_EVENT = 'before dispatch';
     const AFTER_DISPATCH_EVENT = 'after dispatch';
 
+    protected $base_uri;
     protected $rewrite = array();
     protected $namespace = array();
 
@@ -79,9 +77,22 @@ class Router {
 
         if (isset($config['rewrite']))
             $this->rewrite = $config['rewrite'];
+
+        if (isset($config['base_uri']) && ($base_uri = rtrim($config['base_uri'], '/')))
+            $this->base_uri = strtolower($base_uri) .'/';
     }
 
     public function dispatch($uri, $method) {
+        $uri = parse_url(strtolower($uri), PHP_URL_PATH);
+        $uri = rtrim($uri, '/') .'/';
+
+        if ($base_uri = $this->base_uri) {
+            if (strpos($uri, $base_uri) !== 0)
+                throw HTTP\Error::factory(HTTP::NOT_FOUND);
+
+            $uri = '/'.substr($uri, strlen($base_uri));
+        }
+
         list($class, $params) = $this->matchClass($uri);
 
         \Lysine\logger()->debug('Dispatch to controller: '. $class);
