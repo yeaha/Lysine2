@@ -166,7 +166,7 @@ abstract class Data {
         return true;
     }
 
-    protected function formatProp($prop, $val, array $prop_meta) {
+    protected function formatProp($val, array $prop_meta) {
         if ($val === null || $val === '')
             return null;
 
@@ -269,11 +269,6 @@ abstract class Mapper {
         if (!$is_fresh && !$data->isDirty())
             return true;
 
-        if ($is_fresh) {
-            $data->__triggerEvent(Data::BEFORE_INSERT_EVENT);
-        } else {
-            $data->__triggerEvent(Data::BEFORE_UPDATE_EVENT);
-        }
         $data->__triggerEvent(Data::BEFORE_SAVE_EVENT);
 
         // 如果是新对象，就要检查所有的属性
@@ -288,20 +283,18 @@ abstract class Mapper {
         }
 
         foreach ($props as $prop) {
-            if (!$props_meta[$prop]['allow_null'] && !isset($props_data[$prop]))
+            $prop_meta = $props_meta[$prop];
+            if (!$prop_meta['allow_null'] && !isset($props_data[$prop]) && ($prop_meta['default'] === null))
                 throw new NullNotAllowedError($this->class .": Property {$prop} not allow null");
         }
 
-        if ($is_fresh) {
-            if ($result = $this->insert($data))
-                $data->__triggerEvent(Data::AFTER_INSERT_EVENT);
-        } else {
-            if ($result = $this->update($data))
-                $data->__triggerEvent(Data::AFTER_UPDATE_EVENT);
-        }
+        $result = $is_fresh
+                ? $this->insert($data)
+                : $this->update($data);
 
         if ($result)
             $data->__triggerEvent(Data::AFTER_SAVE_EVENT);
+
         return $result;
     }
 
@@ -337,20 +330,30 @@ abstract class Mapper {
     }
 
     protected function insert(Data $data) {
+        $data->__triggerEvent(Data::BEFORE_INSERT_EVENT);
+
         if (!$id = $this->doInsert($data))
             return false;
 
         $field = $this->getMeta()->getPrimaryKey();
         $record = array($field => $id);
+        $this->package($record, $data);
 
-        return $this->package($record, $data);
+        $data->__triggerEvent(Data::AFTER_INSERT_EVENT);
+
+        return true;
     }
 
     protected function update(Data $data) {
+        $data->__triggerEvent(Data::BEFORE_UPDATE_EVENT);
+
         if (!$this->doUpdate($data))
             return false;
 
-        return $this->package(array(), $data);
+        $this->package(array(), $data);
+        $data->__triggerEvent(Data::AFTER_UPDATE_EVENT);
+
+        return true;
     }
 
     protected function recordToProps(array $record) {
@@ -383,6 +386,7 @@ abstract class Mapper {
 class Meta {
     static private $instance = array();
     static private $default_prop_meta = array(
+        'name' => NULL,
         'field' => NULL,
         'type' => NULL,
         'primary_key' => FALSE,
@@ -411,6 +415,8 @@ class Meta {
 
         foreach ($meta['props'] as $prop => &$prop_meta) {
             $prop_meta = array_merge(self::$default_prop_meta, $prop_meta);
+
+            $prop_meta['name'] = $prop;
 
             if (!$prop_meta['field'])
                 $prop_meta['field'] = $prop;
@@ -492,11 +498,6 @@ class Registry {
 //////////////////// database data-mapper implement ////////////////////
 
 class DBData extends Data {
-    protected function formatProp($prop, $val, array $prop_meta) {
-        $val = parent::formatProp($prop, $val, $prop_meta);
-        return $val;
-    }
-
     static public function getMapper() {
         return DBMapper::factory( get_called_class() );
     }
@@ -606,13 +607,9 @@ abstract class CacheDBMapper extends DBMapper {
 
 class DBSelect extends \Lysine\Service\DB\Select {
     public function get($limit = null) {
-        if ($limit !== null)
-            $this->limit($limit);
-
-        $data_set = array();
-        foreach ($this->iterator() as $data)
-            $data_set[$data->id()] = $data;
-
-        return $data_set;
+        $result = array();
+        foreach (parent::get($limit) as $data)
+            $result[$data->id()] = $data;
+        return $result;
     }
 }
