@@ -284,8 +284,22 @@ abstract class Mapper {
 
         foreach ($props as $prop) {
             $prop_meta = $props_meta[$prop];
-            if (!$prop_meta['allow_null'] && !isset($props_data[$prop]) && ($prop_meta['default'] === null))
+
+            do {
+                if ($prop_meta['allow_null'])
+                    break;
+
+                if (isset($props_data[$prop]))
+                    break;
+
+                if ($prop_meta['primary_key'] && $prop_meta['auto_increase'])
+                    break;
+
+                if ($prop_meta['default'] !== null)
+                    break;
+
                 throw new NullNotAllowedError($this->class .": Property {$prop} not allow null");
+            } while (false);
         }
 
         $result = $is_fresh
