@@ -1,6 +1,6 @@
 <?php
 return array(
-    'lysine\config' => 'config.php',
+    'lysine\config' => 'utils.php',
     'lysine\curl' => 'curl.php',
     'lysine\curl\http' => 'curl.php',
     'lysine\datamapper\cachedbmapper' => 'datamapper.php',
@@ -16,7 +16,7 @@ return array(
     'lysine\datamapper\undefinedpropertyerror' => 'error.php',
     'lysine\datamapper\unexpectedvalueerror' => 'error.php',
     'lysine\error' => 'error.php',
-    'lysine\event' => 'event.php',
+    'lysine\event' => 'utils.php',
     'lysine\http' => 'http.php',
     'lysine\http\error' => 'error.php',
     'lysine\http\request' => 'http.php',
@@ -31,7 +31,6 @@ return array(
     'lysine\mvc\application' => 'mvc.php',
     'lysine\mvc\router' => 'mvc.php',
     'lysine\mvc\view' => 'mvc.php',
-    'lysine\profiler' => 'profiler.php',
     'lysine\runtimeerror' => 'error.php',
     'lysine\service\amqp' => 'service/amqp.php',
     'lysine\service\connectionerror' => 'error.php',
@@ -48,6 +47,6 @@ return array(
     'lysine\service\memcached' => 'service/memcached.php',
     'lysine\service\redis' => 'service/redis.php',
     'lysine\service\runtimeerror' => 'error.php',
-    'lysine\session' => 'session.php',
+    'lysine\session' => 'utils.php',
     'lysine\unexpectedvalueerror' => 'error.php',
 );
