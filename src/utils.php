@@ -193,7 +193,7 @@ class MockCookie {
 
     protected $data = array();
 
-    public function set($name, $value, $expire = 0, $path = '/', $domain = null, $secure = false, $httponly = true) {
+    public function set($name, $value, $expire = 0, $path = '/', $domain = null) {
         $domain = $this->normalizeDomain($domain);
         $path = $this->normalizePath($path);
         $this->data[$domain][$path][$name] = array($value, (int)$expire);
