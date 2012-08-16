@@ -70,15 +70,19 @@ namespace {
     }
 
     function req() {
-        return \Lysine\HTTP\Request::instance();
+        if (!defined('LYSINE_REQUEST_CLASS'))
+            return \Lysine\HTTP\Request::instance();
+
+        $class = LYSINE_REQUEST_CLASS;
+        return $class::instance();
     }
 
     function resp() {
-        return \Lysine\HTTP\Response::instance();
-    }
+        if (!defined('LYSINE_RESPONSE_CLASS'))
+            return \Lysine\HTTP\Response::instance();
 
-    function set_cookie($name, $value, $expire = 0, $path = '/', $domain = null, $secure = false, $httponly = true) {
-        return req()->setCookie($name, $value, $expire, $path, $domain, $secure, $httponly);
+        $class = LYSINE_RESPONSE_CLASS;
+        return $class::instance();
     }
 }
 
