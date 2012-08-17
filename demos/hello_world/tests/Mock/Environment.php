@@ -36,6 +36,8 @@ class Environment {
         $_REQUEST = array();
         $_SERVER = array();
         $_SESSION = \Lysine\Session::instance();
+
+        resp()->reset();
     }
 
     static protected function useAjax() {

@@ -2,6 +2,9 @@
 namespace Tests\Controller;
 
 class IndexTest extends \Test\Controller {
+    /**
+     * @group controller
+     */
     public function testGet() {
         $response = $this->GET('/');
 
@@ -9,6 +12,7 @@ class IndexTest extends \Test\Controller {
     }
 
     /**
+     * @group controller
      * @expectedException \Lysine\HTTP\Error
      * @expectedExceptionCode 405
      */
