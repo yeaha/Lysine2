@@ -258,6 +258,10 @@ class Response {
         return $this;
     }
 
+    public function getBody() {
+        return $this->body;
+    }
+
     // return array($header, $body);
     public function compile() {
         $body = in_array($this->getCode(), array(204, 301, 302, 303, 304))
