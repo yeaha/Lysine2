@@ -242,7 +242,7 @@ class View {
     }
 
     protected function includeOnce($view) {
-        if (!isset($this->include_views($view)))
+        if (!isset($this->include_views[$view]))
             $this->includes($view);
     }
 
