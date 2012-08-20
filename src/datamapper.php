@@ -23,7 +23,7 @@ abstract class Data {
     static protected $props_meta = array();
     static protected $readonly = false;
 
-    private $is_fresh;
+    private $is_fresh = true;
     private $props = array();
     private $dirty_props = array();
 
