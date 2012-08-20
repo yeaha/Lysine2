@@ -23,9 +23,9 @@ abstract class Data {
     static protected $props_meta = array();
     static protected $readonly = false;
 
-    private $is_fresh = true;
-    private $props = array();
-    private $dirty_props = array();
+    protected $is_fresh = true;
+    protected $props = array();
+    protected $dirty_props = array();
 
     public function __construct(array $props = array(), $is_fresh = true) {
         $this->__merge($props, $is_fresh);
