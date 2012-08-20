@@ -255,7 +255,7 @@ class ChromePHPHandler implements Handler {
         switch ($record['level']) {
             case Logging::WARNING:
                 return \ChromePHP::warn($record['message']);
-            case Logging::Error:
+            case Logging::ERROR:
             case Logging::CRITICAL:
                 return \ChromePHP::error($record['message']);
             default:

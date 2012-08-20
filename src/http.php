@@ -286,8 +286,7 @@ class Response {
     }
 
     public function redirect($url, $code = 303) {
-        $this->reset()
-             ->setCode($code)
+        $this->setCode($code)
              ->setHeader('Location: '. $url);
 
         return $this;

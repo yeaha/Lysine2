@@ -32,7 +32,7 @@ abstract class Data {
     }
 
     public function __get($prop) {
-        $this->getProp($prop);
+        return $this->getProp($prop);
     }
 
     public function __set($prop, $val) {
@@ -103,7 +103,7 @@ abstract class Data {
     }
 
     public function isReadonly() {
-        return static::$is_readonly;
+        return static::$readonly;
     }
 
     public function toArray($only_dirty = false) {
