@@ -167,6 +167,8 @@ class View {
     protected $block_stack = array();
     protected $block_content = array();
 
+    protected $include_views = array();
+
     public function __construct($dir) {
         $this->dir = $dir;
     }
@@ -190,6 +192,7 @@ class View {
         $this->vars = array();
         $this->block_stack = array();
         $this->block_content = array();
+        $this->include_views = array();
 
         return $this;
     }
@@ -213,6 +216,8 @@ class View {
     //////////////////// protected method ////////////////////
 
     protected function includes($view, array $vars = array(), $return_content = false) {
+        $this->include_views[$view] = 1;
+
         $file = $this->findFile($view);
         $vars = $vars ? array_merge($this->vars, $vars) : $this->vars;
 
@@ -234,6 +239,11 @@ class View {
             return $output;
 
         echo $output;
+    }
+
+    protected function includeOnce($view) {
+        if (!isset($this->include_views($view)))
+            $this->includes($view);
     }
 
     protected function block($name, $method = null) {
