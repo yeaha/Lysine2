@@ -164,7 +164,7 @@ class FileHandler implements Handler {
         if (!$this->buffer_size)
             return false;
 
-        if (!$fp = fopen($this->file_name, 'a'))
+        if (!$fp = @fopen($this->file_name, 'a'))
             return false;
 
         if (flock($fp, LOCK_EX)) {
