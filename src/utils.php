@@ -8,7 +8,10 @@ class Config {
         self::$config = array_merge(self::$config, $config);
     }
 
-    static public function get($key) {
+    static public function get($key = null) {
+        if ($key === null)
+            return self::$config;
+
         if (strpos($key, ',') === false)
              return isset(self::$config[$key]) ? self::$config[$key] : false;
 

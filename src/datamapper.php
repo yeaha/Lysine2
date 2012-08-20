@@ -212,10 +212,13 @@ abstract class Data {
             'props' => static::$props_meta,
         );
 
-        if ($parent_class = get_parent_class()) {
-            $parent_meta = $parent_class::getMeta();
-            $meta['props'] = array_merge($parent_meta['props'], $meta['props']);
-        }
+        $called_class = get_called_class();
+        if ($called_class == __CLASS__)
+            return $meta;
+
+        $parent_class = get_parent_class($called_class);
+        $parent_meta = $parent_class::getMeta();
+        $meta['props'] = array_merge($parent_meta['props'], $meta['props']);
 
         return $meta;
     }
@@ -374,8 +377,8 @@ abstract class Mapper {
         $props = array();
         $prop_of_field = $this->getMeta()->getPropOfField();
 
-        foreach ($record as $field => $val)
-            $props[ $prop_of_field[$field] ] = $val;
+        foreach ($this->getMeta()->getPropOfField() as $field => $prop)
+            $props[$prop] = $record[$field];
 
         return $props;
     }

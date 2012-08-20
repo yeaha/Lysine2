@@ -373,7 +373,7 @@ class Select {
 
     public function count() {
         $cols = $this->cols;
-        $this->cols = array(\Lysine\dbexpr('count(1)'));
+        $this->cols = array(new Expr('count(1)'));
 
         $count = $this->execute()->getCol();
 
@@ -490,7 +490,11 @@ class Select {
 
         list($group_cols, $having, $having_params) = $this->group_by;
 
-        $sql = 'GROUP BY '. implode(', ', $this->adapter->qcol($group_cols));
+        $group_cols = $this->adapter->qcol($group_cols);
+        if (is_array($group_cols))
+            $group_cols = implode(',', $group_cols);
+
+        $sql = 'GROUP BY '. $group_cols;
         if ($having)
             $sql .= ' HAVING '. $having;
 

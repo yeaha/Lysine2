@@ -84,6 +84,10 @@ namespace {
         $class = LYSINE_RESPONSE_CLASS;
         return $class::instance();
     }
+
+    function cfg($key = null) {
+        return \Lysine\Config::get($key);
+    }
 }
 
 namespace Lysine {
