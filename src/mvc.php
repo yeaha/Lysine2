@@ -71,29 +71,29 @@ class Router {
     public function __construct(array $config = null) {
         if (isset($config['namespace']))
             foreach ($config['namespace'] as $path => $ns) {
-                $path = '/'. trim($path, '/');
+                $path = $this->normalizePath($path);
                 $this->namespace[$path] = $ns;
             }
 
         if (isset($config['rewrite']))
             $this->rewrite = $config['rewrite'];
 
-        if (isset($config['base_uri']) && ($base_uri = rtrim($config['base_uri'], '/')))
-            $this->base_uri = strtolower($base_uri) .'/';
+        if (isset($config['base_uri']))
+            $this->base_uri = $this->normalizePath($config['base_uri']);
     }
 
     public function dispatch($uri, $method) {
-        $uri = parse_url(strtolower($uri), PHP_URL_PATH);
-        $uri = rtrim($uri, '/') .'/';
+        $path = parse_url(strtolower($uri), PHP_URL_PATH);
+        $path = $this->normalizePath($path);
 
         if ($base_uri = $this->base_uri) {
-            if (strpos($uri, $base_uri) !== 0)
+            if (strpos($path, $base_uri) !== 0)
                 throw HTTP\Error::factory(HTTP::NOT_FOUND);
 
-            $uri = '/'.substr($uri, strlen($base_uri));
+            $path = '/'.substr($path, strlen($base_uri));
         }
 
-        list($class, $params) = $this->matchClass($uri);
+        list($class, $params) = $this->matchClass($path);
 
         \Lysine\logger()->debug('Dispatch to controller: '. $class);
 
@@ -132,26 +132,32 @@ class Router {
 
     //////////////////// protected method ////////////////////
 
-    protected function matchClass($uri) {
+    protected function matchClass($path) {
         foreach ($this->rewrite as $re => $class) {
-            if (preg_match($re, $uri, $match))
+            if (preg_match($re, $path, $match))
                 return array($class, array_slice($match, 1));
         }
 
         // 路径对应的controller namespace
-        foreach ($this->namespace as $path => $namespace) {
-            if (strpos($uri, $path) !== 0) continue;
+        foreach ($this->namespace as $ns_path => $ns) {
+            if (strpos($path, $ns_path) !== 0) continue;
 
             $class = array();
-            $uri = substr($uri, strlen($path)) ?: '/index';
-            foreach (explode('/', $uri) as $word)
+            $path = substr($path, strlen($ns_path)) ?: '/index';
+            foreach (explode('/', $path) as $word)
                 if ($word) $class[] = ucfirst($word);
 
             $class = implode('\\', $class);
-            return array($namespace.'\\'.$class, array());
+            return array($ns.'\\'.$class, array());
         }
 
         throw HTTP\Error::factory(HTTP::NOT_FOUND);
+    }
+
+    protected function normalizePath($path) {
+        $path = '/'. trim(strtolower($path), '/');
+
+        return ($path == '/') ? $path : $path .'/';
     }
 }
 
