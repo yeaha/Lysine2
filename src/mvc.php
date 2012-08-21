@@ -264,13 +264,13 @@ class View {
         list($block_name, $block_method) = array_pop($this->block_stack);
         $output = ob_get_clean();
 
-        if (isset($this->block[$block_name])) {
+        if (isset($this->block_content[$block_name])) {
             if ($block_method == self::BLOCK_PREPEND) {
-                $output = $this->block[$block_name] . $output;
+                $output = $this->block_content[$block_name] . $output;
             } elseif ($block_method == self::BLOCK_APPEND) {
-                $output = $output . $this->block[$block_name];
+                $output = $output . $this->block_content[$block_name];
             } else {
-                $output = $this->block[$block_name];
+                $output = $this->block_content[$block_name];
             }
         }
 
