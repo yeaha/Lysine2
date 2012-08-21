@@ -176,10 +176,10 @@ abstract class Adapter implements \Lysine\Service\IService {
 
     public function prepareInsert($table, array $cols) {
         $table = $this->qtab($table);
-        $cols = implode(',', $this->qcol($cols));
         $values = implode(',', array_fill(0, count($cols), '?'));
+        $cols = implode(',', $this->qcol($cols));
 
-        $sql = sprintf('INSERT INTO %s (%s) VALUES (%s)', $$table, $cols, $values);
+        $sql = sprintf('INSERT INTO %s (%s) VALUES (%s)', $table, $cols, $values);
         return $this->prepare($sql);
     }
 
