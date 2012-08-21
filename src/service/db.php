@@ -446,6 +446,51 @@ class Select {
         return array_shift($records);
     }
 
+    // 注意：直接利用select删除数据可能不是你想要的结果
+    // <code>
+    // // 找出符合条件的前5条
+    // // select * from "users" where id > 100 order by create_time desc limit 5
+    // $select = $adapter->select('users')->where('id > ?', 100)->order('create_time desc')->limit(5);
+    //
+    // // 因为DELETE语句不支持order by / limit / offset
+    // // 删除符合条件的，不仅仅是前5条
+    // // delete from "users" where id > 100
+    // $select->delete()
+    //
+    // // 如果要删除符合条件的前5条
+    // // delete from "users" where id in (select id from "users" where id > 100 order by create_time desc limit 5)
+    // $adapter->select('users')->whereIn('id', $select->setCols('id'))->delete();
+    // </code>
+    // 这里很容易犯错，考虑是否不提供delete()和update()方法
+    // 或者发现定义了limit / offset就抛出异常中止
+    public function delete() {
+        list($where, $params) = $this->compileWhere();
+
+        // 在这里，不允许没有任何条件的delete
+        if (!$where)
+            throw new \LogicException('MUST specify WHERE condition before delete');
+
+        // 见方法注释
+        if ($this->limit OR $this->offset OR $this->group_by)
+            throw new \LogicException('CAN NOT DELETE while specify LIMIT or OFFSET or GROUP BY');
+
+        return $this->adapter->delete($this->table, $where, $params);
+    }
+
+    public function update(array $row) {
+        list($where, $params) = $this->compileWhere();
+
+        // 在这里，不允许没有任何条件的update
+        if (!$where)
+            throw new \LogicException('MUST specify WHERE condition before update');
+
+        // 见delete()方法注释
+        if ($this->limit OR $this->offset OR $this->group_by)
+            throw new \LogicException('CAN NOT DELETE while specify LIMIT or OFFSET or GROUP BY');
+
+        return $this->adapter->update($this->table, $row, $where, $params);
+    }
+
     public function iterator() {
         return new \NoRewindIterator(new SelectIterator($this));
     }
