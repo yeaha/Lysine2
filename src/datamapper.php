@@ -274,37 +274,6 @@ abstract class Mapper {
 
         $data->__triggerEvent(Data::BEFORE_SAVE_EVENT);
 
-        // 如果是新对象，就要检查所有的属性
-        // 否则就只检查修改过的属性
-        $props_meta = $this->getMeta()->getPropMeta();
-        if ($is_fresh) {
-            $props_data = $data->toArray();
-            $props = array_keys($props_meta);
-        } else {
-            $props_data = $data->toArray(true);
-            $props = array_keys($props_data);
-        }
-
-        foreach ($props as $prop) {
-            $prop_meta = $props_meta[$prop];
-
-            do {
-                if ($prop_meta['allow_null'])
-                    break;
-
-                if (isset($props_data[$prop]))
-                    break;
-
-                if ($prop_meta['primary_key'] && $prop_meta['auto_increase'])
-                    break;
-
-                if ($prop_meta['default'] !== null)
-                    break;
-
-                throw new NullNotAllowedError($this->class .": Property {$prop} not allow null");
-            } while (false);
-        }
-
         $result = $is_fresh
                 ? $this->insert($data)
                 : $this->update($data);
@@ -349,6 +318,8 @@ abstract class Mapper {
     protected function insert(Data $data) {
         $data->__triggerEvent(Data::BEFORE_INSERT_EVENT);
 
+        $this->inspectData($data);
+
         if (!$id = $this->doInsert($data))
             return false;
 
@@ -364,11 +335,48 @@ abstract class Mapper {
     protected function update(Data $data) {
         $data->__triggerEvent(Data::BEFORE_UPDATE_EVENT);
 
+        $this->inspectData($data);
+
         if (!$this->doUpdate($data))
             return false;
 
         $this->package(array(), $data);
         $data->__triggerEvent(Data::AFTER_UPDATE_EVENT);
+
+        return true;
+    }
+
+    protected function inspectData(Data $data) {
+        // 如果是新对象，就要检查所有的属性
+        // 否则就只检查修改过的属性
+        $props_meta = $this->getMeta()->getPropMeta();
+        if ($data->isFresh()) {
+            $props_data = $data->toArray();
+            $props = array_keys($props_meta);
+        } else {
+            $props_data = $data->toArray(true);
+            $props = array_keys($props_data);
+        }
+
+        foreach ($props as $prop) {
+            $prop_meta = $props_meta[$prop];
+
+            do {
+                if ($prop_meta['allow_null'])
+                    break;
+
+                if (isset($props_data[$prop]))
+                    break;
+
+                if ($prop_meta['default'] !== null)
+                    break;
+
+                if ($prop_meta['primary_key'] && $prop_meta['auto_increase'])
+                    break;
+
+                throw new NullNotAllowedError($this->class .": Property {$prop} not allow null");
+            } while (false);
+        }
 
         return true;
     }
