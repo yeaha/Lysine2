@@ -29,8 +29,8 @@ class Sqlite extends \Lysine\Service\DB\Adapter {
     }
 
     public function begin() {
-        if ($this->transacter_counter) {
-            $savepoint = 'SAVEPOINT_'. $this->transacter_counter;
+        if ($this->transaction_counter) {
+            $savepoint = 'SAVEPOINT_'. $this->transaction_counter;
             $this->savepoint[] = $savepoint;
 
             $this->execute('SAVEPOINT '. $savepoint);
@@ -38,12 +38,12 @@ class Sqlite extends \Lysine\Service\DB\Adapter {
             $this->execute('BEGIN');
         }
 
-        $this->transacter_counter++;
+        $this->transaction_counter++;
         return true;
     }
 
     public function commit() {
-        if (!$this->transacter_counter)
+        if (!$this->transaction_counter)
             return false;
 
         if ($this->savepoint) {
@@ -54,12 +54,12 @@ class Sqlite extends \Lysine\Service\DB\Adapter {
             $this->execute('COMMIT');
         }
 
-        $this->transacter_counter--;
+        $this->transaction_counter--;
         return true;
     }
 
     public function rollback() {
-        if (!$this->transacter_counter)
+        if (!$this->transaction_counter)
             return false;
 
         if ($this->savepoint) {
@@ -70,7 +70,7 @@ class Sqlite extends \Lysine\Service\DB\Adapter {
             $this->execute('ROLLBACK');
         }
 
-        $this->transacter_counter--;
+        $this->transaction_counter--;
         return true;
     }
 

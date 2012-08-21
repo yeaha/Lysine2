@@ -90,6 +90,9 @@ abstract class Data {
             if ($prop_meta['strict'])
                 continue;
 
+            if (!$this->is_fresh && ($prop_meta['refuse_update'] || $prop_meta['primary_key']))
+                continue;
+
             $this->setProp($prop, $val, $prop_meta);
         }
     }
@@ -477,19 +480,19 @@ class Meta {
     public function getPropMeta($prop = null) {
         return $prop === null
              ? $this->props_meta
-             : isset($this->props_meta[$prop]) ? $this->props_meta[$prop] : false;
+             : (isset($this->props_meta[$prop]) ? $this->props_meta[$prop] : false);
     }
 
     public function getFieldOfProp($prop = null) {
         return $prop === null
              ? $this->prop_field
-             : isset($this->prop_field[$prop]) ? $this->prop_field[$prop] : false;
+             : (isset($this->prop_field[$prop]) ? $this->prop_field[$prop] : false);
     }
 
     public function getPropOfField($field = null) {
         return $field === null
              ? $this->field_prop
-             : isset($this->field_prop[$field]) ? $this->field_prop[$field] : false;
+             : (isset($this->field_prop[$field]) ? $this->field_prop[$field] : false);
     }
 
     static public function factory($class) {

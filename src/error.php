@@ -12,7 +12,7 @@ class Error extends \Exception {
     public function getMore($key = null) {
         return $key === null
              ? $this->more
-             : isset($this->more[$key]) ? $this->more[$key] : false;
+             : (isset($this->more[$key]) ? $this->more[$key] : false);
     }
 }
 
