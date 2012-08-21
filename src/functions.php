@@ -90,8 +90,12 @@ namespace {
         return $class::instance();
     }
 
-    function cfg($key = null) {
-        return \Lysine\Config::get($key);
+    function cfg($keys = null) {
+        $keys = $keys === null
+              ? null
+              : is_array($keys) ? $keys : func_get_args();
+
+        return \Lysine\Config::get($keys);
     }
 }
 

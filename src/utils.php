@@ -8,17 +8,17 @@ class Config {
         self::$config = array_merge(self::$config, $config);
     }
 
-    static public function get($key = null) {
-        if ($key === null)
+    static public function get($keys = null) {
+        $keys = $keys === null
+              ? null
+              : is_array($keys) ? $keys : func_get_args();
+
+        if ($keys === null)
             return self::$config;
 
-        if (strpos($key, ',') === false)
-             return isset(self::$config[$key]) ? self::$config[$key] : false;
-
         $config = &self::$config;
-        $path = preg_split('/\s?,\s?/', $key, NULL, PREG_SPLIT_NO_EMPTY);
 
-        foreach ($path as $key) {
+        foreach ($keys as $key) {
             if (!isset($config[$key]))
                 return false;
             $config = &$config[$key];
