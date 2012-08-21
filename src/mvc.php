@@ -87,10 +87,10 @@ class Router {
         $path = $this->normalizePath($path);
 
         if ($base_uri = $this->base_uri) {
-            if (strpos($path, $base_uri) !== 0)
+            if (strpos($path.'/', $base_uri.'/') !== 0)
                 throw HTTP\Error::factory(HTTP::NOT_FOUND);
 
-            $path = '/'.substr($path, strlen($base_uri));
+            $path = $this->normalizePath(substr($path, strlen($base_uri)));
         }
 
         list($class, $params) = $this->matchClass($path);
@@ -140,7 +140,8 @@ class Router {
 
         // 路径对应的controller namespace
         foreach ($this->namespace as $ns_path => $ns) {
-            if (strpos($path, $ns_path) !== 0) continue;
+            if ($ns_path != '/' && strpos($path.'/', $ns_path.'/') !== 0)
+                continue;
 
             $class = array();
             $path = substr($path, strlen($ns_path)) ?: '/index';
@@ -155,9 +156,7 @@ class Router {
     }
 
     protected function normalizePath($path) {
-        $path = '/'. trim(strtolower($path), '/');
-
-        return ($path == '/') ? $path : $path .'/';
+        return '/'. trim(strtolower($path), '/');
     }
 }
 
