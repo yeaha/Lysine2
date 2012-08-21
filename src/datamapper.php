@@ -475,15 +475,21 @@ class Meta {
     }
 
     public function getPropMeta($prop = null) {
-        return $prop === null ? $this->props_meta : $this->props_meta[$prop];
+        return $prop === null
+             ? $this->props_meta
+             : isset($this->props_meta[$prop]) ? $this->props_meta[$prop] : false;
     }
 
     public function getFieldOfProp($prop = null) {
-        return $prop === null ? $this->prop_field : $this->prop_field[$prop];
+        return $prop === null
+             ? $this->prop_field
+             : isset($this->prop_field[$prop]) ? $this->prop_field[$prop] : false;
     }
 
     public function getPropOfField($field = null) {
-        return $field === null ? $this->field_prop : $this->field_prop[$field];
+        return $field === null
+             ? $this->field_prop
+             : isset($this->field_prop[$field]) ? $this->field_prop[$field] : false;
     }
 
     static public function factory($class) {
