@@ -153,7 +153,7 @@ abstract class Data {
         if (!$prop_meta['allow_null'] && $val === null)
             throw new NullNotAllowedError(get_class() .": Property {$prop} not allow null");
 
-        if ($prop_meta['pattern'] && !preg_match($prop_meta['patterm'], $val))
+        if ($prop_meta['pattern'] && !preg_match($prop_meta['pattern'], $val))
             throw new UnexpectedValueError(get_class() .": Property {$prop} mismatching pattern {$prop_meta['pattern']}");
 
         $val = $this->formatProp($val, $prop_meta);
