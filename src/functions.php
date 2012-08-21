@@ -10,6 +10,11 @@ namespace {
         return isset($_POST[$key]) ? $_POST[$key] : null;
     }
 
+    function cookie($key = null) {
+        if ($key === null) return $_COOKIE;
+        return isset($_COOKIE[$key]) ? $_COOKIE[$key] : null;
+    }
+
     function put($key = null) {
         static $_PUT = null;
 

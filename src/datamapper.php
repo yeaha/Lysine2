@@ -375,10 +375,10 @@ abstract class Mapper {
 
     protected function recordToProps(array $record) {
         $props = array();
-        $prop_of_field = $this->getMeta()->getPropOfField();
-
-        foreach ($this->getMeta()->getPropOfField() as $field => $prop)
-            $props[$prop] = $record[$field];
+        foreach ($this->getMeta()->getPropOfField() as $field => $prop) {
+            if (isset($record[$field]))
+                $props[$prop] = $record[$field];
+        }
 
         return $props;
     }

@@ -418,7 +418,7 @@ class Select {
         if (!$this->processor)
             return $row;
 
-        return call_user_func($this->process, $row);
+        return call_user_func($this->processor, $row);
     }
 
     public function get($limit = null) {
@@ -444,7 +444,7 @@ class Select {
     }
 
     public function iterator() {
-        return new SelectIterator($this);
+        return new \NoRewindIterator(new SelectIterator($this));
     }
 
     //////////////////// protected method ////////////////////
