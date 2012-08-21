@@ -28,12 +28,14 @@ class Curl {
     public function execute($url, array $options = array()) {
         $this->close();
 
-        $options = $options ? array_merge($this->options, $options) : $this->options;
-        $options[CURLOPT_URL] = $url;
+        $curl_options = $this->options;
+        foreach ($options as $key => $val)
+            $curl_options[$key] = $val;
+        $curl_options[CURLOPT_URL] = $url;
 
         $handler = curl_init();
 
-        curl_setopt_array($handler, $options);
+        curl_setopt_array($handler, $curl_options);
 
         $result = curl_exec($handler);
         if ($result === false)
