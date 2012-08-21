@@ -345,7 +345,10 @@ class Select {
               ? implode(', ', $adapter->qcol($this->cols))
               : '*';
 
-        $sql .= ' FROM '. $this->adapter->qtab($this->table);
+        list($table, $table_params) = $this->compileFrom();
+        if ($table_params) $params = array_merge($params, $table_params);
+
+        $sql .= ' FROM '. $table;
 
         list($where, $where_params) = $this->compileWhere();
         if ($where)
@@ -466,6 +469,21 @@ class Select {
 
         $this->where[] = array($where, $params);
         return $this;
+    }
+
+    protected function compileFrom() {
+        $params = array();
+
+        if ($this->table instanceof Select) {
+            list($sql, $params) = $this->table->compile();
+            $table = sprintf('(%s) AS %s', $sql, $this->adapter->qtab(uniqid()));
+        } elseif ($this->table instanceof Expr) {
+            $table = (string)$this->table;
+        } else {
+            $table = $this->adapter->qtab($this->table);
+        }
+
+        return array($table, $params);
     }
 
     protected function compileWhere() {
