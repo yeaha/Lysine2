@@ -40,12 +40,15 @@ abstract class Data {
     }
 
     public function __merge(array $props, $is_fresh) {
-        foreach ($props as $prop => $val)
-            $this->$prop = $val;
+        $this->props = array_merge($this->props, $props);
 
         $this->is_fresh = $is_fresh;
-        if (!$is_fresh)
+        if (!$is_fresh) {
             $this->dirty_props = array();
+        } else {
+            foreach (array_keys($props) as $prop)
+                $this->dirty_props[$prop] = 1;
+        }
 
         return $this;
     }
