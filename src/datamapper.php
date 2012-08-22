@@ -36,7 +36,7 @@ abstract class Data {
     }
 
     public function __set($prop, $val) {
-        $this->setProp($prop, $val);
+        $this->setProp($prop, $val, true);
     }
 
     public function __merge(array $props, $is_fresh) {
@@ -81,20 +81,8 @@ abstract class Data {
     }
 
     public function setProps(array $props) {
-        $meta = static::getMapper()->getMeta();
-
-        foreach ($props as $prop => $val) {
-            if (!$prop_meta = $meta->getPropMeta($prop))
-                continue;
-
-            if ($prop_meta['strict'])
-                continue;
-
-            if (!$this->is_fresh && ($prop_meta['refuse_update'] || $prop_meta['primary_key']))
-                continue;
-
-            $this->setProp($prop, $val, $prop_meta);
-        }
+        foreach ($props as $prop => $val)
+            $this->setProp($prop, $val, false);
     }
 
     public function isFresh() {
@@ -145,13 +133,19 @@ abstract class Data {
              : $prop_meta['default'];
     }
 
-    protected function setProp($prop, $val, array $prop_meta = null) {
-        $prop_meta = $prop_meta ?: static::getMapper()->getMeta()->getPropMeta($prop);
-        if (!$prop_meta)
+    protected function setProp($prop, $val, $strict) {
+        if (!$prop_meta = static::getMapper()->getMeta()->getPropMeta($prop)) {
+            if (!$strict) return false;
             throw new UndefinedPropertyError(get_class() .": Undefined property {$prop}");
+        }
 
-        if (!$this->is_fresh && ($prop_meta['refuse_update'] || $prop_meta['primary_key']))
+        if (!$strict && $prop_meta['strict'])
+            return false;
+
+        if (!$this->is_fresh && ($prop_meta['refuse_update'] || $prop_meta['primary_key'])) {
+            if (!$strict) return false;
             throw new RuntimeError(get_class() .": Property {$prop} refuse update");
+        }
 
         if (!$prop_meta['allow_null'] && $val === null)
             throw new NullNotAllowedError(get_class() .": Property {$prop} not allow null");
