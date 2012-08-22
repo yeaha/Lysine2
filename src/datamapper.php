@@ -83,6 +83,7 @@ abstract class Data {
     public function setProps(array $props) {
         foreach ($props as $prop => $val)
             $this->setProp($prop, $val, false);
+        return $this;
     }
 
     public function isFresh() {
