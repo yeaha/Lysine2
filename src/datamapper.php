@@ -28,7 +28,12 @@ abstract class Data {
     protected $dirty_props = array();
 
     public function __construct(array $props = array(), $is_fresh = true) {
-        $this->__merge($props, $is_fresh);
+        // 使用较严格的__set()方法赋值
+        foreach ($props as $prop => $val)
+            $this->$prop = $val;
+
+        if (!$this->is_fresh = $is_fresh)
+            $this->dirty_props = array();
     }
 
     public function __get($prop) {
@@ -39,16 +44,12 @@ abstract class Data {
         $this->setProp($prop, $val, true);
     }
 
-    public function __merge(array $props, $is_fresh) {
+    // 此方法是提供给Mapper赋值的快捷方法
+    // 除Mapper外都不该调用此方法赋值
+    public function __merge(array $props) {
         $this->props = array_merge($this->props, $props);
-
-        $this->is_fresh = $is_fresh;
-        if (!$is_fresh) {
-            $this->dirty_props = array();
-        } else {
-            foreach (array_keys($props) as $prop)
-                $this->dirty_props[$prop] = 1;
-        }
+        $this->is_fresh = false;
+        $this->dirty_props = array();
 
         return $this;
     }
@@ -310,7 +311,7 @@ abstract class Mapper {
             $data = new $this->class;
 
         $props = $this->recordToProps($record);
-        $data->__merge($props, false);
+        $data->__merge($props);
 
         Registry::set($data);
         return $data;
