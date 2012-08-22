@@ -245,7 +245,7 @@ class Response {
 
     public function setHeader($header) {
         if (strpos($header, ':')) {
-            list($key, $val) = explode(':', $header);
+            list($key, $val) = explode(':', $header, 2);
             $this->header[trim($key)] = trim($val);
         } else {
             $this->header[$header] = null;
