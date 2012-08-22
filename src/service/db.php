@@ -141,27 +141,53 @@ abstract class Adapter implements \Lysine\Service\IService {
     }
 
     public function insert($table, array $row) {
-        $cols = array_keys($row);
-        $values = array_values($row);
+        $params = $cols = $vals = array();
 
-        $sth = $this->prepareInsert($table, $cols);
-        $this->execute($sth, $values);
-        return $sth->rowCount();
+        foreach ($row as $col => $val) {
+            $cols[] = $col;
+
+            if ($val instanceof Expr) {
+                $vals[] = $val;
+            } else {
+                $vals[] = '?';
+                $params[] = $val;
+            }
+        }
+
+        $sql = sprintf(
+            'INSERT INTO %s (%s) VALUES (%s)',
+            $this->qtab($table),
+            implode(',', $this->qcol($cols)),
+            implode(',', $vals)
+        );
+
+        return $this->execute($sql, $params)->rowCount();
     }
 
     public function update($table, array $row, $where = null, $params = null) {
-        $cols = array_keys($row);
-        $values = array_values($row);
+        $where_params = ($where === null || $params === null)
+                      ? array()
+                      : is_array($params) ? $params : array_slice(func_get_args(), 3);
 
-        $params = ($where === null || $params === null)
-                ? array()
-                : is_array($params) ? $params : array_slice(func_get_args(), 3);
+        $set = $params = array();
+        foreach ($row as $col => $val) {
+            if ($val instanceof Expr) {
+                $set[] = $this->qcol($col) .' = '. $val;
+            } else {
+                $set[] = $this->qcol($col) .' = ?';
+                $params[] = $val;
+            }
+        }
+        if ($where_params) $params = array_merge($params, $where_params);
 
-        $params = array_merge($values, $params);
+        $sql = sprintf(
+            'UPDATE %s SET %s',
+            $this->qtab($table),
+            implode(',', $set)
+        );
+        if ($where) $sql .= ' WHERE '. $where;
 
-        $sth = $this->prepareUpdate($table, $cols, $where);
-        $this->execute($sth, $params);
-        return $sth->rowCount();
+        return $this->execute($sql, $params)->rowCount();
     }
 
     public function delete($table, $where = null, $params = null) {
