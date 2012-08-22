@@ -262,7 +262,13 @@ abstract class Mapper {
         if (!$record = $this->doFind($id))
             return false;
 
-        return $this->package($record, $data ?: null);
+        $data = $this->package($record, $data ?: null);
+
+        // 假设直接使用id通过find()查询的对象是关注度比较高的数据
+        // 所以把结果对象在此运行期内缓存在对象注册表内
+        Registry::set($data);
+
+        return $data;
     }
 
     public function save(Data $data) {
@@ -313,7 +319,6 @@ abstract class Mapper {
         $props = $this->recordToProps($record);
         $data->__merge($props);
 
-        Registry::set($data);
         return $data;
     }
 
