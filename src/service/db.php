@@ -442,10 +442,9 @@ class Select {
     }
 
     public function process(array $row) {
-        if (!$this->processor)
-            return $row;
-
-        return call_user_func($this->processor, $row);
+        return $this->processor
+             ? call_user_func($this->processor, $row)
+             : $row;
     }
 
     public function get($limit = null) {
@@ -457,9 +456,9 @@ class Select {
 
         $records = array();
         while ($record = $sth->getRow()) {
-            if ($processor)
-                $record = call_user_func($processor, $record);
-            $records[] = $record;
+            $records[] = $processor
+                       ? call_user_func($processor, $record)
+                       : $record;
         }
 
         return $records;
