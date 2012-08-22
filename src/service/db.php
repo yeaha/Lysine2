@@ -141,27 +141,14 @@ abstract class Adapter implements \Lysine\Service\IService {
     }
 
     public function insert($table, array $row) {
-        $params = $cols = $vals = array();
-
-        foreach ($row as $col => $val) {
-            $cols[] = $col;
-
-            if ($val instanceof Expr) {
-                $vals[] = $val;
-            } else {
-                $vals[] = '?';
+        $params = array();
+        foreach ($row as $val) {
+            if ( !($val instanceof Expr) )
                 $params[] = $val;
-            }
         }
 
-        $sql = sprintf(
-            'INSERT INTO %s (%s) VALUES (%s)',
-            $this->qtab($table),
-            implode(',', $this->qcol($cols)),
-            implode(',', $vals)
-        );
-
-        return $this->execute($sql, $params)->rowCount();
+        $sth = $this->prepareInsert($table, $row);
+        return $sth->execute($params)->rowCount();
     }
 
     public function update($table, array $row, $where = null, $params = null) {
@@ -169,25 +156,15 @@ abstract class Adapter implements \Lysine\Service\IService {
                       ? array()
                       : is_array($params) ? $params : array_slice(func_get_args(), 3);
 
-        $set = $params = array();
-        foreach ($row as $col => $val) {
-            if ($val instanceof Expr) {
-                $set[] = $this->qcol($col) .' = '. $val;
-            } else {
-                $set[] = $this->qcol($col) .' = ?';
+        $params = array();
+        foreach ($row as $val) {
+            if ( !($val instanceof Expr) )
                 $params[] = $val;
-            }
         }
         if ($where_params) $params = array_merge($params, $where_params);
 
-        $sql = sprintf(
-            'UPDATE %s SET %s',
-            $this->qtab($table),
-            implode(',', $set)
-        );
-        if ($where) $sql .= ' WHERE '. $where;
-
-        return $this->execute($sql, $params)->rowCount();
+        $sth = $this->prepareUpdate($table, $row, $where);
+        return $sth->execute($params)->rowCount();
     }
 
     public function delete($table, $where = null, $params = null) {
@@ -201,25 +178,43 @@ abstract class Adapter implements \Lysine\Service\IService {
     }
 
     public function prepareInsert($table, array $cols) {
-        $table = $this->qtab($table);
-        $values = implode(',', array_fill(0, count($cols), '?'));
-        $cols = implode(',', $this->qcol($cols));
+        $vals = array_values($cols);
 
-        $sql = sprintf('INSERT INTO %s (%s) VALUES (%s)', $table, $cols, $values);
+        if ($vals === $cols) {
+            $vals = array_fill(0, count($cols), '?');
+        } else {
+            $cols = array_keys($cols);
+            foreach ($vals as $key => $val) {
+                if ($val instanceof Expr) continue;
+                $vals[$key] = '?';
+            }
+        }
+
+        $sql = sprintf(
+            'INSERT INTO %s (%s) VALUES (%s)',
+            $this->qtab($table),
+            implode(',', $this->qcol($cols)),
+            implode(',', $vals)
+        );
+
         return $this->prepare($sql);
     }
 
     public function prepareUpdate($table, array $cols, $where = null) {
-        $table = $this->qtab($table);
+        $only_col = (array_values($cols) === $cols);
 
         $set = array();
-        foreach ($cols as $col)
-            $set[] = $this->qcol($col) .' = ?';
-        $set = implode(',', $set);
+        foreach ($cols as $col => $val) {
+            if ($only_col) {
+                $set[] = $this->qcol($val) .' = ?';
+            } else {
+                $val = ($val instanceof Expr) ? $val : '?';
+                $set[] = $this->qcol($col) .' = '. $val;
+            }
+        }
 
-        $sql = sprintf('UPDATE %s SET %s', $table, $set);
-        if ($where)
-            $sql .= ' WHERE '. $where;
+        $sql = sprintf('UPDATE %s SET %s', $this->qtab($table), implode(',', $set));
+        if ($where) $sql .= ' WHERE '. $where;
 
         return $this->prepare($sql);
     }
