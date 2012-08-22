@@ -113,6 +113,10 @@ abstract class Adapter implements \Lysine\Service\IService {
             ));
         }
 
+        $log = 'SQL: '. $sql;
+        if ($params) $log .= ' ['. implode(',', $params) .']';
+        \Lysine\logger()->debug($log);
+
         $sth->setFetchMode(\PDO::FETCH_ASSOC);
         return $sth;
     }
@@ -148,7 +152,7 @@ abstract class Adapter implements \Lysine\Service\IService {
         }
 
         $sth = $this->prepareInsert($table, $row);
-        return $sth->execute($params)->rowCount();
+        return $this->execute($sth, $params)->rowCount();
     }
 
     public function update($table, array $row, $where = null, $params = null) {
@@ -164,7 +168,7 @@ abstract class Adapter implements \Lysine\Service\IService {
         if ($where_params) $params = array_merge($params, $where_params);
 
         $sth = $this->prepareUpdate($table, $row, $where);
-        return $sth->execute($params)->rowCount();
+        return $this->execute($sth, $params)->rowCount();
     }
 
     public function delete($table, $where = null, $params = null) {
@@ -173,8 +177,7 @@ abstract class Adapter implements \Lysine\Service\IService {
                 : is_array($params) ? $params : array_slice(func_get_args(), 2);
 
         $sth = $this->prepareDelete($table, $where);
-        $this->execute($sth, $params);
-        return $sth->rowCount();
+        return $this->execute($sth, $params)->rowCount();
     }
 
     public function prepareInsert($table, array $cols) {
