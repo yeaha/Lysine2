@@ -144,7 +144,7 @@ namespace Lysine {
         return array_keys($keys) !== $keys;
     }
 
-    function logger() {
-        return \Lysine\Logging::factory('__LYSINE__');
+    function logger($name = null) {
+        return \Lysine\Logging::factory($name ?: '__LYSINE__');
     }
 }
