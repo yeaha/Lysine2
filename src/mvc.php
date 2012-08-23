@@ -37,7 +37,7 @@ class Application {
         if (!req()->isGET() && ($params = post() ?: put()))
             \Lysine\logger()->debug('Parameters: '. http_build_query($params));
 
-        $response = $this->getRouter()->dispatch($uri, $method);
+        $response = $this->getRouter()->execute($uri, $method);
 
         return $response instanceof \Lysine\HTTP\Response
              ? $response
@@ -70,10 +70,7 @@ class Router {
 
     public function __construct(array $config = null) {
         if (isset($config['namespace']))
-            foreach ($config['namespace'] as $path => $ns) {
-                $path = $this->normalizePath($path);
-                $this->namespace[$path] = $ns;
-            }
+            $this->namespace = $config['namespace'];
 
         if (isset($config['rewrite']))
             $this->rewrite = $config['rewrite'];
@@ -82,18 +79,8 @@ class Router {
             $this->base_uri = $this->normalizePath($config['base_uri']);
     }
 
-    public function dispatch($uri, $method) {
-        $path = parse_url(strtolower($uri), PHP_URL_PATH);
-        $path = $this->normalizePath($path);
-
-        if ($base_uri = $this->base_uri) {
-            if (strpos($path.'/', $base_uri.'/') !== 0)
-                throw HTTP\Error::factory(HTTP::NOT_FOUND);
-
-            $path = $this->normalizePath(substr($path, strlen($base_uri)));
-        }
-
-        list($class, $params) = $this->matchClass($path);
+    public function execute($uri, $method) {
+        list($class, $params) = $this->dispatch($uri);
 
         \Lysine\logger()->debug('Dispatch to controller: '. $class);
 
@@ -130,9 +117,16 @@ class Router {
         return $response;
     }
 
-    //////////////////// protected method ////////////////////
+    public function dispatch($uri) {
+        $path = $this->normalizePath( parse_url($uri, PHP_URL_PATH) );
 
-    protected function matchClass($path) {
+        if ($base_uri = $this->base_uri) {
+            if (strpos($path.'/', $base_uri.'/') !== 0)
+                throw HTTP\Error::factory(HTTP::NOT_FOUND);
+
+            $path = $this->normalizePath(substr($path, strlen($base_uri)));
+        }
+
         foreach ($this->rewrite as $re => $class) {
             if (preg_match($re, $path, $match))
                 return array($class, array_slice($match, 1));
@@ -140,6 +134,7 @@ class Router {
 
         // 路径对应的controller namespace
         foreach ($this->namespace as $ns_path => $ns) {
+            $ns_path = $this->normalizePath($ns_path);
             if ($ns_path != '/' && strpos($path.'/', $ns_path.'/') !== 0)
                 continue;
 
@@ -154,6 +149,8 @@ class Router {
 
         throw HTTP\Error::factory(HTTP::NOT_FOUND);
     }
+
+    //////////////////// protected method ////////////////////
 
     protected function normalizePath($path) {
         return '/'. trim(strtolower($path), '/');
