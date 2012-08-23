@@ -120,7 +120,7 @@ class Session implements \ArrayAccess {
         return isset($this->data[$offset]);
     }
 
-    public function offsetGet($offset) {
+    public function &offsetGet($offset) {
         $this->start();
         return $this->data[$offset];
     }
