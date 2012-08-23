@@ -120,6 +120,7 @@ class Session implements \ArrayAccess {
         return isset($this->data[$offset]);
     }
 
+    // 返回引用，否则会发生"Indirect modification of overloaded element of $class has no effect"错误
     public function &offsetGet($offset) {
         $this->start();
         return $this->data[$offset];
