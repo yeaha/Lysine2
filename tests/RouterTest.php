@@ -65,14 +65,23 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
     public function testRewrite() {
         $this->router->setRewrite(array(
             '#^/topic/(\d+)#' => '\Controller\Topic',
+            '#^/news/(\d{4}\-\d{1,2}\-\d{1,2})/(\d+)/comment#' => '\Controller\News\Comment',
+            '#^/news/(\d{4}\-\d{1,2}\-\d{1,2})/(\d+)#' => '\Controller\News',
         ));
 
         list($class, $params) = $this->router->dispatch('/topic/123');
         $this->assertEquals('\Controller\Topic', $class);
         $this->assertContains(123, $params);
 
-        list($class, $params) = $this->router->dispatch('/topic/abc');
-        $this->assertEquals('\Controller\Topic\Abc', $class);
+        list($class, $params) = $this->router->dispatch('/news/2012-08-23/123');
+        $this->assertSame(array('2012-08-23', '123'), $params);
+
+        list($class, $params) = $this->router->dispatch('/news/2012-08-23/123/comment');
+        $this->assertEquals('\Controller\News\Comment', $class);
+        $this->assertSame(array('2012-08-23', '123'), $params);
+
+        list($class, $params) = $this->router->dispatch('/topic/comment');
+        $this->assertEquals('\Controller\Topic\Comment', $class);
     }
 
     /**
