@@ -148,7 +148,12 @@ class FileHandler implements Handler {
         $record['time'] = strftime($this->time_format, time());
         $record['level'] = Logging::getLevelName($record['level']);
 
-        $line = sprintf('%s %-8s %-8s %s', $record['time'], $record['pid'], $record['level'], $record['message']);
+        $message = is_array($record['message'])
+                 ? $record['message']
+                 : array($record['message']);
+
+        foreach ($message as $line)
+            $line = sprintf('%s %-8s %-8s %s', $record['time'], $record['pid'], $record['level'], $line);
         $this->write($line);
     }
 
