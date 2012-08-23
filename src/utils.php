@@ -151,9 +151,9 @@ class Session implements \ArrayAccess {
     }
 
     public function destroy() {
-        $this->start();
+        if ($this->start())
+            session_destroy();
 
-        session_destroy();
         $this->reset();
     }
 
@@ -169,7 +169,7 @@ class Session implements \ArrayAccess {
         $this->snapshot = $_SESSION;
 
         $_SESSION = $this;
-        $this->start = true;
+        return $this->start = true;
     }
 
     public function toArray() {
