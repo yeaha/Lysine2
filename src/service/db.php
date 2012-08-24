@@ -434,7 +434,7 @@ class Select {
     }
 
     public function setProcessor($processor) {
-        if (!is_callable($processor))
+        if ($processor && !is_callable($processor))
             throw new \Lysine\UnexpectedValueError('Select processor is not callable');
 
         $this->processor = $processor;
