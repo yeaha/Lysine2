@@ -14,10 +14,10 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
         $this->router = new \Test\Mock\Router($config);
     }
 
-    protected function assertController($except, $uri, $router) {
+    protected function assertController($expect, $uri, $router) {
         list($controller,) = $router->dispatch($uri);
 
-        $this->assertEquals($except, $controller);
+        $this->assertEquals($expect, $controller);
     }
 
     public function testNamespace() {
