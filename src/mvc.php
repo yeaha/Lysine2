@@ -80,14 +80,14 @@ class Router {
     }
 
     public function execute($uri, $method) {
-        list($class, $params, $uri) = $this->dispatch($uri);
+        list($class, $params, $path) = $this->dispatch($uri);
 
         \Lysine\logger()->debug('Dispatch to controller: '. $class);
 
         if (!$class || !class_exists($class))
             throw HTTP\Error::factory(HTTP::NOT_FOUND);
 
-        \Lysine\Event::instance()->fire($this, self::BEFORE_DISPATCH_EVENT, array($class, $uri));
+        \Lysine\Event::instance()->fire($this, self::BEFORE_DISPATCH_EVENT, array($class, $path));
 
         $controller = new $class;
         if (method_exists($controller, '__before_run')) {
@@ -144,7 +144,7 @@ class Router {
                 if ($word) $class[] = ucfirst($word);
 
             $class = implode('\\', $class);
-            return array($ns.'\\'.$class, array(), $path);
+            return array($ns.'\\'.$class, array(), $this->normalizePath($path));
         }
 
         throw HTTP\Error::factory(HTTP::NOT_FOUND);
