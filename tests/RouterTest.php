@@ -14,6 +14,12 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
         $this->router = new \Test\Mock\Router($config);
     }
 
+    protected function assertController($except, $uri, $router) {
+        list($controller,) = $router->dispatch($uri);
+
+        $this->assertEquals($except, $controller);
+    }
+
     public function testNamespace() {
         $this->router->setNamespace(array(
             '/admin' => '\Admin\Controller',
@@ -21,36 +27,20 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
             '/' => '\Action',
         ));
 
-        list($class,) = $this->router->dispatch('/blog');
-        $this->assertEquals('\Blog\Controller\Index', $class);
-
-        list($class,) = $this->router->dispatch('/blogs');
-        $this->assertEquals('\Action\Blogs', $class);
-
-        list($class,) = $this->router->dispatch('/admin');
-        $this->assertEquals('\Admin\Controller\Index', $class);
-
-        list($class,) = $this->router->dispatch('/admin/user');
-        $this->assertEquals('\Admin\Controller\User', $class);
-
-        list($class,) = $this->router->dispatch('/admin/user/');
-        $this->assertEquals('\Admin\Controller\User', $class);
-
-        list($class,) = $this->router->dispatch('/aDmin/User');
-        $this->assertEquals('\Admin\Controller\User', $class);
-
-        list($class,) = $this->router->dispatch('/');
-        $this->assertEquals('\Action\Index', $class);
+        $this->assertController('\Blog\Controller\Index', '/blog', $this->router);
+        $this->assertcontroller('\Action\Blogs', '/blogs', $this->router);
+        $this->assertcontroller('\Admin\Controller\Index', '/admin', $this->router);
+        $this->assertcontroller('\Admin\Controller\User', '/admin/user', $this->router);
+        $this->assertcontroller('\Admin\Controller\User', '/admin/user/', $this->router);
+        $this->assertcontroller('\Admin\Controller\User', '/aDmin/User/', $this->router);
+        $this->assertcontroller('\Action\Index', '/', $this->router);
     }
 
     public function testBaseUri() {
         $this->router->setBaseUri('/admin');
 
-        list($class,) = $this->router->dispatch('/admin/');
-        $this->assertEquals('\Controller\Index', $class);
-
-        list($class,) = $this->router->dispatch('/admin/test');
-        $this->assertEquals('\Controller\Test', $class);
+        $this->assertController('\Controller\Index', '/admin', $this->router);
+        $this->assertController('\Controller\Test', '/admin/test', $this->router);
     }
 
     /**
@@ -80,8 +70,7 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals('\Controller\News\Comment', $class);
         $this->assertSame(array('2012-08-23', '123'), $params);
 
-        list($class, $params) = $this->router->dispatch('/topic/comment');
-        $this->assertEquals('\Controller\Topic\Comment', $class);
+        $this->assertController('\Controller\Topic\Comment', '/topic/comment', $this->router);
     }
 
     /**
