@@ -67,7 +67,7 @@ class Redis implements \Lysine\Service\IService {
     public function disconnect() {
         if ($this->handler instanceof \Redis) {
             $this->handler->close();
-            unset($this->handler);
+            $this->handler = null;
         }
 
         return $this;
