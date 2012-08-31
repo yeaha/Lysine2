@@ -21,7 +21,8 @@ class Curl {
     }
 
     public function setOptions(array $options) {
-        $this->options = array_merge($this->options, $options);
+        foreach ($options as $key => $val)
+            $this->options[$key] = $val;
         return $this;
     }
 
