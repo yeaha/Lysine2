@@ -58,7 +58,7 @@ abstract class Adapter implements \Lysine\Service\IService {
             while ($this->transaction_counter)
                 $this->rollback();
 
-            unset($this->handler);
+            $this->handler = null;
         }
 
         return $this;

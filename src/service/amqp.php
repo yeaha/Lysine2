@@ -32,11 +32,11 @@ class AMQP implements \Lysine\Service\IService {
 
     public function disconnect() {
         if ($this->channel instanceof AMQPChannel)
-            unset($this->channel);
+            $this->channel = null;
 
         if ($this->connection instanceof AMQPConnection) {
             $this->connection->disconnect();
-            unset($this->connection);
+            $this->connection = null;
         }
 
         return $this;

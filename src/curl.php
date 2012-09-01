@@ -15,7 +15,7 @@ class Curl {
     public function close() {
         if ($this->handler) {
             curl_close($this->handler);
-            unset($this->handler);
+            $this->handler = null;
         }
         return $this;
     }
