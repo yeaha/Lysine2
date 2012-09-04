@@ -462,6 +462,9 @@ class Meta {
         if (!$this->primary_key)
             throw new RuntimeError("{$class}: Undefined primary key");
 
+        if (!$this->storage)
+            throw new RuntimeError("{$class}: Undefined storage service");
+
         $this->props_meta = $meta['props'];
         $this->field_prop = array_flip($this->prop_field);
     }
