@@ -31,7 +31,6 @@ return array(
     'lysine\mvc\application' => 'mvc.php',
     'lysine\mvc\router' => 'mvc.php',
     'lysine\mvc\view' => 'mvc.php',
-    'lysine\mockcookie' => 'utils.php',
     'lysine\runtimeerror' => 'error.php',
     'lysine\service\amqp' => 'service/amqp.php',
     'lysine\service\connectionerror' => 'error.php',
