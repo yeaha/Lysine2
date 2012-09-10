@@ -172,7 +172,7 @@ class FileHandler implements Handler {
         if (!$fp = @fopen($this->file_name, 'a'))
             return false;
 
-        if (flock($fp, LOCK_EX)) {
+        if (flock($fp, LOCK_EX | LOCK_NB)) {
             fwrite($fp, implode("\n", $this->buffer) ."\n");
             flock($fp, LOCK_UN);
             $this->buffer = array();
