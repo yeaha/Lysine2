@@ -509,7 +509,7 @@ class Select {
 
         // 见delete()方法注释
         if ($this->limit OR $this->offset OR $this->group_by)
-            throw new \LogicException('CAN NOT DELETE while specify LIMIT or OFFSET or GROUP BY');
+            throw new \LogicException('CAN NOT UPDATE while specify LIMIT or OFFSET or GROUP BY');
 
         return $this->adapter->update($this->table, $row, $where, $params);
     }
