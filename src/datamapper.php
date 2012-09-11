@@ -246,7 +246,7 @@ abstract class Mapper {
     public function getStorage() {
         $storage = $this->getMeta()->getStorage();
 
-        if (!$storage === null)
+        if ($storage === null)
             throw new RuntimeError("{$this->class}: Undefined storage service");
 
         return \Lysine\Service\Manager::instance()->get($storage);
