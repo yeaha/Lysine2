@@ -244,12 +244,9 @@ abstract class Mapper {
     }
 
     public function getStorage() {
-        $storage = $this->getMeta()->getStorage();
-
-        if ($storage === null)
-            throw new RuntimeError("{$this->class}: Undefined storage service");
-
-        return \Lysine\Service\Manager::instance()->get($storage);
+        return \Lysine\Service\Manager::instance()->get(
+            $this->getMeta()->getStorage()
+        );
     }
 
     public function getCollection() {
@@ -470,6 +467,8 @@ class Meta {
     }
 
     public function getStorage() {
+        if (!$this->storage)
+            throw new RuntimeError("{$this->class}: Undefined storage service");
         return $this->storage;
     }
 
