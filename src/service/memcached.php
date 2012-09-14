@@ -4,7 +4,7 @@ namespace Lysine\Service;
 if (!extension_loaded('memcached'))
     throw new \Lysine\Service\RuntimeError('Require memcached extension');
 
-class Memcached extends \Lysine\Service\IService {
+class Memcached implements \Lysine\Service\IService {
     protected $handler;
     protected $config;
 
