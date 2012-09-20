@@ -117,6 +117,7 @@ class Router {
         return $response;
     }
 
+    // return array($class, $params, $path)
     public function dispatch($uri) {
         $path = $this->normalizePath( parse_url($uri, PHP_URL_PATH) );
 
@@ -127,11 +128,25 @@ class Router {
             $path = $this->normalizePath(substr($path, strlen($base_uri)));
         }
 
+        $dest = $this->rewrite($path) ?: $this->convert($path);
+        if ($dest) return $dest;
+
+        throw HTTP\Error::factory(HTTP::NOT_FOUND);
+    }
+
+    //////////////////// protected method ////////////////////
+    // return array($class, $params, $path)
+    protected function rewrite($path) {
         foreach ($this->rewrite as $re => $class) {
             if (preg_match($re, $path, $match))
                 return array($class, array_slice($match, 1), $path);
         }
+        return false;
+    }
 
+    // 把路径转换为controller
+    // return array($class, $params, $path)
+    protected function convert($path) {
         // 匹配controller之前，去掉路径里的文件扩展名
         $pathinfo = pathinfo($path);
         $path = $this->normalizePath( $pathinfo['dirname'] .'/'. $pathinfo['filename'] );
@@ -151,10 +166,8 @@ class Router {
             return array($ns.'\\'.$class, array(), $this->normalizePath($path));
         }
 
-        throw HTTP\Error::factory(HTTP::NOT_FOUND);
+        return false;
     }
-
-    //////////////////// protected method ////////////////////
 
     protected function normalizePath($path) {
         return '/'. trim(strtolower($path), '/');
