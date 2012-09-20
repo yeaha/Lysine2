@@ -132,6 +132,10 @@ class Router {
                 return array($class, array_slice($match, 1), $path);
         }
 
+        // 匹配controller之前，去掉路径里的文件扩展名
+        $pathinfo = pathinfo($path);
+        $path = $this->normalizePath( $pathinfo['dirname'] .'/'. $pathinfo['filename'] );
+
         // 路径对应的controller namespace
         foreach ($this->namespace as $ns_path => $ns) {
             $ns_path = $this->normalizePath($ns_path);

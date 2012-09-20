@@ -73,6 +73,22 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
         $this->assertController('\Controller\Topic\Comment', '/topic/comment', $this->router);
     }
 
+    public function testExtension() {
+        list($class,) = $this->router->dispatch('/topic');
+        $this->assertEquals('\Controller\Topic', $class);
+
+        list($class,) = $this->router->dispatch('/topic.json');
+        $this->assertEquals('\Controller\Topic', $class);
+
+        $this->router->setRewrite(array(
+            '#^/topic.json#' => '\Controller\JsonTopic',
+            '#^/topic#' => '\Controller\Topic',
+        ));
+
+        list($class,) = $this->router->dispatch('/topic.json');
+        $this->assertEquals('\Controller\JsonTopic', $class);
+    }
+
     /**
      * @expectedException \Lysine\HTTP\Error
      * @expectedExceptionCode 405

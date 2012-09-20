@@ -125,6 +125,12 @@ class Request {
         return $this->method = strtoupper($method);
     }
 
+    public function extension() {
+        $path = parse_url($this->requestUri(), PHP_URL_PATH);
+        return strtolower(pathinfo($path, PATHINFO_EXTENSION))
+            ?: 'html';
+    }
+
     public function isGET() {
         return ($this->method() === 'GET') ?: $this->isHEAD();
     }
