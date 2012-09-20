@@ -21,13 +21,11 @@ Lysine\logger()
 
 Lysine\Session::initialize();
 
-$app = new MVC\Application(Config::get('application'));
-
 $router = new MVC\Router(Config::get('router'));
-$app->setRouter($router);
 
-// 可以在这里放RBAC检查逻辑
-//Lysine\Event::instance()->listen($router, $router::BEFORE_DISPATCH_EVENT, function($controller, $path) {
-//});
+$app = new MVC\Application(Config::get('application'));
+$app->setRouter( $router );
+
+Lysine\Event::instance()->listen($router, $router::BEFORE_DISPATCH_EVENT, array(Model\RBAC::instance(), 'execute'));
 
 return $app;

@@ -1,0 +1,5 @@
+2012-08-13 19:21:38 13087    DEBUG    GET /
+2012-08-13 19:21:38 13087    DEBUG    Dispatch to controller: \Controller\Index
+2012-08-13 19:22:53 13088    DEBUG    GET /
+2012-08-13 19:22:53 13088    DEBUG    Dispatch to controller: \Controller\Index
+2012-08-13 19:22:53 13088    DEBUG    RBAC check class \Controller\Index

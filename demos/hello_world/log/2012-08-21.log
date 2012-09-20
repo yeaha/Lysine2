@@ -1,0 +1,14 @@
+2012-08-21 13:29:16 576      DEBUG    GET /
+2012-08-21 13:29:16 576      DEBUG    Dispatch to controller: \Controller\Index
+2012-08-21 13:29:49 577      DEBUG    GET /
+2012-08-21 13:29:49 577      DEBUG    Dispatch to controller: \Controller\Index
+2012-08-21 13:31:59 576      DEBUG    GET /
+2012-08-21 13:31:59 576      DEBUG    Dispatch to controller: \Controller\Index
+2012-08-21 13:32:32 577      DEBUG    GET /
+2012-08-21 13:32:32 577      DEBUG    Dispatch to controller: \Controller\Index
+2012-08-21 13:34:27 576      DEBUG    GET /
+2012-08-21 13:34:27 576      DEBUG    Dispatch to controller: \Controller\Index
+2012-08-21 13:34:39 577      DEBUG    GET /
+2012-08-21 13:34:39 577      DEBUG    Dispatch to controller: \Controller\Index
+2012-08-21 13:36:10 576      DEBUG    GET /
+2012-08-21 13:36:10 576      DEBUG    Dispatch to controller: \Controller\Index
