@@ -45,7 +45,7 @@ abstract class Adapter implements \Lysine\Service\IService {
         try {
             $this->handler = new \PDO($dsn, $user, $password, $options);
         } catch (\PDOException $ex) {
-            throw new Service\ConnectionError($ex->getMessage(), 0, $ex, array(
+            throw new Service\ConnectionError('Database connect failed!', 0, $ex, array(
                 'dsn' => $dsn,
             ));
         }
