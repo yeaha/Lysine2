@@ -147,4 +147,50 @@ namespace Lysine {
     function logger($name = null) {
         return \Lysine\Logging::factory($name ?: '__LYSINE__');
     }
+
+    // 根据参数构建url字符串
+    // url('/', array('a' => 1, 'b' => 2));
+    // /?a=1&b=2
+    // url('/?c=3', array('a' => 1, 'b' => 2, 'c' => false));
+    // /?a=1&b=2
+    // url('/', array('a' => 1, 'b' => 2, 'c' => 3), array('c' => 4));
+    // /?a=1&b=2&c=4
+    function url($url, $args = null) {
+        $url = parse_url($url);
+        if (!isset($url['path'])) return false;
+
+        $query = array();
+        if (isset($url['query']))
+            parse_str($url['query'], $query);
+
+        if ($args !== null) {
+            foreach (array_slice(func_get_args(), 1) as $args) {
+                if (!is_array($args)) continue;
+
+                foreach ($args as $k => $v) {
+                    if ($v === false) {
+                        unset($query[$k]);
+                    } else {
+                        $query[$k] = $v;
+                    }
+                }
+            }
+        }
+
+        $result = '';
+        if (isset($url['scheme'])) $result .= $url['scheme'].'://';
+        if (isset($url['user'])) {
+            $result .= $url['user'];
+            if (isset($url['pass'])) $result .= ':'.$url['pass'];
+            $result .= '@';
+        }
+
+        if (isset($url['host'])) $result .= $url['host'];
+        $result .= $url['path'];
+
+        if ($query) $result .= '?'.http_build_query($query);
+        if (isset($url['fragment'])) $result .= '#'.$url['fragment'];
+
+        return $result;
+    }
 }
