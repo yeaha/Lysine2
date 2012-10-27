@@ -515,23 +515,24 @@ class Registry {
         if (!$id = $data->id())
             return false;
 
-        $class = get_class($data);
-        $key = $class.'@'.$id;
-
+        $key = self::key(get_class($data), $id);
         self::$members[$key] = $data;
     }
 
     static public function get($class, $id) {
-        $key = $class.'@'.$id;
-
+        $key = self::key($class, $id);
         return isset(self::$members[$key])
              ? self::$members[$key]
              : false;
     }
 
     static public function remove($class, $id) {
-        $key = $class.'@'.$id;
+        $key = self::key($class, $id);
         unset(self::$members[$key]);
+    }
+
+    static private function key($class, $id) {
+        return strtolower($class.'@'.$id);
     }
 }
 
