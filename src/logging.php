@@ -135,7 +135,7 @@ class FileHandler implements Handler {
             $this->buffer_max_size = $options['buffer_max_size'];
 
         if (!isset($options['file_name']))
-            throw new \Lysine\Runtime('Need log file name');
+            throw new \Lysine\RuntimeError('Need log file name');
 
         $this->file_name = strftime($options['file_name'], time());
     }
