@@ -157,7 +157,8 @@ namespace Lysine {
     // /?a=1&b=2&c=4
     function url($url, $args = null) {
         $url = parse_url($url);
-        if (!isset($url['path'])) return false;
+        if (!isset($url['path']) || !$url['path'])
+            $url['path'] = '';
 
         $query = array();
         if (isset($url['query']))
