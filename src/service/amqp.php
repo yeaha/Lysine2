@@ -23,11 +23,9 @@ class AMQP implements \Lysine\Service\IService {
         $this->disconnect();
     }
 
-    public function connect() {
-        if ($this->connection)
-            return $this->connection;
-
-        return $this->connection = new AMQPConnection( $this->config );
+    // return AMQPConnection
+    public function connection() {
+        return $this->connection ?: $this->connection = new AMQPConnection( $this->config );
     }
 
     public function disconnect() {
@@ -42,18 +40,20 @@ class AMQP implements \Lysine\Service\IService {
         return $this;
     }
 
+    // return AMQPChannel
     public function channel($new = false) {
-        if (!$new && $this->channel)
-            return $this->channel;
-
-        $connection = $this->connect();
+        $connection = $this->connection();
 
         if (!$connection->isConnected() && !$connection->connect())
             throw new \Lysine\Service\ConnectionError('Cannot connect to the broker');
 
-        return $this->channel = new AMQPChannel($connection);
+        if ($new || !$this->channel)
+            $this->channel = new AMQPChannel($connection);
+
+        return $this->channel;
     }
 
+    // return AMQPExchange
     public function declareExchange($name, $type = null, $flag = null, $arguments = null) {
         $exchange = new AMQPExchange($this->channel());
         $exchange->setName($name);
@@ -70,6 +70,7 @@ class AMQP implements \Lysine\Service\IService {
         return $exchange;
     }
 
+    // return AMQPQueue
     public function declareQueue($name, $flag = null, $arguments = null) {
         $queue = new AMQPQueue($this->channel());
         $queue->setName($name);
