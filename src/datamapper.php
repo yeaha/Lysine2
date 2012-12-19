@@ -75,9 +75,20 @@ abstract class Data {
         $this->$fn();
     }
 
+    // 如果主键是多个字段，返回数组
+    // return array(
+    //     prop => val,
+    //     ...
+    // )
+    // 否则直接返回值
     public function id() {
-        $prop = static::getMapper()->getMeta()->getPrimaryKey(true);
-        return $this->getProp($prop);
+        $props = array_keys(static::getMapper()->getMeta()->getPrimaryKey());
+
+        $id = array();
+        foreach ($props as $prop)
+            $id[$prop] = $this->getProp($prop);
+
+        return (count($id) > 1) ? $id : array_shift($id);
     }
 
     public function hasProp($prop) {
@@ -330,9 +341,7 @@ abstract class Mapper {
         if (!$id = $this->doInsert($data))
             return false;
 
-        $field = $this->getMeta()->getPrimaryKey();
-        $record = array($field => $id);
-        $this->package($record, $data);
+        $this->package($id, $data);
 
         $data->__triggerEvent(Data::AFTER_INSERT_EVENT);
 
@@ -433,7 +442,7 @@ class Meta {
     private $class;
     private $storage;
     private $collection;
-    private $primary_key;
+    private $primary_key = array();
     private $props_meta;
     private $prop_field = array();
     private $field_prop = array();
@@ -454,7 +463,7 @@ class Meta {
                 $prop_meta['field'] = $prop;
 
             if ($prop_meta['primary_key'])
-                $this->primary_key = $prop_meta['field'];
+                $this->primary_key[] = $prop;
 
             $this->prop_field[$prop] = $prop_meta['field'];
         }
@@ -478,9 +487,12 @@ class Meta {
         return $this->collection;
     }
 
-    public function getPrimaryKey($as_prop = false) {
-        $field = $this->primary_key;
-        return $as_prop ? $this->getPropOfField($field) : $field;
+    public function getPrimaryKey() {
+        $keys = array();
+        foreach ($this->primary_key as $prop)
+            $keys[$prop] = $this->getPropMeta($prop);
+
+        return $keys;
     }
 
     public function getPropMeta($prop = null) {
@@ -512,6 +524,9 @@ class Registry {
     static private $members = array();
 
     static public function set(Data $data) {
+        if ($data->isFresh())
+            return false;
+
         if (!$id = $data->id())
             return false;
 
@@ -532,7 +547,19 @@ class Registry {
     }
 
     static private function key($class, $id) {
-        return strtolower($class.'@'.$id);
+        $key = '';
+        if (is_array($id)) {
+            ksort($id);
+
+            foreach ($id as $prop => $val) {
+                if ($key) $key .= ';';
+                $key .= "{$prop}:{$val}";
+            }
+        } else {
+            $key = $id;
+        }
+
+        return strtolower($class.'@'.$key);
     }
 }
 
@@ -566,13 +593,23 @@ class DBMapper extends Mapper {
     protected function doFind($id, IService $storage = null, $collection = null) {
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
-        $primary_key = $storage->qcol($this->getMeta()->getPrimaryKey());
+        $primary_key = $this->getMeta()->getPrimaryKey();
 
-        return $storage->select($collection)
-                       ->where("{$primary_key} = ?", $id)
-                       ->limit(1)
-                       ->execute()
-                       ->fetch();
+        if (count($primary_key) > 1 && !is_array($id)) {
+            $prop = array_keys($primary_key);
+            $prop = $prop[0];
+
+            $id = array($prop => $id);
+        }
+
+        $select = $storage->select($collection);
+
+        foreach ($primary_key as $prop => $prop_meta) {
+            $field = $storage->qcol($prop_meta['field']);
+            $select->where("{$field} = ?", is_array($id) ? $id[$prop] : $id);
+        }
+
+        return $select->limit(1)->execute()->fetch();
     }
 
     protected function doInsert(Data $data, IService $storage = null, $collection = null) {
@@ -580,37 +617,62 @@ class DBMapper extends Mapper {
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
 
+        var_dump($record);
+
         if (!$storage->insert($collection, $record))
             return false;
 
-        $primary_key = $this->getMeta()->getPrimaryKey();
-        if (isset($record[$primary_key]))
-            return $record[$primary_key];
+        $id = array();
+        foreach ($this->getMeta()->getPrimaryKey() as $prop_meta) {
+            $field = $prop_meta['field'];
 
-        if (!$last_id = $storage->lastId($collection, $primary_key))
-            throw new RuntimeError("{$this->class}: Insert record success, but get last-id failed!");
+            $last_id = $prop_meta['auto_increase']
+                     ? $storage->lastId($collection, $field)
+                     : $record[$field];
 
-        return $last_id;
+            if (!$last_id)
+                throw new RuntimeError("{$this->class}: Insert record success, but get last-id failed!");
+
+            $id[$field] = $last_id;
+        }
+
+        return $id;
     }
 
     protected function doUpdate(Data $data, IService $storage = null, $collection = null) {
         $record = $this->propsToRecord($data->toArray(true));
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
-        $primary_key = $this->getMeta()->getPrimaryKey();
 
-        unset($record[$primary_key]);
-        $primary_key = $storage->qcol($primary_key);
+        $where = array();
+        $params = array();
 
-        return $storage->update($collection, $record, "{$primary_key} = ?", $data->id());
+        foreach ($this->getMeta()->getPrimaryKey() as $prop => $prop_meta) {
+            $field = $prop_meta['field'];
+            unset($record[$field]);
+
+            $where[] = $storage->qcol($field) .' = ?';
+            $params[] = $data->$prop;
+        }
+        $where = implode(' AND ', $where);
+
+        return $storage->update($collection, $record, $where, $params);
     }
 
     protected function doDelete(Data $data, IService $storage = null, $collection = null) {
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
-        $primary_key = $storage->qcol($this->getMeta()->getPrimaryKey());
 
-        return $storage->delete($collection, "{$primary_key} = ?", $data->id());
+        $where = array();
+        $params = array();
+
+        foreach ($this->getMeta()->getPrimaryKey() as $prop => $prop_meta) {
+            $where[] = $storage->qcol($prop_meta['field']) .' = ?';
+            $params[] = $data->$prop;
+        }
+        $where = implode(' AND ', $where);
+
+        return $storage->delete($collection, $where, $params);
     }
 }
 
@@ -649,8 +711,15 @@ abstract class CacheDBMapper extends DBMapper {
 class DBSelect extends \Lysine\Service\DB\Select {
     public function get($limit = null) {
         $result = array();
-        foreach (parent::get($limit) as $data)
-            $result[$data->id()] = $data;
+        foreach (parent::get($limit) as $data) {
+            $id = $data->id();
+
+            if (is_array($id)) {
+                $result[] = $data;
+            } else {
+                $result[$data->id()] = $data;
+            }
+        }
         return $result;
     }
 }
