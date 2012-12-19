@@ -717,7 +717,7 @@ class DBSelect extends \Lysine\Service\DB\Select {
             if (is_array($id)) {
                 $result[] = $data;
             } else {
-                $result[$data->id()] = $data;
+                $result[$id] = $data;
             }
         }
         return $result;
