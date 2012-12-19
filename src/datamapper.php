@@ -356,6 +356,7 @@ abstract class Mapper {
         if (!$this->doUpdate($data))
             return false;
 
+        // 通过调用package方法，清除$data的dirty_props属性记录
         $this->package(array(), $data);
         $data->__triggerEvent(Data::AFTER_UPDATE_EVENT);
 
@@ -579,8 +580,13 @@ class DBMapper extends Mapper {
     public function select(IService $storage = null, $collection = null) {
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
+        $primary_key = $this->getMeta()->getPrimaryKey();
 
-        $select = new DBSelect($storage, $collection);
+        if (count($primary_key) == 1) {
+            $select = new DBSelect($storage, $collection);
+        } else {
+            $select = new \Lysine\Service\DB\Select($storage, $collection);
+        }
 
         $mapper = $this;
         $select->setProcessor(function($record) use ($mapper) {
@@ -616,8 +622,6 @@ class DBMapper extends Mapper {
         $record = $this->propsToRecord($data->toArray());
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
-
-        var_dump($record);
 
         if (!$storage->insert($collection, $record))
             return false;
@@ -711,15 +715,9 @@ abstract class CacheDBMapper extends DBMapper {
 class DBSelect extends \Lysine\Service\DB\Select {
     public function get($limit = null) {
         $result = array();
-        foreach (parent::get($limit) as $data) {
-            $id = $data->id();
+        foreach (parent::get($limit) as $data)
+            $result[$data->id()] = $data;
 
-            if (is_array($id)) {
-                $result[] = $data;
-            } else {
-                $result[$id] = $data;
-            }
-        }
         return $result;
     }
 }
