@@ -656,15 +656,13 @@ class DBMapper extends Mapper {
         $primary_key = $this->getMeta()->getPrimaryKey();
         $key_count = count($primary_key);
 
-        if ($key_count > 1) {
-            if (!is_array($id) || count($id) != count($primary_key))
-                throw new RuntimeError("{$this->class}: Illegal id value");
-        } else {
+        if ($key_count == 1 && !is_array($id)) {
             $prop = array_keys($primary_key);
-            $id = array(
-                $prop[0] => $id
-            );
+            $id = array($prop[0] => $id);
         }
+
+        if (!is_array($id) || count($id) < $key_count)
+            throw new RuntimeError("{$this->class}: Illegal id value");
 
         $where = $params = array();
         foreach ($primary_key as $prop => $prop_meta) {
