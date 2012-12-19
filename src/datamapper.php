@@ -599,21 +599,11 @@ class DBMapper extends Mapper {
     protected function doFind($id, IService $storage = null, $collection = null) {
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
-        $primary_key = $this->getMeta()->getPrimaryKey();
-
-        if (count($primary_key) > 1 && !is_array($id)) {
-            $prop = array_keys($primary_key);
-            $prop = $prop[0];
-
-            $id = array($prop => $id);
-        }
 
         $select = $storage->select($collection);
 
-        foreach ($primary_key as $prop => $prop_meta) {
-            $field = $storage->qcol($prop_meta['field']);
-            $select->where("{$field} = ?", is_array($id) ? $id[$prop] : $id);
-        }
+        list($where, $params) = $this->whereId($storage, $id);
+        $select->where($where, $params);
 
         return $select->limit(1)->execute()->fetch();
     }
@@ -648,17 +638,7 @@ class DBMapper extends Mapper {
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
 
-        $where = array();
-        $params = array();
-
-        foreach ($this->getMeta()->getPrimaryKey() as $prop => $prop_meta) {
-            $field = $prop_meta['field'];
-            unset($record[$field]);
-
-            $where[] = $storage->qcol($field) .' = ?';
-            $params[] = $data->$prop;
-        }
-        $where = implode(' AND ', $where);
+        list($where, $params) = $this->whereId($storage, $data->id());
 
         return $storage->update($collection, $record, $where, $params);
     }
@@ -667,16 +647,39 @@ class DBMapper extends Mapper {
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
 
-        $where = array();
-        $params = array();
+        list($where, $params) = $this->whereId($storage, $data->id());
 
-        foreach ($this->getMeta()->getPrimaryKey() as $prop => $prop_meta) {
-            $where[] = $storage->qcol($prop_meta['field']) .' = ?';
-            $params[] = $data->$prop;
+        return $storage->delete($collection, $where, $params);
+    }
+
+    protected function whereId(IService $storage, $id) {
+        $primary_key = $this->getMeta()->getPrimaryKey();
+        $key_count = count($primary_key);
+
+        if ($key_count > 1) {
+            if (!is_array($id) || count($id) != count($primary_key))
+                throw new RuntimeError("{$this->class}: Illegal id value");
+        } else {
+            $prop = array_keys($primary_key);
+            $id = array(
+                $prop[0] => $id
+            );
+        }
+
+        $where = $params = array();
+        foreach ($primary_key as $prop => $prop_meta) {
+            $filed = $prop_meta['field'];
+
+            $where[] = $storage->qcol($filed) .' = ?';
+
+            if (!isset($id[$prop]))
+                throw new RuntimeError("{$this->class}: Illegal id value");
+
+            $params[] = $id[$prop];
         }
         $where = implode(' AND ', $where);
 
-        return $storage->delete($collection, $where, $params);
+        return array($where, $params);
     }
 }
 
