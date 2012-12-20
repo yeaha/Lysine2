@@ -327,9 +327,7 @@ abstract class Mapper {
         if (!$data)
             $data = new $this->class;
 
-        $props = $this->recordToProps($record);
-        $data->__merge($props);
-
+        $data->__merge($record);
         return $data;
     }
 
@@ -398,26 +396,6 @@ abstract class Mapper {
         return true;
     }
 
-    protected function recordToProps(array $record) {
-        $props = array();
-        foreach ($this->getMeta()->getPropOfField() as $field => $prop) {
-            if (isset($record[$field]))
-                $props[$prop] = $record[$field];
-        }
-
-        return $props;
-    }
-
-    protected function propsToRecord(array $props) {
-        $record = array();
-        $field_of_prop = $this->getMeta()->getFieldOfProp();
-
-        foreach ($props as $prop => $val)
-            $record[ $field_of_prop[$prop] ] = $val;
-
-        return $record;
-    }
-
     static public function factory($class) {
         if (!isset(self::$instance[$class]))
             self::$instance[$class] = new static($class);
@@ -429,7 +407,6 @@ class Meta {
     static private $instance = array();
     static private $default_prop_meta = array(
         'name' => NULL,
-        'field' => NULL,
         'type' => NULL,
         'primary_key' => FALSE,
         'auto_increase' => FALSE,
@@ -445,8 +422,6 @@ class Meta {
     private $collection;
     private $primary_key = array();
     private $props_meta;
-    private $prop_field = array();
-    private $field_prop = array();
 
     private function __construct($class) {
         $meta = $class::getMeta();
@@ -460,20 +435,14 @@ class Meta {
 
             $prop_meta['name'] = $prop;
 
-            if (!$prop_meta['field'])
-                $prop_meta['field'] = $prop;
-
             if ($prop_meta['primary_key'])
                 $this->primary_key[] = $prop;
-
-            $this->prop_field[$prop] = $prop_meta['field'];
         }
 
         if (!$this->primary_key)
             throw new RuntimeError("{$class}: Undefined primary key");
 
         $this->props_meta = $meta['props'];
-        $this->field_prop = array_flip($this->prop_field);
     }
 
     public function getStorage() {
@@ -491,7 +460,7 @@ class Meta {
     public function getPrimaryKey() {
         $keys = array();
         foreach ($this->primary_key as $prop)
-            $keys[$prop] = $this->getPropMeta($prop);
+            $keys[$prop] = $this->props_meta[$prop];
 
         return $keys;
     }
@@ -500,18 +469,6 @@ class Meta {
         return $prop === null
              ? $this->props_meta
              : (isset($this->props_meta[$prop]) ? $this->props_meta[$prop] : false);
-    }
-
-    public function getFieldOfProp($prop = null) {
-        return $prop === null
-             ? $this->prop_field
-             : (isset($this->prop_field[$prop]) ? $this->prop_field[$prop] : false);
-    }
-
-    public function getPropOfField($field = null) {
-        return $field === null
-             ? $this->field_prop
-             : (isset($this->field_prop[$field]) ? $this->field_prop[$field] : false);
     }
 
     static public function factory($class) {
@@ -602,6 +559,9 @@ class DBMapper extends Mapper {
 
         $select = $storage->select($collection);
 
+        $props = array_keys($this->getMeta()->getPropMeta());
+        $select->setCols($props);
+
         list($where, $params) = $this->whereId($storage, $id);
         $select->where($where, $params);
 
@@ -609,7 +569,7 @@ class DBMapper extends Mapper {
     }
 
     protected function doInsert(Data $data, IService $storage = null, $collection = null) {
-        $record = $this->propsToRecord($data->toArray());
+        $record = $data->toArray();
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
 
@@ -617,24 +577,22 @@ class DBMapper extends Mapper {
             return false;
 
         $id = array();
-        foreach ($this->getMeta()->getPrimaryKey() as $prop_meta) {
-            $field = $prop_meta['field'];
-
+        foreach ($this->getMeta()->getPrimaryKey() as $prop => $prop_meta) {
             $last_id = $prop_meta['auto_increase']
-                     ? $storage->lastId($collection, $field)
-                     : $record[$field];
+                     ? $storage->lastId($collection, $prop)
+                     : $record[$prop];
 
             if (!$last_id)
                 throw new RuntimeError("{$this->class}: Insert record success, but get last-id failed!");
 
-            $id[$field] = $last_id;
+            $id[$prop] = $last_id;
         }
 
         return $id;
     }
 
     protected function doUpdate(Data $data, IService $storage = null, $collection = null) {
-        $record = $this->propsToRecord($data->toArray(true));
+        $record = $data->toArray(true);
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
 
@@ -665,10 +623,8 @@ class DBMapper extends Mapper {
             throw new RuntimeError("{$this->class}: Illegal id value");
 
         $where = $params = array();
-        foreach ($primary_key as $prop => $prop_meta) {
-            $filed = $prop_meta['field'];
-
-            $where[] = $storage->qcol($filed) .' = ?';
+        foreach (array_keys($primary_key) as $prop) {
+            $where[] = $storage->qcol($prop) .' = ?';
 
             if (!isset($id[$prop]))
                 throw new RuntimeError("{$this->class}: Illegal id value");
