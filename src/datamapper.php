@@ -327,7 +327,9 @@ abstract class Mapper {
         if (!$data)
             $data = new $this->class;
 
-        $data->__merge($record);
+        $props = $this->recordToProps($record);
+        $data->__merge($props);
+
         return $data;
     }
 
@@ -394,6 +396,18 @@ abstract class Mapper {
         }
 
         return true;
+    }
+
+    // 把属性值转换为存储记录
+    // 可以重载此方法实现预处理逻辑
+    protected function propsToRecord(array $props) {
+        return $props;
+    }
+
+    // 把存储记录转换为属性值
+    // 可以重载此方法实现预处理逻辑
+    protected function recordToProps(array $record) {
+        return $record;
     }
 
     static public function factory($class) {
@@ -569,7 +583,7 @@ class DBMapper extends Mapper {
     }
 
     protected function doInsert(Data $data, IService $storage = null, $collection = null) {
-        $record = $data->toArray();
+        $record = $this->propsToRecord($data->toArray());
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
 
@@ -592,7 +606,7 @@ class DBMapper extends Mapper {
     }
 
     protected function doUpdate(Data $data, IService $storage = null, $collection = null) {
-        $record = $data->toArray(true);
+        $record = $this->propsToRecord($data->toArray(true));
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
 
