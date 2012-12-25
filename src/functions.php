@@ -194,4 +194,16 @@ namespace Lysine {
 
         return $result;
     }
+
+    function array_pick(array $data, $key1/*[, $key2[, $key3]]*/) {
+        $keys = array_slice(func_get_args(), 1);
+        $result = array();
+
+        foreach ($keys as $key) {
+            if (isset($data[$key]))
+                $result[$key] = $data[$key];
+        }
+
+        return $result;
+    }
 }
