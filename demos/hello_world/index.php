@@ -4,7 +4,7 @@ use Lysine\HTTP;
 $__start__ = microtime(true);
 
 try {
-    $app = require __DIR__ .'/../config/boot.php';
+    $app = require __DIR__ .'/config/boot.php';
     $response = $app->execute();
 } catch (HTTP\Error $exception) {
     Lysine\logger()->debug( HTTP::getStatusHeader($exception->getCode()) );
