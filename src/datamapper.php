@@ -69,10 +69,10 @@ abstract class Data {
         if (!isset($callback[$event]))
             return false;
 
-        \Lysine\Event::instance()->fire($this, $event, array($this));
-
         $fn = $callback[$event];
         $this->$fn();
+
+        \Lysine\Event::instance()->fire($this, $event, array($this));
     }
 
     // 如果主键是多个字段，返回数组
