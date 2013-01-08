@@ -243,8 +243,10 @@ class Response {
         return $this->code;
     }
 
-    public function setCookie($name, $value, $expire = 0, $path = '/', $domain = null, $secure = false, $httponly = true) {
+    public function setCookie($name, $value, $expire = 0, $path = '/', $domain = null, $secure = null, $httponly = true) {
+        if ($secure === null) $secure = (bool)server('https');
         $key = sprintf('%s@%s:%s', $name, $domain, $path);
+
         $this->cookie[$key] = array($name, $value, $expire, $path, $domain, $secure, $httponly);
         return $this;
     }
