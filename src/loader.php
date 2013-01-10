@@ -19,8 +19,6 @@ spl_autoload_register(function ($class) {
     if (!array_key_exists($class, $files)) return false;
 
     require __DIR__ .'/'. $files[$class];
-
-    return class_exists($class, false) || interface_exists($class, false);
 });
 
 require __DIR__ .'/functions.php';
