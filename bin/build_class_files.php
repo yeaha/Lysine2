@@ -80,7 +80,7 @@ function getClass($file) {
             continue;
         }
 
-        if ($tname == 'T_CLASS' OR $tname == 'T_INTERFACE') $catch_class = true;
+        if ($tname == 'T_CLASS' OR $tname == 'T_INTERFACE' OR $tname == 'T_TRAIT') $catch_class = true;
 
         if ($catch_class && $tname == 'T_STRING') {
             $class_name = implode('', $namespace) ."\\". $token[1];
