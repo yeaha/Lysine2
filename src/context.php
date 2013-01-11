@@ -228,9 +228,14 @@ class CookieContextHandler extends ContextHandler {
 
         // salt function可以实现运行期间动态获取salt字符串
         // 例如，把用户id保存在上下文中，以用户密码作为salt
-        $salt = ($salt_func = $this->getConfig('salt_func'))
-              ? call_user_func($salt_func, $string)
-              : $this->getConfig('salt');
+        if ($salt_func = $this->getConfig('salt_func')) {
+            $data = json_decode($string, true) ?: array();
+            $context = isset($data['c']) ? $data['c'] : array();
+
+            $salt = call_user_func($salt_func, $context);
+        } else {
+            $salt = $this->getConfig('salt');
+        }
 
         if (!$salt)
             throw new RuntimeError('Require context encrypt salt string');
