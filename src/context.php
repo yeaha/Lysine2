@@ -87,17 +87,19 @@ class SessionContextHandler extends ContextHandler {
 // 数据将会附带数字签名，防止客户端伪造
 //
 // $config = array(
-//     'token' => (string),     // 必须，上下文存储唯一标识
-//     'salt' => (string),      // 必须，用于计算数字签名的随机字符串
-//     'domain' => (string),    // 可选，cookie 域名，默认：null
-//     'path' => (string),      // 可选，cookie 路径，默认：/
-//     'ttl' => (integer),      // 可选，生存期，单位：秒，默认：0
-//     'bind_ip' => (bool),     // 可选，是否绑定到IP，默认：false
-//     'zip' => (bool),         // 可选，是否将数据压缩保存，默认：false
+//     'token' => (string),         // 必须，上下文存储唯一标识
+//     'salt' => (string),          // 必须，用于计算数字签名的随机字符串
+//     'salt_func' => (callback),   // 可选，获取salt字符串自定义方法，设置了salt_func就可以不设置salt
+//     'domain' => (string),        // 可选，cookie 域名，默认：null
+//     'path' => (string),          // 可选，cookie 路径，默认：/
+//     'ttl' => (integer),          // 可选，生存期，单位：秒，默认：0
+//     'bind_ip' => (bool),         // 可选，是否绑定到IP，默认：false
+//     'zip' => (bool),             // 可选，是否将数据压缩保存，默认：false
 // );
 // $handler = ContextHandler::factory('cookie', $config);
 class CookieContextHandler extends ContextHandler {
     protected $data;
+    protected $salt;
 
     public function set($key, $val) {
         $this->restore();
@@ -172,7 +174,6 @@ class CookieContextHandler extends ContextHandler {
             $data['t'] = time() + $ttl;
 
         $data = json_encode($data);
-
         return $data . $this->getSign($data);
     }
 
@@ -205,10 +206,12 @@ class CookieContextHandler extends ContextHandler {
     }
 
     // 生成数字签名
+    // $string = json_encode(array(
+    //     'c' => (array),      // 上下文数据
+    //     't' => (integer),    // 过期时间
+    // ));
     protected function getSign($string) {
-        if (!$salt = $this->getConfig('salt'))
-            throw new RuntimeError('Require context encrypt salt string');
-
+        $salt = $this->getSalt($string);
         $data = array($string, $salt);
 
         if ($this->getConfig('bind_ip')) {
@@ -217,6 +220,22 @@ class CookieContextHandler extends ContextHandler {
         }
 
         return sha1(implode(',', $data));
+    }
+
+    protected function getSalt($string) {
+        if ($this->salt)
+            return $this->salt;
+
+        // salt function可以实现运行期间动态获取salt字符串
+        // 例如，把用户id保存在上下文中，以用户密码作为salt
+        $salt = ($salt_func = $this->getConfig('salt_func'))
+              ? call_user_func($salt_func, $string)
+              : $this->getConfig('salt');
+
+        if (!$salt)
+            throw new RuntimeError('Require context encrypt salt string');
+
+        return $this->salt = $salt;
     }
 }
 
