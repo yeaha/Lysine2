@@ -247,7 +247,7 @@ class CookieContextHandler extends ContextHandler {
 // $config = array(
 //     'token' => (string),     // 必须，上下文存储唯一标识
 //     'service' => (string),   // 必须，用于存储的redis服务名
-//     'ttl' => (integer),      // 可选，生存期，单位：秒，默认：300
+//     'ttl' => (integer),      // 可选，生存期，单位：秒，默认：0
 // );
 // $handler = ContextHandler::factory('redis', $config);
 class RedisContextHandler extends ContextHandler {
@@ -255,7 +255,7 @@ class RedisContextHandler extends ContextHandler {
         $redis = $this->getService();
         $token = $this->getToken();
 
-        if ($ttl = $this->getConfig('ttl')) {
+        if ($ttl = (int)$this->getConfig('ttl')) {
             $redis->multi(\Redis::PIPELINE)
                   ->hSet($token, $key, $val)
                   ->setTimeout($token, $ttl)
@@ -285,7 +285,7 @@ class RedisContextHandler extends ContextHandler {
         $redis = $this->getService();
         $token = $this->getToken();
 
-        if ($ttl = $this->getConfig('ttl')) {
+        if ($ttl = (int)$this->getConfig('ttl')) {
             $redis->multi(\Redis::PIPELINE)
                   ->hDel($token, $key)
                   ->setTimeout($token, $ttl)
