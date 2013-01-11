@@ -48,5 +48,7 @@ return array(
     'lysine\service\redis' => 'service/redis.php',
     'lysine\service\runtimeerror' => 'error.php',
     'lysine\session' => 'utils.php',
+    'lysine\traits\eventmethods' => 'traits.php',
+    'lysine\traits\singleton' => 'traits.php',
     'lysine\unexpectedvalueerror' => 'error.php',
 );
