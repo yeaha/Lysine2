@@ -1,6 +1,8 @@
 <?php
 return array(
     'lysine\config' => 'utils.php',
+    'lysine\contexthandler' => 'context.php',
+    'lysine\cookiecontexthandler' => 'context.php',
     'lysine\curl' => 'curl.php',
     'lysine\curl\http' => 'curl.php',
     'lysine\datamapper\cachedbmapper' => 'datamapper.php',
@@ -31,6 +33,7 @@ return array(
     'lysine\mvc\application' => 'mvc.php',
     'lysine\mvc\router' => 'mvc.php',
     'lysine\mvc\view' => 'mvc.php',
+    'lysine\rediscontexthandler' => 'context.php',
     'lysine\runtimeerror' => 'error.php',
     'lysine\service\amqp' => 'service/amqp.php',
     'lysine\service\connectionerror' => 'error.php',
@@ -48,6 +51,7 @@ return array(
     'lysine\service\redis' => 'service/redis.php',
     'lysine\service\runtimeerror' => 'error.php',
     'lysine\session' => 'utils.php',
+    'lysine\sessioncontexthandler' => 'context.php',
     'lysine\traits\eventmethods' => 'traits.php',
     'lysine\traits\singleton' => 'traits.php',
     'lysine\unexpectedvalueerror' => 'error.php',
