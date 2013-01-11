@@ -216,7 +216,7 @@ class CookieContextHandler extends ContextHandler {
 
         if ($this->getConfig('bind_ip')) {
             $ip = req()->ip();
-            $data[] = substr($ip, 0, strrpos($ip, '.')).'.0';    // 192.168.1.123 -> 192.168.1.0
+            $data[] = long2ip(ip2long($ip) & ip2long('255.255.255.0'));     // 192.168.1.123 -> 192.168.1.0
         }
 
         return sha1(implode(',', $data));
