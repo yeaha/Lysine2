@@ -1,8 +1,8 @@
 <?php
 namespace Lysine\Traits;
 
-use Lysine\RuntimeError;
 use Lysine\Event;
+use Lysine\RuntimeError;
 
 // 事件方法
 trait EventMethods {
@@ -27,5 +27,41 @@ trait Singleton {
 
     static public function getInstance() {
         return static::$instance ?: (static::$instance = new static);
+    }
+}
+
+// 上下文消息
+trait Context {
+    protected $context_handler;
+
+    public function setContext($key, $val) {
+        return $this->getContextHandler()->set($key, $val);
+    }
+
+    public function getContext($key = null) {
+        return $this->getContextHandler()->get($key);
+    }
+
+    public function hasContext($key) {
+        return $this->getContextHandler()->has($key);
+    }
+
+    public function removeContext($key) {
+        return $this->getContextHandler()->remove($key);
+    }
+
+    public function clearContext() {
+        return $this->getContextHandler()->clear();
+    }
+
+    protected function setContextHandler(\Lysine\ContextHandler $handler) {
+        $this->conntext_handler = $handler;
+    }
+
+    protected function getContextHandler() {
+        if (!$this->context_handler)
+            throw new RuntimeError('Please set context handler before use');
+
+        return $this->context_handler;
     }
 }
