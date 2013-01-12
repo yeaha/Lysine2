@@ -48,7 +48,9 @@ abstract class ContextHandler {
 // $config = array(
 //     'token' => (string),     // 必须，上下文存储唯一标识
 // );
+//
 // $handler = ContextHandler::factory('session', $config);
+// $handler = new SessionContextHandler($config);
 class SessionContextHandler extends ContextHandler {
     public function set($key, $val) {
         $token = $this->getToken();
@@ -96,7 +98,9 @@ class SessionContextHandler extends ContextHandler {
 //     'bind_ip' => (bool),         // 可选，是否绑定到IP，默认：false
 //     'zip' => (bool),             // 可选，是否将数据压缩保存，默认：false
 // );
+//
 // $handler = ContextHandler::factory('cookie', $config);
+// $handler = new CookieContextHandler($config);
 class CookieContextHandler extends ContextHandler {
     protected $data;
     protected $salt;
@@ -249,7 +253,9 @@ class CookieContextHandler extends ContextHandler {
 //     'service' => (string),   // 必须，用于存储的redis服务名
 //     'ttl' => (integer),      // 可选，生存期，单位：秒，默认：0
 // );
+//
 // $handler = ContextHandler::factory('redis', $config);
+// $handler = new RedisContextHandler($config);
 class RedisContextHandler extends ContextHandler {
     public function set($key, $val) {
         $redis = $this->getService();
