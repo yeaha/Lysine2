@@ -6,7 +6,7 @@ use Lysine\RuntimeError;
 
 // 事件方法
 trait EventMethods {
-    public function listenEvent($event, $callback) {
+    public function onEvent($event, $callback) {
         return Event::instance()->listen($this, $event, $callback);
     }
 
