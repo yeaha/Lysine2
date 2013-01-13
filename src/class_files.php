@@ -52,6 +52,7 @@ return array(
     'lysine\service\runtimeerror' => 'error.php',
     'lysine\session' => 'utils.php',
     'lysine\sessioncontexthandler' => 'context.php',
+    'lysine\traits\context' => 'traits.php',
     'lysine\traits\eventmethods' => 'traits.php',
     'lysine\traits\singleton' => 'traits.php',
     'lysine\unexpectedvalueerror' => 'error.php',
