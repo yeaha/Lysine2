@@ -92,7 +92,6 @@ class SessionContextHandler extends ContextHandler {
 //     'token' => (string),         // 必须，上下文存储唯一标识
 //     'salt' => (string),          // 必须，用于计算数字签名的随机字符串
 //     'salt_func' => (callback),   // 可选，获取salt字符串自定义方法，设置了salt_func就可以不设置salt
-//     'encrypt' => (mixed),        // 可选，加密cookie内的数据，mcrypt加密方法常量或者名字
 //     'encrypt' => array(          // 可选，加密方法配置
 //         (string),                // ciphers name，例如MCRYPT_3DES
 //         (string),                // ciphers mode, 默认MCRYPT_MODE_ECB
