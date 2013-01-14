@@ -51,6 +51,29 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         }
     }
 
+    // 数字签名
+    public function testCookieContextSign() {
+        $mock_cookie = \Test\Mock\Cookie::getInstance();
+        $mock_cookie->reset();
+
+        $config = array('token' => 'test', 'salt' => 'fdajkfldsjfldsf');
+        $handler = new \Lysine\CookieContextHandler($config);
+
+        $handler->set('test', 'abc');
+
+        $mock_cookie->apply();
+        $handler->reset();
+
+        $_COOKIE['test'] = '0'. $_COOKIE['test'];
+        $this->assertNull($handler->get('test'), '篡改cookie内容');
+
+        $_COOKIE['test'] = substr($_COOKIE['test'], 1);
+        $handler->reset();
+
+        $handler->setConfig('salt', 'r431oj0if31jr3');
+        $this->assertNull($handler->get('test'), 'salt没有起作用');
+    }
+
     // 地址绑定
     public function testBindIpCookieContext() {
         $mock_cookie = \Test\Mock\Cookie::getInstance();

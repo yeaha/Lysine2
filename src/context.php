@@ -146,6 +146,7 @@ class CookieContextHandler extends ContextHandler {
 
     public function reset() {
         $this->data = null;
+        $this->salt = null;
     }
 
     // 保存到cookie
