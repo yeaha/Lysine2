@@ -80,6 +80,8 @@ class SessionContextHandler extends ContextHandler {
     }
 
     public function clear() {
+        $token = $this->getToken();
+
         unset($_SESSION[$token]);
     }
 }
@@ -159,6 +161,8 @@ class CookieContextHandler extends ContextHandler {
         }
 
         resp()->setCookie($token, $data, $expire, $path, $domain);
+
+        return $data;
     }
 
     // 从cookie恢复数据
