@@ -657,10 +657,20 @@ abstract class CacheDBMapper extends DBMapper {
     abstract protected function saveCache($id, array $record);
 
     protected function doFind($id, IService $storage = null, $collection = null) {
-        if (!$record = $this->getCache($id)) {
-            if ($record = parent::doFind($id, $storage, $collection))
-                $this->saveCache($id, $record);
+        if ($record = $this->getCache($id))
+            return $record;
+
+        if (!$record = parent::doFind($id, $storage, $collection))
+            return $record;
+
+        // 值为NULL的字段不用缓存
+        foreach ($record as $key => $val) {
+            if ($val === null)
+                unset($record[$key]);
         }
+
+        $this->saveCache($id, $record);
+
         return $record;
     }
 
