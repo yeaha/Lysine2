@@ -14,7 +14,8 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
         $this->router = new \Test\Mock\Router($config);
     }
 
-    protected function assertController($expect, $uri, $router) {
+    protected function assertController($uri, $expect, $router = null) {
+        $router = $router ?: $this->router;
         list($controller,) = $router->dispatch($uri);
 
         $this->assertEquals($expect, $controller);
@@ -27,20 +28,25 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
             '/' => '\Action',
         ));
 
-        $this->assertController('\Blog\Controller\Index', '/blog', $this->router);
-        $this->assertcontroller('\Action\Blogs', '/blogs', $this->router);
-        $this->assertcontroller('\Admin\Controller\Index', '/admin', $this->router);
-        $this->assertcontroller('\Admin\Controller\User', '/admin/user', $this->router);
-        $this->assertcontroller('\Admin\Controller\User', '/admin/user/', $this->router);
-        $this->assertcontroller('\Admin\Controller\User', '/aDmin/User/', $this->router);
-        $this->assertcontroller('\Action\Index', '/', $this->router);
+        $test = array(
+            '/blog' => '\Blog\Controller\Index',
+            '/blogs' => '\Action\Blogs',
+            '/admin' => '\Admin\Controller\Index',
+            '/admin/user' => '\Admin\Controller\User',
+            '/admin/user/' => '\Admin\Controller\User',
+            '/admin/User/' => '\Admin\Controller\User',
+            '/' => '\Action\Index',
+        );
+
+        foreach ($test as $uri => $expect)
+            $this->assertController($uri, $expect);
     }
 
     public function testBaseUri() {
         $this->router->setBaseUri('/admin');
 
-        $this->assertController('\Controller\Index', '/admin', $this->router);
-        $this->assertController('\Controller\Test', '/admin/test', $this->router);
+        $this->assertController('/admin', '\Controller\Index');
+        $this->assertController('/admin/test', '\Controller\Test');
     }
 
     /**
@@ -70,7 +76,7 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals('\Controller\News\Comment', $class);
         $this->assertSame(array('2012-08-23', '123'), $params);
 
-        $this->assertController('\Controller\Topic\Comment', '/topic/comment', $this->router);
+        $this->assertController('/topic/comment', '\Controller\Topic\Comment');
     }
 
     public function testExtension() {
