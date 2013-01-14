@@ -212,8 +212,8 @@ class CookieContextHandler extends ContextHandler {
                     : $string;
         }
 
-        // sha1() hash length is 40
-        $hash_length = 40;
+        // sha1 raw binary length is 20
+        $hash_length = 20;
 
         // 数字签名校验
         do {
@@ -277,7 +277,7 @@ class CookieContextHandler extends ContextHandler {
             $data[] = long2ip(ip2long($ip) & ip2long('255.255.255.0'));     // 192.168.1.123 -> 192.168.1.0
         }
 
-        return sha1(implode(',', $data));
+        return sha1(implode(',', $data), true);
     }
 
     protected function getSalt() {
