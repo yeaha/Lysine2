@@ -54,7 +54,7 @@ trait Context {
     }
 
     protected function setContextHandler(\Lysine\ContextHandler $handler) {
-        $this->conntext_handler = $handler;
+        $this->context_handler = $handler;
     }
 
     protected function getContextHandler() {
