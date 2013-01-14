@@ -56,9 +56,9 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         $handler->set('test', 'abc');
 
         $mock_cookie->apply();
+        $handler->reset();
 
-        $other_handler = new \Lysine\CookieContextHandler($config);
-        $this->assertEquals($other_handler->get('test'), 'abc');
+        $this->assertEquals($handler->get('test'), 'abc');
     }
 
     // 加密
@@ -72,9 +72,9 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         $handler->set('test', 'abc');
 
         $mock_cookie->apply();
+        $handler->reset();
 
-        $other_handler = new \Lysine\CookieContextHandler($config);
-        $this->assertEquals($other_handler->get('test'), 'abc');
+        $this->assertEquals($handler->get('test'), 'abc');
     }
 
     // 地址绑定
@@ -90,12 +90,12 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
 
         $mock_cookie->apply();
 
+        $handler->reset();
         $_SERVER['REMOTE_ADDR'] = '192.168.1.3';
-        $other_handler = new \Lysine\CookieContextHandler($config);
-        $this->assertEquals($other_handler->get('test'), 'abc', '同子网IP取值');
+        $this->assertEquals($handler->get('test'), 'abc', '同子网IP取值');
 
+        $handler->reset();
         $_SERVER['REMOTE_ADDR'] = '192.168.2.1';
-        $other_handler = new \Lysine\CookieContextHandler($config);
-        $this->assertNull($other_handler->get('test'), '不同子网IP取值');
+        $this->assertNull($handler->get('test'), '不同子网IP取值');
     }
 }

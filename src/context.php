@@ -144,6 +144,10 @@ class CookieContextHandler extends ContextHandler {
         $this->save();
     }
 
+    public function reset() {
+        $this->data = null;
+    }
+
     // 保存到cookie
     protected function save() {
         $token = $this->getToken();
