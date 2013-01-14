@@ -92,6 +92,7 @@ class SessionContextHandler extends ContextHandler {
 //     'token' => (string),         // 必须，上下文存储唯一标识
 //     'salt' => (string),          // 必须，用于计算数字签名的随机字符串
 //     'salt_func' => (callback),   // 可选，获取salt字符串自定义方法，设置了salt_func就可以不设置salt
+//     'crypt' => (mixed),          // 可选，加密cookie内的数据，mcrypt加密方法常量或者名字
 //     'domain' => (string),        // 可选，cookie 域名，默认：null
 //     'path' => (string),          // 可选，cookie 路径，默认：/
 //     'ttl' => (integer),          // 可选，生存期，单位：秒，默认：0
@@ -138,75 +139,120 @@ class CookieContextHandler extends ContextHandler {
         $this->save();
     }
 
-    // 从cookie恢复上下文信息
-    protected function restore() {
-        if ($this->data !== null)
-            return $this->data;
-
-        if (($data = cookie($this->getToken())) && $this->getConfig('zip')) {
-            // 压缩文本最前面有'_'
-            // 否则在运行期间切换压缩配置时，未压缩文本会导致解压报错
-            $data = (substr($data, 0, 1) == '_')
-                  ? gzuncompress(substr($data, 1))
-                  : $data;
-        }
-
-        return $this->data = $this->decode($data);
-    }
-
     // 保存到cookie
     protected function save() {
-        $data = $this->encode($this->data) ?: null;
-
-        if ($data && $this->getConfig('zip'))
-            $data = '_'.gzcompress($data, 9);
-
         $token = $this->getToken();
         $expire = ($ttl = (int)$this->getConfig('ttl')) ? (time() + $ttl) : 0;
         $path = $this->getConfig('path') ?: '/';
         $domain = $this->getConfig('domain');
 
+        if ($this->data) {
+            $data = array('c' => $this->data);
+            if ($expire) $data['t'] = $expire;
+
+            $data = $this->encode($data);
+        } else {
+            $data = '';
+        }
+
         resp()->setCookie($token, $data, $expire, $path, $domain);
     }
 
-    // 编码上下文信息
-    protected function encode($context) {
-        if (!$context) return false;
-
-        $data = array('c' => $context);
-        if ($ttl = (int)$this->getConfig('ttl'))
-            $data['t'] = time() + $ttl;
-
-        $data = json_encode($data);
-        return $data . $this->getSign($data);
-    }
-
-    // 解码上下文信息
-    protected function decode($string) {
-        // sha1() hash length is 40
-        $hash_length = 40;
+    // 从cookie恢复数据
+    protected function restore() {
+        if ($this->data !== null)
+            return $this->data;
 
         do {
+            if (!$data = cookie($this->getToken()))
+                break;
+
+            if (!$data = $this->decode($data))
+                break;
+
+            if ($this->getConfig('ttl') && (!isset($data['t']) || $data['t'] <= time()))
+                break;
+
+            return $this->data = isset($data['c']) ? $data['c'] : array();
+        } while (false);
+
+        return $this->data = array();
+    }
+
+    // 把上下文数据编码为字符串
+    // return string
+    protected function encode($data) {
+        $data = json_encode($data);
+
+        // 加密方式存储
+        if ($this->getConfig('crypt'))
+            return $this->encrypt($data);
+
+        // 明文加数字签名
+        $data = $data . $this->getSign($data);
+
+        if ($this->getConfig('zip'))
+            $data = '_'. gzcompress($data, 9);
+
+        return $data;
+    }
+
+    // 把保存为字符串的上下文数据恢复为数组
+    // return array('c' => (array), 't' => (integer));
+    protected function decode($string) {
+        if ($this->getConfig('crypt')) {
+            $decrypted = $this->decrypt($string);
+            return json_decode($decrypted, true) ?: array();
+        }
+
+        if ($this->getConfig('zip')) {
+            // 压缩文本最前面有'_'
+            // 否则在运行期间切换压缩配置时，未压缩文本会导致解压报错
+            $string = (substr($string, 0, 1) == '_')
+                    ? gzuncompress(substr($string, 1))
+                    : $string;
+        }
+
+        do {
+            // sha1() hash length is 40
+            $hash_length = 40;
+
             if (!$string || strlen($string) <= $hash_length)
                 break;
 
             $hash = substr($string, $hash_length * -1);
-            $data = substr($string, 0, strlen($string) - $hash_length);
+            $string = substr($string, 0, strlen($string) - $hash_length);
 
-            if ($this->getSign($data) !== $hash)
+            if ($this->getSign($string) !== $hash)
                 break;
 
-            $data = json_decode($data, true);
-
-            if ($this->getConfig('ttl')) {
-                if (!isset($data['t']) || $data['t'] <= time())
-                    break;
-            }
-
-            return isset($data['c']) ? $data['c'] : array();
+            return json_decode($string, true) ?: array();
         } while (false);
 
         return array();
+    }
+
+    // 加密字符串
+    protected function encrypt($string) {
+        $cipher = $this->getConfig('crypt');
+        $iv_size = mcrypt_get_iv_size($cipher, MCRYPT_MODE_ECB);
+        $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
+        $key = $this->getSalt();
+
+        return mcrypt_encrypt($cipher, $key, $string, MCRYPT_MODE_ECB, $iv);
+    }
+
+    // 解密字符串
+    protected function decrypt($string) {
+        $cipher = $this->getConfig('crypt');
+        $iv_size = mcrypt_get_iv_size($cipher, MCRYPT_MODE_ECB);
+        $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
+        $key = $this->getSalt();
+
+        if ($decrypted = mcrypt_decrypt($cipher, $key, $string, MCRYPT_MODE_ECB, $iv))
+            $decrypted = rtrim($decrypted, "\0");   // remove padding
+
+        return $decrypted;
     }
 
     // 生成数字签名
@@ -215,7 +261,7 @@ class CookieContextHandler extends ContextHandler {
     //     't' => (integer),    // 过期时间
     // ));
     protected function getSign($string) {
-        $salt = $this->getSalt($string);
+        $salt = $this->getSalt();
         $data = array($string, $salt);
 
         if ($this->getConfig('bind_ip')) {
@@ -226,17 +272,14 @@ class CookieContextHandler extends ContextHandler {
         return sha1(implode(',', $data));
     }
 
-    protected function getSalt($string) {
+    protected function getSalt() {
         if ($this->salt)
             return $this->salt;
 
         // salt function可以实现运行期间动态获取salt字符串
         // 例如，把用户id保存在上下文中，以用户密码作为salt
         if ($salt_func = $this->getConfig('salt_func')) {
-            $data = json_decode($string, true) ?: array();
-            $context = isset($data['c']) ? $data['c'] : array();
-
-            $salt = call_user_func($salt_func, $context);
+            $salt = call_user_func($salt_func, $this->data);
         } else {
             $salt = $this->getConfig('salt');
         }
