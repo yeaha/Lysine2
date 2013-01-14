@@ -29,52 +29,26 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         }
     }
 
-    // 明文
     public function testCookieContext() {
+        $config_list = array(
+            '明文' => array('token' => 'test', 'salt' => 'fdajkfldsjfldsf'),
+            '明文+压缩' => array('token' => 'test', 'salt' => 'fdajkfldsjfldsf', 'zip' => true),
+            '加密' => array('token' => 'test', 'salt' => 'fdajkfldsjfldsf', 'encrypt' => array(MCRYPT_RIJNDAEL_256)),
+        );
+
         $mock_cookie = \Test\Mock\Cookie::getInstance();
-        $mock_cookie->reset();
 
-        $config = array('token' => 'test', 'salt' => 'fdajkfldsjfldsf');
+        foreach ($config_list as $msg => $config) {
+            $mock_cookie->reset();
 
-        $handler = new \Lysine\CookieContextHandler($config);
-        $handler->set('test', 'abc');
+            $handler = new \Lysine\CookieContextHandler($config);
+            $handler->set('test', 'abc');
 
-        $mock_cookie->apply();
+            $mock_cookie->apply();
+            $handler->reset();
 
-        $other_handler = new \Lysine\CookieContextHandler($config);
-        $this->assertEquals($other_handler->get('test'), 'abc');
-    }
-
-    // 明文压缩
-    public function testZipCookieContext() {
-        $mock_cookie = \Test\Mock\Cookie::getInstance();
-        $mock_cookie->reset();
-
-        $config = array('token' => 'test', 'salt' => 'fdajkfldsjfldsf', 'zip' => true);
-
-        $handler = new \Lysine\CookieContextHandler($config);
-        $handler->set('test', 'abc');
-
-        $mock_cookie->apply();
-        $handler->reset();
-
-        $this->assertEquals($handler->get('test'), 'abc');
-    }
-
-    // 加密
-    public function testEncryptCookieContext() {
-        $mock_cookie = \Test\Mock\Cookie::getInstance();
-        $mock_cookie->reset();
-
-        $config = array('token' => 'test', 'salt' => 'fdajkfldsjfldsf', 'encrypt' => array(MCRYPT_RIJNDAEL_256));
-
-        $handler = new \Lysine\CookieContextHandler($config);
-        $handler->set('test', 'abc');
-
-        $mock_cookie->apply();
-        $handler->reset();
-
-        $this->assertEquals($handler->get('test'), 'abc');
+            $this->assertEquals($handler->get('test'), 'abc', $msg);
+        }
     }
 
     // 地址绑定
