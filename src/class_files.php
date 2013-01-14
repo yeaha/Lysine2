@@ -53,7 +53,7 @@ return array(
     'lysine\session' => 'utils.php',
     'lysine\sessioncontexthandler' => 'context.php',
     'lysine\traits\context' => 'traits.php',
-    'lysine\traits\eventmethods' => 'traits.php',
+    'lysine\traits\event' => 'traits.php',
     'lysine\traits\singleton' => 'traits.php',
     'lysine\unexpectedvalueerror' => 'error.php',
 );
