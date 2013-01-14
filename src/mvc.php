@@ -53,10 +53,8 @@ class Application {
             if (!is_file($f)) continue;
 
             require $f;
-            return class_exists($class, false) || interface_exists($class, false);
+            break;
         }
-
-        return false;
     }
 }
 
