@@ -187,15 +187,16 @@ class CookieContextHandler extends ContextHandler {
     protected function encode($data) {
         $data = json_encode($data);
 
-        // 加密方式存储
-        if ($this->getConfig('encrypt'))
-            return $this->encrypt($data);
-
-        // 明文加数字签名
+        // 添加数字签名
         $data = $data . $this->getSign($data);
 
-        if ($this->getConfig('zip'))
+        if ($this->getConfig('encrypt')) {      // 加密，加密数据不需要压缩
+            $data = $this->encrypt($data);
+        } elseif ($this->getConfig('zip')) {    // 压缩
+            // 压缩文本最前面有'_'，用于判断是否压缩数据
+            // 否则在运行期间切换压缩配置时，错误的数据格式会导致gzcompress()报错
             $data = '_'. gzcompress($data, 9);
+        }
 
         return $data;
     }
@@ -203,23 +204,19 @@ class CookieContextHandler extends ContextHandler {
     // 把保存为字符串的上下文数据恢复为数组
     // return array('c' => (array), 't' => (integer));
     protected function decode($string) {
-        if ($this->getConfig('encrypt')) {
-            $decrypted = $this->decrypt($string);
-            return json_decode($decrypted, true) ?: array();
-        }
-
-        if ($this->getConfig('zip')) {
-            // 压缩文本最前面有'_'
-            // 否则在运行期间切换压缩配置时，未压缩文本会导致解压报错
+        if ($this->getConfig('encrypt')) {      // 解密
+            $string = $this->decrypt($string);
+        } elseif ($this->getConfig('zip')) {    // 解压
             $string = (substr($string, 0, 1) == '_')
                     ? gzuncompress(substr($string, 1))
                     : $string;
         }
 
-        do {
-            // sha1() hash length is 40
-            $hash_length = 40;
+        // sha1() hash length is 40
+        $hash_length = 40;
 
+        // 数字签名校验
+        do {
             if (!$string || strlen($string) <= $hash_length)
                 break;
 
