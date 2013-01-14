@@ -84,18 +84,17 @@ class SessionContextHandler extends ContextHandler {
     }
 }
 
-// 上下文信息将以明文访问保存在cookie内
-// 不要存放敏感信息（如密码等）
-// 数据将会附带数字签名，防止客户端伪造
+// 默认使用明文加数字签名防伪方式保存数据
+// 如果要存放敏感信息，注意使用加密存储
 //
 // $config = array(
 //     'token' => (string),         // 必须，上下文存储唯一标识
 //     'salt' => (string),          // 必须，用于计算数字签名的随机字符串
 //     'salt_func' => (callback),   // 可选，获取salt字符串自定义方法，设置了salt_func就可以不设置salt
 //     'encrypt' => array(          // 可选，加密方法配置
-//         (string),                // ciphers name，例如MCRYPT_3DES
-//         (string),                // ciphers mode, 默认MCRYPT_MODE_ECB
-//         (integer),               // random device，默认MCRYPT_RAND
+//         (string),                //   必须，ciphers name，例如MCRYPT_3DES
+//         (string),                //   可选，ciphers mode, 默认MCRYPT_MODE_ECB
+//         (integer),               //   可选，random device，默认MCRYPT_RAND
 //     ),
 //     'domain' => (string),        // 可选，cookie 域名，默认：null
 //     'path' => (string),          // 可选，cookie 路径，默认：/
