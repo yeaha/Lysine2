@@ -1,17 +1,16 @@
 <?php
 namespace Lysine\Traits;
 
-use Lysine\Event;
 use Lysine\RuntimeError;
 
 // 事件方法
 trait Event {
     public function onEvent($event, $callback) {
-        return Event::instance()->listen($this, $event, $callback);
+        return \Lysine\Event::instance()->listen($this, $event, $callback);
     }
 
     public function fireEvent($event, array $args = null) {
-        return Event::instance()->fire($this, $event, $args);
+        return \Lysine\Event::instance()->fire($this, $event, $args);
     }
 }
 
