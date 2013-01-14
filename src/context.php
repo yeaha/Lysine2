@@ -92,7 +92,12 @@ class SessionContextHandler extends ContextHandler {
 //     'token' => (string),         // 必须，上下文存储唯一标识
 //     'salt' => (string),          // 必须，用于计算数字签名的随机字符串
 //     'salt_func' => (callback),   // 可选，获取salt字符串自定义方法，设置了salt_func就可以不设置salt
-//     'crypt' => (mixed),          // 可选，加密cookie内的数据，mcrypt加密方法常量或者名字
+//     'encrypt' => (mixed),        // 可选，加密cookie内的数据，mcrypt加密方法常量或者名字
+//     'encrypt' => array(          // 可选，加密方法配置
+//         (string),                // ciphers name，例如MCRYPT_3DES
+//         (string),                // ciphers mode, 默认MCRYPT_MODE_ECB
+//         (string),                // random device，默认MCRYPT_RAND
+//     ),
 //     'domain' => (string),        // 可选，cookie 域名，默认：null
 //     'path' => (string),          // 可选，cookie 路径，默认：/
 //     'ttl' => (integer),          // 可选，生存期，单位：秒，默认：0
@@ -185,7 +190,7 @@ class CookieContextHandler extends ContextHandler {
         $data = json_encode($data);
 
         // 加密方式存储
-        if ($this->getConfig('crypt'))
+        if ($this->getConfig('encrypt'))
             return $this->encrypt($data);
 
         // 明文加数字签名
@@ -200,7 +205,7 @@ class CookieContextHandler extends ContextHandler {
     // 把保存为字符串的上下文数据恢复为数组
     // return array('c' => (array), 't' => (integer));
     protected function decode($string) {
-        if ($this->getConfig('crypt')) {
+        if ($this->getConfig('encrypt')) {
             $decrypted = $this->decrypt($string);
             return json_decode($decrypted, true) ?: array();
         }
@@ -234,22 +239,30 @@ class CookieContextHandler extends ContextHandler {
 
     // 加密字符串
     protected function encrypt($string) {
-        $cipher = $this->getConfig('crypt');
-        $iv_size = mcrypt_get_iv_size($cipher, MCRYPT_MODE_ECB);
-        $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
+        $config = $this->getConfig('encrypt');
+        $cipher = $config[0];
+        $mode = isset($config[1]) ? $config[1] : MCRYPT_MODE_ECB;
+        $device = isset($config[2]) ? $config[2] : MCRYPT_RAND;
+
+        $iv_size = mcrypt_get_iv_size($cipher, $mode);
+        $iv = mcrypt_create_iv($iv_size, $device);
         $key = $this->getSalt();
 
-        return mcrypt_encrypt($cipher, $key, $string, MCRYPT_MODE_ECB, $iv);
+        return mcrypt_encrypt($cipher, $key, $string, $mode, $iv);
     }
 
     // 解密字符串
     protected function decrypt($string) {
-        $cipher = $this->getConfig('crypt');
-        $iv_size = mcrypt_get_iv_size($cipher, MCRYPT_MODE_ECB);
-        $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
+        $config = $this->getConfig('encrypt');
+        $cipher = $config[0];
+        $mode = isset($config[1]) ? $config[1] : MCRYPT_MODE_ECB;
+        $device = isset($config[2]) ? $config[2] : MCRYPT_RAND;
+
+        $iv_size = mcrypt_get_iv_size($cipher, $mode);
+        $iv = mcrypt_create_iv($iv_size, $device);
         $key = $this->getSalt();
 
-        if ($decrypted = mcrypt_decrypt($cipher, $key, $string, MCRYPT_MODE_ECB, $iv))
+        if ($decrypted = mcrypt_decrypt($cipher, $key, $string, $mode, $iv))
             $decrypted = rtrim($decrypted, "\0");   // remove padding
 
         return $decrypted;
