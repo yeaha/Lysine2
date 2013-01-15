@@ -12,6 +12,14 @@ trait Event {
     public function fireEvent($event, array $args = null) {
         return \Lysine\Event::getInstance()->fire($this, $event, $args);
     }
+
+    public function clearEvent($event = null) {
+        return \Lysine\Event::getInstance()->clear($this, $event);
+    }
+
+    static public function subscribeEvent($event, $callback) {
+        return \Lysine\Event::getInstance()->subscribe(get_called_class(), $event, $callback);
+    }
 }
 
 // 单例模式
