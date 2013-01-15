@@ -3,11 +3,10 @@ namespace Lysine\Service;
 
 class Manager {
     use \Lysine\Traits\Event;
+    use \Lysine\Traits\Singleton;
 
     const BEFORE_CREATE_EVENT = 'before create service instance';
     const AFTER_CREATE_EVENT = 'after create service instance';
-
-    static private $instance;
 
     protected $instances = array();
     protected $dispatcher = array();
@@ -82,11 +81,6 @@ class Manager {
         unset($config['__IMPORT__']);
 
         return $config;
-    }
-
-    //////////////////// static method ////////////////////
-    static public function instance() {
-        return self::$instance ?: (self::$instance = new static);
     }
 }
 

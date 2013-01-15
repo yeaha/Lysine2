@@ -71,7 +71,7 @@ namespace {
         if ($args !== null)
             $args = array_slice(func_get_args(), 1);
 
-        return \Lysine\Service\Manager::instance()->get($name, $args);
+        return \Lysine\Service\Manager::getInstance()->get($name, $args);
     }
 
     function req() {

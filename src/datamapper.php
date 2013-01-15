@@ -257,7 +257,7 @@ abstract class Mapper {
     }
 
     public function getStorage() {
-        return \Lysine\Service\Manager::instance()->get(
+        return \Lysine\Service\Manager::getInstance()->get(
             $this->getMeta()->getStorage()
         );
     }
