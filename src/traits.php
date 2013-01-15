@@ -6,11 +6,11 @@ use Lysine\RuntimeError;
 // 事件方法
 trait Event {
     public function onEvent($event, $callback) {
-        return \Lysine\Event::instance()->listen($this, $event, $callback);
+        return \Lysine\Event::getInstance()->listen($this, $event, $callback);
     }
 
     public function fireEvent($event, array $args = null) {
-        return \Lysine\Event::instance()->fire($this, $event, $args);
+        return \Lysine\Event::getInstance()->fire($this, $event, $args);
     }
 }
 

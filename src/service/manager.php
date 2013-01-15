@@ -2,6 +2,8 @@
 namespace Lysine\Service;
 
 class Manager {
+    use \Lysine\Traits\Event;
+
     const BEFORE_CREATE_EVENT = 'before create service instance';
     const AFTER_CREATE_EVENT = 'after create service instance';
 
@@ -53,7 +55,7 @@ class Manager {
 
         $config = $this->getConfig($name);
 
-        \Lysine\Event::instance()->fire($this, self::BEFORE_CREATE_EVENT, array($name, $config));
+        $this->fireEvent(self::BEFORE_CREATE_EVENT, array($name, $config));
 
         $class = $config['class'];
         unset($config['class']);
@@ -61,7 +63,7 @@ class Manager {
 
         $this->instances[$name] = $service;
 
-        \Lysine\Event::instance()->fire($this, self::AFTER_CREATE_EVENT, array($name, $config, $service));
+        $this->fireEvent(self::AFTER_CREATE_EVENT, array($name, $config, $service));
 
         return $service;
     }

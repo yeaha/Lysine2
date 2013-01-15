@@ -29,7 +29,7 @@ class Config {
 }
 
 class Event {
-    static protected $instance;
+    use \Lysine\Traits\Singleton;
 
     protected $listen = array();
     protected $subscribe = array();
@@ -90,10 +90,6 @@ class Event {
         return is_object($obj)
              ? spl_object_hash($obj)
              : $obj;
-    }
-
-    static public function instance() {
-        return self::$instance ?: (self::$instance = new static);
     }
 }
 

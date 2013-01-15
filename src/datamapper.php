@@ -4,6 +4,8 @@ namespace Lysine\DataMapper;
 use Lysine\Service\IService;
 
 abstract class Data {
+    use \Lysine\Traits\Event;
+
     const AFTER_DELETE_EVENT = 'AFTER DELETE EVENT';
     const AFTER_INSERT_EVENT = 'AFTER INSERT EVENT';
     const AFTER_SAVE_EVENT = 'AFTER SAVE EVENT';
@@ -72,7 +74,7 @@ abstract class Data {
         $fn = $callback[$event];
         $this->$fn();
 
-        \Lysine\Event::instance()->fire($this, $event, array($this));
+        $this->fireEvent($event, array($this));
     }
 
     // 如果主键是多个字段，返回数组

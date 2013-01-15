@@ -59,6 +59,8 @@ class Application {
 }
 
 class Router {
+    use \Lysine\Traits\Event;
+
     const BEFORE_DISPATCH_EVENT = 'before dispatch';
     const AFTER_DISPATCH_EVENT = 'after dispatch';
 
@@ -85,7 +87,7 @@ class Router {
         if (!$class || !class_exists($class))
             throw HTTP\Error::factory(HTTP::NOT_FOUND);
 
-        \Lysine\Event::instance()->fire($this, self::BEFORE_DISPATCH_EVENT, array($class, $path));
+        $this->fireEvent(self::BEFORE_DISPATCH_EVENT, array($class, $path));
 
         $controller = new $class;
         if (method_exists($controller, '__before_run')) {
@@ -110,7 +112,7 @@ class Router {
         if (method_exists($controller, '__after_run'))
             $controller->__after_run($response);
 
-        \Lysine\Event::instance()->fire($this, self::AFTER_DISPATCH_EVENT, array($class, $response));
+        $this->fireEvent(self::AFTER_DISPATCH_EVENT, array($class, $response));
 
         return $response;
     }
