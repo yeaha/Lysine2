@@ -12,9 +12,6 @@ class Manager {
     protected $dispatcher = array();
     protected $config = array();
 
-    protected function __construct() {
-    }
-
     public function __destruct() {
         $this->instances = array();
         $this->dispatcher = array();
