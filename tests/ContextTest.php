@@ -6,14 +6,25 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         return \Lysine\ContextHandler::factory($type, $config);
     }
 
+    protected function setUp() {
+        \Test\Mock\Environment::init('/', 'GET');
+    }
+
+    protected function tearDown() {
+        \Test\Mock\Environment::reset();
+    }
+
     public function testAbstractMethods() {
         $handlers = array(
             'session' => array('token' => 'test'),
             'cookie' => array('token' => 'test', 'salt' => 'fdjsaifowjfojweo'),
+            'redis' => array('token' => 'test', 'ttl' => 300, 'service' => 'redis.local'),
         );
 
         foreach ($handlers as $type => $config) {
             $handler = $this->createHandler($type, $config);
+            $handler->clear();
+
             $class = get_class($handler);
 
             $this->assertFalse($handler->has('test'), "{$class}->has()");
@@ -22,7 +33,7 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
             $this->assertEquals($handler->get('test'), 'abc', "{$class}->get() exists key");
 
             $handler->remove('test');
-            $this->assertNull($handler->get('test'), "{$class}->get() not exists key");
+            $this->assertFalse($handler->has('test'), "{$class}->has() not exists key");
 
             $handler->clear();
             $this->assertEquals($handler->get(), array(), "{$class}->get()");

@@ -20,3 +20,5 @@ spl_autoload_register(function($class) {
 
     return class_exists($class, false) || interface_exists($class, false);
 });
+
+\Lysine\Service\Manager::getInstance()->importConfig(require __DIR__.'/Fixture/config/services.php');
