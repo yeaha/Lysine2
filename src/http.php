@@ -89,13 +89,10 @@ class HTTP {
 namespace Lysine\HTTP;
 
 class Request {
-    static private $instance;
+    use \Lysine\Traits\Singleton;
 
     private $method;
     private $request_uri;
-
-    protected function __construct() {
-    }
 
     public function header($key) {
         $key = 'http_'. str_replace('-', '_', $key);
@@ -199,28 +196,20 @@ class Request {
 
         return array_shift($ip_set);
     }
-
-    //////////////////// static method ////////////////////
-    static public function instance() {
-        return self::$instance ?: (self::$instance = new static);
-    }
 }
 
 class Response {
-    static private $instance;
+    use \Lysine\Traits\Singleton;
 
     protected $code = \Lysine\HTTP::OK;
     protected $header = array();
     protected $cookie = array();
     protected $body;
 
-    protected function __construct() {
-    }
-
     public function execute() {
         list($header, $body) = $this->compile();
 
-        \Lysine\Session::instance()->commit();
+        \Lysine\Session::getInstance()->commit();
 
         array_map('header', $header);
         $this->header = array();
@@ -288,7 +277,7 @@ class Response {
         $this->cookie = array();
         $this->body = null;
 
-        \Lysine\Session::instance()->reset();
+        \Lysine\Session::getInstance()->reset();
 
         return $this;
     }
@@ -311,10 +300,5 @@ class Response {
                       : $key .': '. $val;
 
         return $header;
-    }
-
-    //////////////////// static method ////////////////////
-    static public function instance() {
-        return self::$instance ?: (self::$instance = new static);
     }
 }

@@ -94,7 +94,7 @@ class Event {
 }
 
 class Session implements \ArrayAccess {
-    static private $instance;
+    use \Lysine\Traits\Singleton;
 
     protected $start;
     protected $data = array();
@@ -177,12 +177,7 @@ class Session implements \ArrayAccess {
 
     static public function initialize() {
         if (!isset($GLOBALS['_SESSION']) or !($GLOBALS['_SESSION'] instanceof Session))
-            $GLOBALS['_SESSION'] = self::instance();
-        return self::instance();
-    }
-
-    static public function instance() {
-        return self::$instance
-            ?: (self::$instance = new static);
+            $GLOBALS['_SESSION'] = self::getInstance();
+        return self::getInstance();
     }
 }

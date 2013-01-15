@@ -7,7 +7,7 @@ class SessionTest extends \PHPUnit_Framework_TestCase {
     }
 
     protected function tearDown() {
-        \Lysine\Session::instance()->destroy();
+        \Lysine\Session::getInstance()->destroy();
         unset($_SESSION);
     }
 

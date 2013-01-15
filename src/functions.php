@@ -76,18 +76,18 @@ namespace {
 
     function req() {
         if (!defined('LYSINE_REQUEST_CLASS'))
-            return \Lysine\HTTP\Request::instance();
+            return \Lysine\HTTP\Request::getInstance();
 
         $class = LYSINE_REQUEST_CLASS;
-        return $class::instance();
+        return $class::getInstance();
     }
 
     function resp() {
         if (!defined('LYSINE_RESPONSE_CLASS'))
-            return \Lysine\HTTP\Response::instance();
+            return \Lysine\HTTP\Response::getInstance();
 
         $class = LYSINE_RESPONSE_CLASS;
-        return $class::instance();
+        return $class::getInstance();
     }
 
     function cfg($keys = null) {
