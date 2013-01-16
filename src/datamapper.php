@@ -15,6 +15,11 @@ abstract class Data {
     const BEFORE_SAVE_EVENT = 'BEFORE SAVE EVENT';
     const BEFORE_UPDATE_EVENT = 'BEFORE UPDATE EVENT';
 
+    const CURRENT_TIMESTAMP = 'current_timestamp';      // time()
+    const CURRENT_DATETIME = 'current_datetime';        // strftime('%F %T')
+    const CURRENT_DATE = 'current_date';                // strftime('%F')
+    const CURRENT_TIME = 'current_time';                // strftime('%T')
+
     static protected $storage;
     static protected $collection;
     static protected $props_meta = array();
@@ -29,8 +34,19 @@ abstract class Data {
         foreach ($props as $prop => $val)
             $this->$prop = $val;
 
-        if (!$this->is_fresh = $is_fresh)
+        if (!$this->is_fresh = $is_fresh) {
             $this->dirty_props = array();
+        } else {
+            // 给新对象的属性设置默认值
+            foreach ($this->getPropMeta() as $prop => $prop_meta) {
+                if (isset($this->props[$prop]) || $prop_meta['allow_null'])
+                    continue;
+
+                $default = $this->getDefaultValue($prop_meta);
+                if ($default !== null)
+                    $this->$prop = $default;
+            }
+        }
     }
 
     public function __get($prop) {
@@ -39,14 +55,6 @@ abstract class Data {
 
     public function __set($prop, $val) {
         $this->setProp($prop, $val, true);
-    }
-
-    public function __isset($prop) {
-        return isset($this->props[$prop]);
-    }
-
-    public function __unset($prop) {
-        unset($this->props[$prop]);
     }
 
     // 此方法是提供给Mapper赋值的快捷方法
@@ -97,7 +105,7 @@ abstract class Data {
     }
 
     public function hasProp($prop) {
-        return (bool)static::getMapper()->getMeta()->getPropMeta($prop);
+        return (bool)$this->getPropMeta($prop);
     }
 
     public function setProps(array $props) {
@@ -145,17 +153,17 @@ abstract class Data {
 
     //////////////////// protected method ////////////////////
     protected function getProp($prop, array $prop_meta = null) {
-        $prop_meta = $prop_meta ?: static::getMapper()->getMeta()->getPropMeta($prop);
+        $prop_meta = $prop_meta ?: $this->getPropMeta($prop);
         if (!$prop_meta)
             throw new UndefinedPropertyError(get_class() .": Undefined property {$prop}");
 
         return isset($this->props[$prop])
              ? $this->props[$prop]
-             : $prop_meta['default'];
+             : $this->getDefaultValue($prop_meta);
     }
 
     protected function setProp($prop, $val, $strict) {
-        if (!$prop_meta = static::getMapper()->getMeta()->getPropMeta($prop)) {
+        if (!$prop_meta = $this->getPropMeta($prop)) {
             if (!$strict) return false;
             throw new UndefinedPropertyError(get_class() .": Undefined property {$prop}");
         }
@@ -198,6 +206,20 @@ abstract class Data {
         }
 
         return $val;
+    }
+
+    protected function getDefaultValue($prop_meta) {
+        switch ($prop_meta['default']) {
+            case self::CURRENT_TIMESTAMP: return time();
+            case self::CURRENT_DATETIME: return strftime('%F %T');
+            case self::CURRENT_DATE: return strftime('%F');
+            case self::CURRENT_TIME: return strftime('%T');
+            default: return $prop_meta['default'];
+        }
+    }
+
+    protected function getPropMeta($prop = null) {
+        return static::getMapper()->getMeta()->getPropMeta($prop);
     }
 
     // {{{ 内置事件响应方法
@@ -388,9 +410,6 @@ abstract class Mapper {
                     break;
 
                 if (isset($props_data[$prop]))
-                    break;
-
-                if ($prop_meta['default'] !== null)
                     break;
 
                 if ($prop_meta['primary_key'] && $prop_meta['auto_increase'])
