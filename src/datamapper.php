@@ -44,7 +44,7 @@ abstract class Data {
 
                 $default = $this->getDefaultValue($prop_meta);
                 if ($default !== null)
-                    $this->$prop = $default;
+                    $this->changeProp($prop, $default);
             }
         }
     }
@@ -184,10 +184,8 @@ abstract class Data {
 
         $val = $this->formatProp($val, $prop_meta);
 
-        if ($val !== $this->getProp($prop, $prop_meta)) {
-            $this->props[$prop] = $val;
-            $this->dirty_props[$prop] = 1;
-        }
+        if (!array_key_exists($prop, $this->props) || $val !== $this->props[$prop])
+            $this->changeProp($prop, $val);
 
         return true;
     }
@@ -220,6 +218,11 @@ abstract class Data {
 
     protected function getPropMeta($prop = null) {
         return static::getMapper()->getMeta()->getPropMeta($prop);
+    }
+
+    final private function changeProp($prop, $val) {
+        $this->props[$prop] = $val;
+        $this->dirty_props[$prop] = 1;
     }
 
     // {{{ 内置事件响应方法
