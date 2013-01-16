@@ -46,6 +46,14 @@ abstract class Data {
         $this->setProp($prop, $val, true);
     }
 
+    public function __isset($prop) {
+        return isset($this->props[$prop]);
+    }
+
+    public function __unset($prop) {
+        unset($this->props[$prop]);
+    }
+
     // 此方法是提供给Mapper赋值的快捷方法
     // 除Mapper外都不该调用此方法赋值
     public function __merge(array $props) {
