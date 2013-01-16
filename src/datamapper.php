@@ -15,11 +15,6 @@ abstract class Data {
     const BEFORE_SAVE_EVENT = 'BEFORE SAVE EVENT';
     const BEFORE_UPDATE_EVENT = 'BEFORE UPDATE EVENT';
 
-    const TYPE_INT = 'integer';
-    const TYPE_FLOAT = 'float';
-    const TYPE_STRING = 'string';
-    const TYPE_ARRAY = 'array';
-
     static protected $storage;
     static protected $collection;
     static protected $props_meta = array();
@@ -194,11 +189,11 @@ abstract class Data {
             return null;
 
         switch ($prop_meta['type']) {
-            case Data::TYPE_INT:
+            case 'int':
+            case 'integer':
                 return (int)$val;
-            case Data::TYPE_FLOAT:
-                return (float)$val;
-            case Data::TYPE_STRING:
+            case 'text':
+            case 'string':
                 return (string)$val;
         }
 
