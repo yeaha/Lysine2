@@ -207,12 +207,18 @@ abstract class Data {
     }
 
     protected function getDefaultValue($prop_meta) {
-        switch ($prop_meta['default']) {
-            case self::CURRENT_TIMESTAMP: return time();
-            case self::CURRENT_DATETIME: return strftime('%F %T');
-            case self::CURRENT_DATE: return strftime('%F');
-            case self::CURRENT_TIME: return strftime('%T');
-            default: return $prop_meta['default'];
+        $default = $prop_meta['default'];
+
+        if ($default === self::CURRENT_TIMESTAMP) {
+            return time();
+        } elseif ($default === self::CURRENT_DATETIME) {
+            return strftime('%F %T');
+        } elseif ($default === self::CURRENT_DATE) {
+            return strftime('%F');
+        } elseif ($default === self::CURRENT_TIME) {
+            return strftime('%T');
+        } else {
+            return $default;
         }
     }
 
