@@ -5,4 +5,7 @@ return array(
         'host' => '127.0.0.1',
         'database' => 0,
     ),
+    'mock.storage' => array(
+        'class' => '\Test\Mock\DataMapper\Storage',
+    ),
 );
