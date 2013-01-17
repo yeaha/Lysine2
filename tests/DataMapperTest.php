@@ -18,9 +18,12 @@ class DataMapperData extends \PHPUnit_Framework_TestCase {
     public function testDefaultValue() {
         $this->setPropsMeta(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
-            'create_time' => array('type' => 'datetime', 'default' => Data::CURRENT_DATETIME),
-            'update_time' => array('type' => 'datetime', 'allow_null' => true, 'default' => Data::CURRENT_DATETIME),
-            'active' => array('type' => 'integer', 'default' => 0),
+            'datetime1' => array('type' => 'datetime', 'default' => Data::CURRENT_DATETIME),
+            'datetime2' => array('type' => 'datetime', 'allow_null' => true, 'default' => Data::CURRENT_DATETIME),
+            'timestamp' => array('type' => 'datetime', 'default' => Data::CURRENT_TIMESTAMP),
+            'date' => array('type' => 'datetime', 'default' => Data::CURRENT_DATE),
+            'time' => array('type' => 'datetime', 'default' => Data::CURRENT_TIME),
+            'p' => array('type' => 'integer', 'default' => 0),
         ));
 
         $class = $this->class;
@@ -28,12 +31,18 @@ class DataMapperData extends \PHPUnit_Framework_TestCase {
 
         $this->assertNull($d->id);
 
-        $this->assertEquals($d->create_time, strftime('%F %T'));
-        $this->assertTrue(isset($d->create_time));
+        $this->assertEquals($d->datetime1, strftime('%F %T'));
+        $this->assertTrue(isset($d->datetime1));
 
-        $this->assertEquals($d->update_time, strftime('%F %T'));
-        $this->assertFalse(isset($d->update_time));
+        $this->assertEquals($d->datetime2, strftime('%F %T'));
+        $this->assertFalse(isset($d->datetime2));
 
-        $this->assertEquals($d->active, 0);
+        $this->assertEquals($d->timestamp, time());
+
+        $this->assertEquals($d->date, strftime('%F'));
+
+        $this->assertEquals($d->time, strftime('%T'));
+
+        $this->assertEquals($d->p, 0);
     }
 }
