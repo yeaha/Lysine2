@@ -57,6 +57,10 @@ abstract class Data {
         $this->setProp($prop, $val, true);
     }
 
+    public function __isset($prop) {
+        return isset($this->props[$prop]);
+    }
+
     // 此方法是提供给Mapper赋值的快捷方法
     // 除Mapper外都不该调用此方法赋值
     public function __merge(array $props) {
@@ -451,7 +455,7 @@ abstract class Mapper {
 }
 
 class Meta {
-    static private $instance = array();
+    static protected $instance = array();
     static private $default_prop_meta = array(
         'name' => NULL,
         'type' => NULL,
