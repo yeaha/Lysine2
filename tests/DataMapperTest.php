@@ -148,7 +148,13 @@ class DataMapperData extends \PHPUnit_Framework_TestCase {
         ));
 
         $class = $this->class;
-        $data = new $class;
+        $data = new $class(array(
+            'email' => 'yangyi.cn.gz@gmail.com',
+            'name' => 'yangyi',
+        ));
+
+        $this->assertEquals($data->email, 'yangyi.cn.gz@gmail.com');
+        $this->assertEquals($data->name, 'yangyi');
 
         $test = false;
         try {
