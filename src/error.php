@@ -55,5 +55,8 @@ class UndefinedPropertyError extends \Lysine\InvalidArgumentError {
 class UnexpectedValueError extends \Lysine\UnexpectedValueError {
 }
 
+class RefuseUpdateError extends \Lysine\UnexpectedValueError {
+}
+
 class NullNotAllowedError extends \Lysine\UnexpectedValueError {
 }

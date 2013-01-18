@@ -177,7 +177,7 @@ abstract class Data {
 
         if (!$this->is_fresh && ($prop_meta['refuse_update'] || $prop_meta['primary_key'])) {
             if (!$strict) return false;
-            throw new RuntimeError(get_class() .": Property {$prop} refuse update");
+            throw new RefuseUpdateError(get_class() .": Property {$prop} refuse update");
         }
 
         if (!$prop_meta['allow_null'] && $val === null)

@@ -13,6 +13,7 @@ return array(
     'lysine\datamapper\mapper' => 'datamapper.php',
     'lysine\datamapper\meta' => 'datamapper.php',
     'lysine\datamapper\nullnotallowederror' => 'error.php',
+    'lysine\datamapper\refuseupdateerror' => 'error.php',
     'lysine\datamapper\registry' => 'datamapper.php',
     'lysine\datamapper\runtimeerror' => 'error.php',
     'lysine\datamapper\undefinedpropertyerror' => 'error.php',
