@@ -172,4 +172,27 @@ class DataMapperData extends \PHPUnit_Framework_TestCase {
         }
         $this->assertTrue($test);
     }
+
+    public function testStrictProp() {
+        $this->setPropsMeta(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+            'name' => array('type' => 'string', 'strict' => true),
+            'address' => array('type' => 'string'),
+        ));
+
+        $class = $this->class;
+        $data = new $class;
+
+        $data->setProps(array(
+            'name' => 'abc',
+            'address' => 'def',
+            'other' => 'xyz',
+        ));
+        $this->assertFalse(isset($data->name), 'setProps()没有忽略strict属性');
+        $this->assertFalse(isset($data->other), 'setProps()没有忽略不存在的属性');
+        $this->assertTrue(isset($data->address), 'setProps()应该可以修改非strict属性');
+
+        $data->name = 'abc';
+        $this->assertTrue(isset($data->name), 'strict属性应该允许->设置');
+    }
 }
