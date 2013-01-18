@@ -49,7 +49,7 @@ class DataMapperData extends \PHPUnit_Framework_TestCase {
     public function testSetProp() {
         $this->setPropsMeta(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
-            'email' => array('type' => 'string', 'refuse_update' => true),
+            'email' => array('type' => 'string', 'refuse_update' => true, 'pattern' => "/^([a-z0-9_\-\.])+\@([a-z0-9_\-\.])+\.([a-z]{2,4})$/i"),
             'name' => array('type' => 'string', 'allow_null' => true),
         ));
 
@@ -57,8 +57,16 @@ class DataMapperData extends \PHPUnit_Framework_TestCase {
         $data = new $class;
         $this->assertTrue($data->isFresh());
 
-        $data->email = '';
-        $this->assertNull($data->email, '对string类型的属性赋值\'\'应该转换为null');
+        $test = false;
+        try {
+            $data->email = 'yangyi';
+        } catch (\Lysine\DataMapper\UnexpectedValueError $ex) {
+            $test = true;
+        }
+        $this->assertTrue($test, '属性pattern检查没有生效');
+
+        $data->name = '';
+        $this->assertNull($data->name, '对string类型的属性赋值\'\'应该转换为null');
 
         $data->email = 'yangyi.cn.gz@gmail.com';
         $data->name = 'yangyi';
