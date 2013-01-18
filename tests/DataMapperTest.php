@@ -183,13 +183,16 @@ class DataMapperData extends \PHPUnit_Framework_TestCase {
         $class = $this->class;
         $data = new $class;
 
-        $data->setProps(array(
-            'name' => 'abc',
-            'address' => 'def',
-            'other' => 'xyz',
-        ));
+        try {
+            $data->setProps(array(
+                'name' => 'abc',
+                'address' => 'def',
+                'other' => 'xyz',
+            ));
+        } catch (\Lysine\DataMapper\UndefinedPropertyError $ex) {
+            $this->fail('setProps()没有忽略不存在的属性');
+        }
         $this->assertFalse(isset($data->name), 'setProps()没有忽略strict属性');
-        $this->assertFalse(isset($data->other), 'setProps()没有忽略不存在的属性');
         $this->assertTrue(isset($data->address), 'setProps()应该可以修改非strict属性');
 
         $data->name = 'abc';
