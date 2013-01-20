@@ -152,18 +152,10 @@ class CookieContextHandler extends ContextHandler {
     // 保存到cookie
     protected function save() {
         $token = $this->getToken();
+        $data = $this->data ? $this->encode($this->data) : '';
         $expire = ($ttl = (int)$this->getConfig('ttl')) ? (time() + $ttl) : 0;
         $path = $this->getConfig('path') ?: '/';
         $domain = $this->getConfig('domain');
-
-        if ($this->data) {
-            $data = array('c' => $this->data);
-            if ($expire) $data['t'] = $expire;
-
-            $data = $this->encode($data);
-        } else {
-            $data = '';
-        }
 
         resp()->setCookie($token, $data, $expire, $path, $domain);
 
@@ -182,10 +174,7 @@ class CookieContextHandler extends ContextHandler {
             if (!$data = $this->decode($data))
                 break;
 
-            if ($this->getConfig('ttl') && (!isset($data['t']) || $data['t'] <= time()))
-                break;
-
-            return $this->data = isset($data['c']) ? $data['c'] : array();
+            return $this->data = $data;
         } while (false);
 
         return $this->data = array();
