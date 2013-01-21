@@ -100,6 +100,7 @@ class SessionContextHandler extends ContextHandler {
 //     ),
 //     'domain' => (string),        // 可选，cookie 域名，默认：null
 //     'path' => (string),          // 可选，cookie 路径，默认：/
+//     'expire_at' => (integer),    // 可选，过期时间，优先级高于ttl
 //     'ttl' => (integer),          // 可选，生存期，单位：秒，默认：0
 //     'bind_ip' => (bool),         // 可选，是否绑定到IP，默认：false
 //     'zip' => (bool),             // 可选，是否将数据压缩保存，默认：false
@@ -153,7 +154,8 @@ class CookieContextHandler extends ContextHandler {
     protected function save() {
         $token = $this->getToken();
         $data = $this->data ? $this->encode($this->data) : '';
-        $expire = ($ttl = (int)$this->getConfig('ttl')) ? (time() + $ttl) : 0;
+        if (!$expire = (int)$this->getConfig('expire_at'))
+            $expire = ($ttl = (int)$this->getConfig('ttl')) ? (time() + $ttl) : 0;
         $path = $this->getConfig('path') ?: '/';
         $domain = $this->getConfig('domain');
 
