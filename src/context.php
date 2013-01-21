@@ -92,7 +92,6 @@ class SessionContextHandler extends ContextHandler {
 // $config = array(
 //     'token' => (string),         // 必须，上下文存储唯一标识
 //     'salt' => (string),          // 必须，用于计算数字签名的随机字符串
-//     'salt_func' => (callback),   // 可选，获取salt字符串自定义方法，设置了salt_func就可以不设置salt
 //     'encrypt' => array(          // 可选，加密方法配置
 //         (string),                //   必须，ciphers name，例如MCRYPT_3DES
 //         (string),                //   可选，ciphers mode, 默认MCRYPT_MODE_ECB
@@ -110,7 +109,6 @@ class SessionContextHandler extends ContextHandler {
 // $handler = new CookieContextHandler($config);
 class CookieContextHandler extends ContextHandler {
     protected $data;
-    protected $salt;
 
     public function set($key, $val) {
         $this->restore();
@@ -281,21 +279,9 @@ class CookieContextHandler extends ContextHandler {
     }
 
     protected function getSalt() {
-        if ($this->salt)
-            return $this->salt;
-
-        // salt function可以实现运行期间动态获取salt字符串
-        // 例如，把用户id保存在上下文中，以用户密码作为salt
-        if ($salt_func = $this->getConfig('salt_func')) {
-            $salt = call_user_func($salt_func, $this->data);
-        } else {
-            $salt = $this->getConfig('salt');
-        }
-
-        if (!$salt)
+        if (!$salt = $this->getConfig('salt'))
             throw new RuntimeError('Require context encrypt salt string');
-
-        return $this->salt = $salt;
+        return $salt;
     }
 }
 
