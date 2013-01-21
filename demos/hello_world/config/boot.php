@@ -12,7 +12,7 @@ $config = require __DIR__ .'/_config.php';
 
 Config::import($config);
 
-Lysine\Service\Manager::instance()
+Lysine\Service\Manager::getInstance()
     ->importConfig(Config::get('services'));
 
 Lysine\logger()
