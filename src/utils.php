@@ -101,7 +101,7 @@ class Session implements \ArrayAccess {
     protected $snapshot = array();
 
     protected function __construct() {
-        $this->start = isset($_SESSION);
+        $this->start = (session_status() === PHP_SESSION_ACTIVE);
 
         if ($this->start)
             $this->data = $_SESSION instanceof Session
@@ -141,10 +141,13 @@ class Session implements \ArrayAccess {
 
         $this->snapshot = $this->data;
         $_SESSION = $this;
+
+        $this->start = (session_status() === PHP_SESSION_ACTIVE);
     }
 
     public function reset() {
         $this->data = $this->snapshot;
+        $this->start = (session_status() === PHP_SESSION_ACTIVE);
     }
 
     public function destroy() {
@@ -158,7 +161,7 @@ class Session implements \ArrayAccess {
         if ($this->start)
             return true;
 
-        if (PHP_SAPI == 'cli')
+        if (session_status() === PHP_SESSION_DISABLED || PHP_SAPI == 'cli')
             return false;
 
         session_start();
