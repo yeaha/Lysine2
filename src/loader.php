@@ -1,4 +1,7 @@
 <?php
+if (version_compare(PHP_VERSION, '5.4.0', '<'))
+    die('Lysine require PHP version 5.4.0 or later');
+
 defined('DEBUG') or define('DEBUG', false);
 
 if (!defined('LYSINE_NO_ERROR_HANDLER'))
