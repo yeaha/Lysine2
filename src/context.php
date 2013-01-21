@@ -238,6 +238,8 @@ class CookieContextHandler extends ContextHandler {
         $iv_size = mcrypt_get_iv_size($cipher, $mode);
         $iv = mcrypt_create_iv($iv_size, $device);
 
+        $salt = substr($salt, 0, $iv_size);
+
         return mcrypt_encrypt($cipher, $salt, $string, $mode, $iv);
     }
 
@@ -247,6 +249,8 @@ class CookieContextHandler extends ContextHandler {
 
         $iv_size = mcrypt_get_iv_size($cipher, $mode);
         $iv = mcrypt_create_iv($iv_size, $device);
+
+        $salt = substr($salt, 0, $iv_size);
 
         if ($decrypted = mcrypt_decrypt($cipher, $salt, $string, $mode, $iv))
             $decrypted = rtrim($decrypted, "\0");   // remove padding
