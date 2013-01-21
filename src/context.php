@@ -91,8 +91,9 @@ class SessionContextHandler extends ContextHandler {
 //
 // $config = array(
 //     'token' => (string),         // 必须，上下文存储唯一标识
-//     'salt' => (string),          // 必须，用于计算数字签名的随机字符串
+//     'sign_salt' => (mixed),      // 必须，用于计算数字签名的salt，可以为字符串或者callable方法
 //     'encrypt' => array(          // 可选，加密方法配置
+//         (string),                //   必须，salt string，随机字符串
 //         (string),                //   必须，ciphers name，例如MCRYPT_3DES
 //         (string),                //   可选，ciphers mode, 默认MCRYPT_MODE_ECB
 //         (integer),               //   可选，random device，默认MCRYPT_RAND
@@ -232,56 +233,75 @@ class CookieContextHandler extends ContextHandler {
 
     // 加密字符串
     protected function encrypt($string) {
-        $config = $this->getConfig('encrypt');
-        $cipher = $config[0];
-        $mode = isset($config[1]) ? $config[1] : MCRYPT_MODE_ECB;
-        $device = isset($config[2]) ? $config[2] : MCRYPT_RAND;
+        list($salt, $cipher, $mode, $device) = $this->getEncryptConfig();
 
         $iv_size = mcrypt_get_iv_size($cipher, $mode);
         $iv = mcrypt_create_iv($iv_size, $device);
-        $key = $this->getSalt();
 
-        return mcrypt_encrypt($cipher, $key, $string, $mode, $iv);
+        return mcrypt_encrypt($cipher, $salt, $string, $mode, $iv);
     }
 
     // 解密字符串
     protected function decrypt($string) {
-        $config = $this->getConfig('encrypt');
-        $cipher = $config[0];
-        $mode = isset($config[1]) ? $config[1] : MCRYPT_MODE_ECB;
-        $device = isset($config[2]) ? $config[2] : MCRYPT_RAND;
+        list($salt, $cipher, $mode, $device) = $this->getEncryptConfig();
 
         $iv_size = mcrypt_get_iv_size($cipher, $mode);
         $iv = mcrypt_create_iv($iv_size, $device);
-        $key = $this->getSalt();
 
-        if ($decrypted = mcrypt_decrypt($cipher, $key, $string, $mode, $iv))
+        if ($decrypted = mcrypt_decrypt($cipher, $salt, $string, $mode, $iv))
             $decrypted = rtrim($decrypted, "\0");   // remove padding
 
         return $decrypted;
     }
 
-    // 生成数字签名
-    // $string = json_encode(array(
-    //     'c' => (array),      // 上下文数据
-    //     't' => (integer),    // 过期时间
-    // ));
-    protected function getSign($string) {
-        $salt = $this->getSalt();
-        $data = array($string, $salt);
+    // 获得加密配置
+    protected function getEncryptConfig() {
+        $config = $this->getConfig('encrypt') ?: array();
 
-        if ($this->getConfig('bind_ip')) {
-            $ip = req()->ip();
-            $data[] = long2ip(ip2long($ip) & ip2long('255.255.255.0'));     // 192.168.1.123 -> 192.168.1.0
-        }
+        if (!isset($config[0]) || !$config[0])
+            throw new RuntimeError('Require encrypt salt string');
+        $salt = $config[0];
 
-        return sha1(implode(',', $data), true);
+        if (!isset($config[1]) || !$config[1])
+            throw new RuntimeError('Require encrypt cipher name');
+        $cipher = $config[1];
+
+        if (!in_array($cipher, mcrypt_list_algorithms()))
+            throw new RuntimeError('Unsupport encrypt cipher: '. $cipher);
+
+        $mode = isset($config[2]) ? $config[2] : MCRYPT_MODE_ECB;
+        $device = isset($config[3]) ? $config[3] : MCRYPT_RAND;
+
+        return array($salt, $cipher, $mode, $device);
     }
 
-    protected function getSalt() {
-        if (!$salt = $this->getConfig('salt'))
-            throw new RuntimeError('Require context encrypt salt string');
-        return $salt;
+    // 生成数字签名
+    protected function getSign($string) {
+        $salt = $this->getSignSalt($string);
+        return sha1($string . $salt, true);
+    }
+
+    // 获得计算数字签名的salt字符串
+    protected function getSignSalt($string) {
+        do {
+            if (!$salt = $this->getConfig('sign_salt'))
+                break;
+
+            if (is_callable($salt))
+                $salt = call_user_func($salt, $string);
+
+            if (!$salt)
+                break;
+
+            if ($this->getConfig('bind_ip')) {
+                $ip = req()->ip();
+                $salt .= long2ip(ip2long($ip) & ip2long('255.255.255.0'));     // 192.168.1.123 -> 192.168.1.0
+            }
+
+            return $salt;
+        } while (false);
+
+        throw new RuntimeError('Require signature salt string');
     }
 }
 

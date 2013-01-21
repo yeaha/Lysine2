@@ -17,7 +17,7 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
     public function testAbstractMethods() {
         $handlers = array(
             'session' => array('token' => 'test'),
-            'cookie' => array('token' => 'test', 'salt' => 'fdjsaifowjfojweo'),
+            'cookie' => array('token' => 'test', 'sign_salt' => 'fdjsaifowjfojweo'),
             'redis' => array('token' => 'test', 'ttl' => 300, 'service' => 'redis.local'),
         );
 
@@ -47,9 +47,9 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
 
     public function testCookieContext() {
         $config_list = array(
-            '明文' => array('token' => 'test', 'salt' => 'fdajkfldsjfldsf'),
-            '明文+压缩' => array('token' => 'test', 'salt' => 'fdajkfldsjfldsf', 'zip' => true),
-            '加密' => array('token' => 'test', 'salt' => 'fdajkfldsjfldsf', 'encrypt' => array(MCRYPT_RIJNDAEL_256)),
+            '明文' => array('token' => 'test', 'sign_salt' => 'fdajkfldsjfldsf'),
+            '明文+压缩' => array('token' => 'test', 'sign_salt' => 'fdajkfldsjfldsf', 'zip' => true),
+            '加密' => array('token' => 'test', 'sign_salt' => 'fdajkfldsjfldsf', 'encrypt' => array('i9qrjofj2o3jr', MCRYPT_RIJNDAEL_256)),
         );
 
         $mock_cookie = \Test\Mock\Cookie::getInstance();
@@ -72,7 +72,7 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         $mock_cookie = \Test\Mock\Cookie::getInstance();
         $mock_cookie->reset();
 
-        $config = array('token' => 'test', 'salt' => 'fdajkfldsjfldsf');
+        $config = array('token' => 'test', 'sign_salt' => 'fdajkfldsjfldsf');
         $handler = new \Lysine\CookieContextHandler($config);
 
         $handler->set('test', 'abc');
@@ -86,8 +86,30 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         $_COOKIE['test'] = substr($_COOKIE['test'], 1);
         $handler->reset();
 
-        $handler->setConfig('salt', 'r431oj0if31jr3');
+        $handler->setConfig('sign_salt', 'r431oj0if31jr3');
         $this->assertNull($handler->get('test'), 'salt没有起作用');
+    }
+
+    // 从自定义方法内计算sign salt
+    public function testCookieContextSignSaltFunc() {
+        $mock_cookie = \Test\Mock\Cookie::getInstance();
+        $mock_cookie->reset();
+
+        $salt_func = function($string) {
+            $context = json_decode($string, true) ?: array();
+            return isset($context['id']) ? $context['id'] : 'rj102jrojfoe';
+        };
+
+        $config = array('token' => 'test', 'sign_salt' => $salt_func);
+        $handler = new \Lysine\CookieContextHandler($config);
+
+        $id = uniqid();
+        $handler->set('id', $id);
+
+        $mock_cookie->apply();
+        $handler->reset();
+
+        $this->assertEquals($id, $handler->get('id'), '自定义sign salt没有起作用');
     }
 
     // 地址绑定
@@ -95,7 +117,7 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         $mock_cookie = \Test\Mock\Cookie::getInstance();
         $mock_cookie->reset();
 
-        $config = array('token' => 'test', 'salt' => 'fdajkfldsjfldsf', 'bind_ip' => true);
+        $config = array('token' => 'test', 'sign_salt' => 'fdajkfldsjfldsf', 'bind_ip' => true);
         $_SERVER['REMOTE_ADDR'] = '192.168.1.1';
 
         $handler = new \Lysine\CookieContextHandler($config);
