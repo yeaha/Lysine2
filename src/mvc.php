@@ -84,8 +84,15 @@ class Router {
 
         \Lysine\logger()->debug('Dispatch to controller: '. $class);
 
-        if (!$class || !class_exists($class))
-            throw HTTP\Error::factory(HTTP::NOT_FOUND);
+        if (!$class || !class_exists($class)) {
+            $exception = HTTP\Error::factory(HTTP::NOT_FOUND);
+            $exception->setMore(array(
+                'class' => $class,
+                'path' => $path,
+            ));
+
+            throw $exception;
+        }
 
         $this->fireEvent(self::BEFORE_DISPATCH_EVENT, array($class, $path));
 

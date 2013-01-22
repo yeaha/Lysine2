@@ -14,6 +14,10 @@ class Error extends \Exception {
              ? $this->more
              : (isset($this->more[$key]) ? $this->more[$key] : false);
     }
+
+    public function setMore(array $more) {
+        $this->more = array_merge($this->more, $more);
+    }
 }
 
 class RuntimeError extends Error {
