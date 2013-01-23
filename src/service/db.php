@@ -43,14 +43,14 @@ abstract class Adapter implements \Lysine\Service\IService {
         $options[\PDO::ATTR_STATEMENT_CLASS] = array('\Lysine\Service\DB\Statement');
 
         try {
-            $this->handler = new \PDO($dsn, $user, $password, $options);
+            $handler = new \PDO($dsn, $user, $password, $options);
         } catch (\PDOException $ex) {
             throw new Service\ConnectionError('Database connect failed!', 0, $ex, array(
                 'dsn' => $dsn,
             ));
         }
 
-        return $this->handler;
+        return $this->handler = $handler;
     }
 
     public function disconnect() {
