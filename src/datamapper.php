@@ -281,10 +281,10 @@ abstract class Mapper {
     static private $instance = array();
     protected $class;
 
-    abstract protected function doFind($id, IService $storage = null, $collection = null);
-    abstract protected function doInsert(Data $data, IService $storage = null, $collection = null);
-    abstract protected function doUpdate(Data $data, IService $storage = null, $collection = null);
-    abstract protected function doDelete(Data $data, IService $storage = null, $collection = null);
+    abstract protected function doFind($id, \Lysine\Service\IService $storage = null, $collection = null);
+    abstract protected function doInsert(\Lysine\DataMapper\Data $data, \Lysine\Service\IService $storage = null, $collection = null);
+    abstract protected function doUpdate(\Lysine\DataMapper\Data $data, \Lysine\Service\IService $storage = null, $collection = null);
+    abstract protected function doDelete(\Lysine\DataMapper\Data $data, \Lysine\Service\IService $storage = null, $collection = null);
 
     protected function __construct($class) {
         $this->class = $class;
