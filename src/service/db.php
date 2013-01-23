@@ -55,7 +55,8 @@ abstract class Adapter implements \Lysine\Service\IService {
 
     public function disconnect() {
         if ($this->isConnected()) {
-            while ($this->transaction_counter)
+            $max = 9;   // 最多9次，避免死循环
+            while ($this->transaction_counter && $max-- > 0)
                 $this->rollback();
 
             $this->handler = null;
