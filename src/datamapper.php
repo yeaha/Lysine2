@@ -675,7 +675,7 @@ class DBMapper extends Mapper {
 
         $where = $params = array();
         foreach (array_keys($primary_key) as $prop) {
-            $where[] = $storage->qcol($prop) .' = ?';
+            $where[] = $storage->quoteColumn($prop) .' = ?';
 
             if (!isset($id[$prop]))
                 throw new RuntimeError("{$this->class}: Illegal id value");

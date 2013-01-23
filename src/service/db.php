@@ -8,8 +8,8 @@ abstract class Adapter implements \Lysine\Service\IService {
     protected $handler;
     protected $transaction_counter = 0;
 
-    abstract public function qtab($table);
-    abstract public function qcol($column);
+    abstract public function quoteTable($table);
+    abstract public function quoteColumn($column);
     abstract public function lastId($table = null, $column = null);
 
     public function __construct(array $config = array()) {
@@ -122,10 +122,10 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $sth;
     }
 
-    public function qstr($val) {
+    public function quote($val) {
         if (is_array($val)) {
             foreach ($val as $k => $v)
-                $val[$k] = $this->qstr($v);
+                $val[$k] = $this->quote($v);
             return $val;
         }
 
@@ -196,8 +196,8 @@ abstract class Adapter implements \Lysine\Service\IService {
 
         $sql = sprintf(
             'INSERT INTO %s (%s) VALUES (%s)',
-            $this->qtab($table),
-            implode(',', $this->qcol($cols)),
+            $this->quoteTable($table),
+            implode(',', $this->quoteColumn($cols)),
             implode(',', $vals)
         );
 
@@ -210,21 +210,21 @@ abstract class Adapter implements \Lysine\Service\IService {
         $set = array();
         foreach ($cols as $col => $val) {
             if ($only_col) {
-                $set[] = $this->qcol($val) .' = ?';
+                $set[] = $this->quoteColumn($val) .' = ?';
             } else {
                 $val = ($val instanceof Expr) ? $val : '?';
-                $set[] = $this->qcol($col) .' = '. $val;
+                $set[] = $this->quoteColumn($col) .' = '. $val;
             }
         }
 
-        $sql = sprintf('UPDATE %s SET %s', $this->qtab($table), implode(',', $set));
+        $sql = sprintf('UPDATE %s SET %s', $this->quoteTable($table), implode(',', $set));
         if ($where) $sql .= ' WHERE '. $where;
 
         return $this->prepare($sql);
     }
 
     public function prepareDelete($table, $where = null) {
-        $table = $this->qtab($table);
+        $table = $this->quoteTable($table);
 
         $sql = sprintf('DELETE FROM %s', $table);
         if ($where)
@@ -367,7 +367,7 @@ class Select {
         $params = array();
 
         $sql .= $this->cols
-              ? implode(', ', $adapter->qcol($this->cols))
+              ? implode(', ', $adapter->quoteColumn($this->cols))
               : '*';
 
         list($table, $table_params) = $this->compileFrom();
@@ -522,14 +522,14 @@ class Select {
     //////////////////// protected method ////////////////////
 
     protected function whereSub($col, $relation, $in) {
-        $col = $this->adapter->qcol($col);
+        $col = $this->adapter->quoteColumn($col);
         $params = array();
 
         if ($relation instanceof Select) {
             list($sql, $params) = $relation->compile();
             $sub = $sql;
         } else {
-            $sub = implode(',', $this->adapter->qstr($relation));
+            $sub = implode(',', $this->adapter->quote($relation));
         }
 
         $where = $in
@@ -545,11 +545,11 @@ class Select {
 
         if ($this->table instanceof Select) {
             list($sql, $params) = $this->table->compile();
-            $table = sprintf('(%s) AS %s', $sql, $this->adapter->qtab(uniqid()));
+            $table = sprintf('(%s) AS %s', $sql, $this->adapter->quoteTable(uniqid()));
         } elseif ($this->table instanceof Expr) {
             $table = (string)$this->table;
         } else {
-            $table = $this->adapter->qtab($this->table);
+            $table = $this->adapter->quoteTable($this->table);
         }
 
         return array($table, $params);
@@ -577,7 +577,7 @@ class Select {
 
         list($group_cols, $having, $having_params) = $this->group_by;
 
-        $group_cols = $this->adapter->qcol($group_cols);
+        $group_cols = $this->adapter->quoteColumn($group_cols);
         if (is_array($group_cols))
             $group_cols = implode(',', $group_cols);
 

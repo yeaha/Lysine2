@@ -9,14 +9,14 @@ if (!extension_loaded('pdo_pgsql'))
 class Pgsql extends \Lysine\Service\DB\Adapter {
     protected $savepoint = array();
 
-    public function qtab($table) {
-        return $this->qcol($table);
+    public function quoteTable($table) {
+        return $this->quoteColumn($table);
     }
 
-    public function qcol($column) {
+    public function quoteColumn($column) {
         if (is_array($column)) {
             foreach ($column as $k => $c)
-                $column[$k] = $this->qcol($c);
+                $column[$k] = $this->quoteColumn($c);
             return $column;
         }
 
@@ -98,7 +98,7 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
         if ($schema)
             $sequence = $schema .'.'. $sequence;
 
-        return $this->qcol($sequence);
+        return $this->quoteColumn($sequence);
     }
 
     protected function parseTableName($table) {

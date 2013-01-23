@@ -9,14 +9,14 @@ if (!extension_loaded('pdo_sqlite'))
 class Sqlite extends \Lysine\Service\DB\Adapter {
     protected $savepoint = array();
 
-    public function qtab($table) {
-        return $this->qcol($table);
+    public function quoteTable($table) {
+        return $this->quoteColumn($table);
     }
 
-    public function qcol($column) {
+    public function quoteColumn($column) {
         if (is_array($column)) {
             foreach ($column as $k => $c)
-                $column[$k] = $this->qcol($c);
+                $column[$k] = $this->quoteColumn($c);
             return $column;
         }
 

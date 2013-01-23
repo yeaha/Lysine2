@@ -7,14 +7,14 @@ if (!extension_loaded('pdo_mysql'))
     throw new \Lysine\Service\RuntimeError('Require pdo_mysql extension!');
 
 class Mysql extends \Lysine\Service\DB\Adapter {
-    public function qtab($table) {
-        return $this->qcol($table);
+    public function quoteTable($table) {
+        return $this->quoteColumn($table);
     }
 
-    public function qcol($column) {
+    public function quoteColumn($column) {
         if (is_array($column)) {
             foreach ($column as $k => $c)
-                $column[$k] = $this->qcol($c);
+                $column[$k] = $this->quoteColumn($c);
             return $column;
         }
 
