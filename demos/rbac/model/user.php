@@ -8,7 +8,7 @@ class User extends \Lysine\DataMapper\DBData {
     static protected $collection = 'rbac.users';
     static protected $props_meta = array(
         'user_id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
-        'email' => array('type' => 'string', 'refuse_update' => true),
+        'email' => array('type' => 'string', 'refuse_update' => true, 'pattern' => '/^([a-z0-9_\-\.])+\@([a-z0-9_\-\.])+\.([a-z]{2,4})$/i'),
         'passwd' => array('type' => 'string', 'strict' => true),
         'create_time' => array('type' => 'datetime', 'refuse_update' => true, 'default' => \Lysine\DataMapper\Data::CURRENT_DATETIME),
     );
