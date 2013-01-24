@@ -196,6 +196,58 @@ class Request {
 
         return array_shift($ip_set);
     }
+
+    public function getAcceptTypes() {
+        return $this->getAccept('http_accept');
+    }
+
+    public function getAcceptLanguage() {
+        return $this->getAccept('http_accept_language');
+    }
+
+    public function getAcceptCharset() {
+        return $this->getAccept('http_accept_charset');
+    }
+
+    public function getAcceptEncoding() {
+        return $this->getAccept('http_accept_encoding');
+    }
+
+    public function isAcceptType($type) {
+        return $this->isAccept($type, $this->getAcceptTypes());
+    }
+
+    public function isAcceptLanguage($lang) {
+        return $this->isAccept($lang, $this->getAcceptLanguage());
+    }
+
+    public function isAcceptCharset($charset) {
+        return $this->isAccept($charset, $this->getAcceptCharset());
+    }
+
+    public function isAcceptEncoding($encoding) {
+        return $this->isAccept($encoding, $this->getAcceptEncoding());
+    }
+
+    //////////////////// protected method ////////////////////
+    protected function getAccept($header_key) {
+        if (!$accept = server($header_key))
+            return array();
+
+        $result = array();
+        $accept = strtolower($accept);
+        foreach (explode(',', $accept) as $accept) {
+            if (($pos = strpos($accept, ';')) !== false)
+                $accept = substr($accept, 0, $pos);
+            $result[] = trim($accept);
+        }
+
+        return $result;
+    }
+
+    protected function isAccept($find, array $accept) {
+        return in_array(strtolower($find), $accept, true);
+    }
 }
 
 class Response {

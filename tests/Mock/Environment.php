@@ -16,8 +16,11 @@ class Environment {
             parse_str($uri['query'], $_GET);
         }
 
-        if ($method != 'GET')
+        if ($method == 'GET') {
+            $_GET = $params;
+        } else {
             $_POST = $params;
+        }
 
         if (isset($options['ajax']) && $options['ajax'])
             self::useAjax();
@@ -40,11 +43,11 @@ class Environment {
         resp()->reset();
     }
 
-    static protected function useAjax() {
+    static public function useAjax() {
         self::setHeader('X-REQUESTED-WITH', 'xmlhttprequest');
     }
 
-    static protected function setHeader($key, $val) {
+    static public function setHeader($key, $val) {
         $key = strtoupper('http_' . str_replace('-', '_', $key));
         $_SERVER[$key] = $val;
     }
