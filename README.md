@@ -17,7 +17,7 @@ Lysine是一个PHP框架，为RESTful web app开发设计，从2010年开发至�
 功能特性
 ========
 
-* 基于PHP5.4新特性，namespace及trait
+* 基于PHP5.4新特性，[namespace](http://php.net/manual/en/language.namespaces.php)及[trait](http://php.net/manual/en/language.oop5.traits.php)
 * [RESTful](http://en.wikipedia.org/wiki/Representational_state_transfer) controller，以资源的方式组织web app，通过HTTP标准方法(GET/POST/PUT/DELETE)访问资源 (@src/mvc.php)
 * URL路由，自动匹配或者正则匹配 (@src/mvc.php)
 * 纯PHP实现的网页视图，支持视图layout特性 (\Lysine\View类 @src/mvc.php)
