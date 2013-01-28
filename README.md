@@ -17,7 +17,7 @@ Lysine是一个PHP框架，为RESTful web app开发设计，从2010年开发至�
 功能特性
 ========
 
-* 基于PHP5.4新特性，[namespace](http://php.net/manual/en/language.namespaces.php)及[trait](http://php.net/manual/en/language.oop5.traits.php)
+* 基于PHP 5.4新特性，[namespace](http://php.net/manual/en/language.namespaces.php)及[trait](http://php.net/manual/en/language.oop5.traits.php)
 * [RESTful](http://en.wikipedia.org/wiki/Representational_state_transfer) controller，以资源的方式组织web app，通过HTTP标准方法(GET/POST/PUT/DELETE)访问资源 (@src/mvc.php)
 * URL路由，自动匹配或者正则匹配 (@src/mvc.php)
 * 纯PHP实现的网页视图，支持视图layout特性 (\Lysine\View类 @src/mvc.php)
@@ -63,12 +63,12 @@ Role-based access control([RBAC](http://en.wikipedia.org/wiki/Role-based_access_
     phploc 1.7.4 by Sebastian Bergmann.
 
     Directories:                                          2
-    Files:                                               19
+    Files:                                               21
 
-    Lines of Code (LOC):                               4049
+    Lines of Code (LOC):                               4053
       Cyclomatic Complexity / Lines of Code:           0.15
     Comment Lines of Code (CLOC):                       351
-    Non-Comment Lines of Code (NCLOC):                 3698
+    Non-Comment Lines of Code (NCLOC):                 3702
 
     Namespaces:                                          11
     Interfaces:                                           2
