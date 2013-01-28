@@ -39,19 +39,10 @@ Lysine是一个PHP框架，为RESTful web app开发设计，从2010年开发至�
 DEMO
 ====
 
-hello word
-----------
+* Hello World: 经典示例 (@demos/hellow_world/)
+* RBAC: 用户角色访问权限控制 (@demos/rbac/)
 
-经典示例，也可以作为新项目的模板代码使用
-
-RBAC
-----
-
-Role-based access control([RBAC](http://en.wikipedia.org/wiki/Role-based_access_control))，以角色的方式控制不同用户访问权限
-
-其中包括了DataMapper对象封装、对象Event事件调用、登录会话上下文数据封装
-
-详见RBAC demo目录下README.md
+详见各demo目录下README.md
 
 代码构成
 =========
