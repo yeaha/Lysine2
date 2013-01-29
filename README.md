@@ -28,7 +28,7 @@ Lysine是一个PHP框架，为RESTful web app开发设计，从2010年开发至�
 * 程序日志记录，可输出至文件、[FirePHP](http://www.firephp.org/)、[FireLogger](http://firelogger.binaryage.com/)、[ChromePHP](http://www.chromephp.com/)
 * 基于事件驱动的对象组织 (\Lysine\Event和\Lysine\Traits\Event @src/core.php)
 * 存储服务管理，快捷定义和调用多种不同的外部服务 (\Lysine\Service\Manager @src/service/manager.php)
-* HTTP会话间上下文数据封装，支持存储到session、cookie、redis (\Lysine\Context @src/utils.php)
+* HTTP会话间上下文数据封装，支持存储到session、cookie、redis (\Lysine\Context @src/context.php)
 
 单元测试
 ========
