@@ -49,7 +49,6 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         $config_list = array(
             '明文' => array('token' => 'test', 'sign_salt' => 'fdajkfldsjfldsf'),
             '明文+压缩' => array('token' => 'test', 'sign_salt' => 'fdajkfldsjfldsf', 'zip' => true),
-            '加密' => array('token' => 'test', 'sign_salt' => 'fdajkfldsjfldsf', 'encrypt' => array('i9qrjofj2o3jr', MCRYPT_RIJNDAEL_256)),
         );
 
         $mock_cookie = \Test\Mock\Cookie::getInstance();
@@ -64,6 +63,31 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
             $handler->reset();
 
             $this->assertEquals($handler->get('test'), 'abc 中文', $msg);
+        }
+    }
+
+    public function testCookieEncrypt() {
+        $crypt = array(
+            'ciphers' => array(MCRYPT_RIJNDAEL_256, MCRYPT_3DES, MCRYPT_BLOWFISH, MCRYPT_CAST_256),
+            'mode' => array(MCRYPT_MODE_ECB, MCRYPT_MODE_CBC, MCRYPT_MODE_CFB, MCRYPT_MODE_OFB, MCRYPT_MODE_NOFB),
+        );
+
+        $config_default = array('token' => 'test', 'sign_salt' => 'fdajkfldsjfldsf');
+
+        $mock_cookie = \Test\Mock\Cookie::getInstance();
+        foreach ($crypt['ciphers'] as $cipher) {
+            foreach ($crypt['mode'] as $mode) {
+                $config = array_merge($config_default, array('encrypt' => array('uf43jrojfosdf', $cipher, $mode)));
+
+                $mock_cookie->reset();
+                $handler = new \Lysine\CookieContextHandler($config);
+                $handler->set('test', 'abc 中文');
+
+                $mock_cookie->apply();
+                $handler->reset();
+
+                $this->assertEquals($handler->get('test'), 'abc 中文', "cipher:{$cipher} mode: {$mode} 加密解密失败");
+            }
         }
     }
 
