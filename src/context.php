@@ -95,8 +95,8 @@ class SessionContextHandler extends ContextHandler {
 //     'encrypt' => array(          // 可选，加密方法配置
 //         (string),                //   必须，salt string，随机字符串
 //         (string),                //   可选，ciphers name，默认MCRYPT_RIJNDAEL_256
-//         (string),                //   可选，ciphers mode, 默认MCRYPT_MODE_ECB
-//         (integer),               //   可选，random device，默认MCRYPT_RAND
+//         (string),                //   可选，ciphers mode, 默认MCRYPT_MODE_CBC
+//         (integer),               //   可选，random device，默认自动匹配可用的
 //     ),
 //     'domain' => (string),        // 可选，cookie 域名，默认：null
 //     'path' => (string),          // 可选，cookie 路径，默认：/
