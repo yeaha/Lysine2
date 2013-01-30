@@ -94,7 +94,7 @@ class SessionContextHandler extends ContextHandler {
 //     'sign_salt' => (mixed),      // 必须，用于计算数字签名的salt，可以为字符串或者callable方法
 //     'encrypt' => array(          // 可选，加密方法配置
 //         (string),                //   必须，salt string，随机字符串
-//         (string),                //   必须，ciphers name，例如MCRYPT_3DES
+//         (string),                //   可选，ciphers name，默认MCRYPT_RIJNDAEL_256
 //         (string),                //   可选，ciphers mode, 默认MCRYPT_MODE_ECB
 //         (integer),               //   可选，random device，默认MCRYPT_RAND
 //     ),
@@ -236,11 +236,16 @@ class CookieContextHandler extends ContextHandler {
         list($salt, $cipher, $mode, $device) = $this->getEncryptConfig();
 
         $iv_size = mcrypt_get_iv_size($cipher, $mode);
+
+        $salt = substr(md5($salt), 0, $iv_size);
         $iv = mcrypt_create_iv($iv_size, $device);
 
-        $salt = substr($salt, 0, $iv_size);
+        $string = $this->pad($string);
 
-        return mcrypt_encrypt($cipher, $salt, $string, $mode, $iv);
+        $encrypted = mcrypt_encrypt($cipher, $salt, $string, $mode, $iv);
+
+        // 把iv保存和加密字符串在一起输出，解密的时候需要相同的iv
+        return $iv . $encrypted;
     }
 
     // 解密字符串
@@ -248,14 +253,15 @@ class CookieContextHandler extends ContextHandler {
         list($salt, $cipher, $mode, $device) = $this->getEncryptConfig();
 
         $iv_size = mcrypt_get_iv_size($cipher, $mode);
-        $iv = mcrypt_create_iv($iv_size, $device);
 
-        $salt = substr($salt, 0, $iv_size);
+        $salt = substr(md5($salt), 0, $iv_size);
+        $iv = substr($string, 0, $iv_size);
 
-        if ($decrypted = mcrypt_decrypt($cipher, $salt, $string, $mode, $iv))
-            $decrypted = rtrim($decrypted, "\0");   // remove padding
+        $string = substr($string, $iv_size);
 
-        return $decrypted;
+        $decrypted = mcrypt_decrypt($cipher, $salt, $string, $mode, $iv);
+
+        return $this->unpad($decrypted);
     }
 
     // 获得加密配置
@@ -266,17 +272,47 @@ class CookieContextHandler extends ContextHandler {
             throw new RuntimeError('Require encrypt salt string');
         $salt = $config[0];
 
-        if (!isset($config[1]) || !$config[1])
-            throw new RuntimeError('Require encrypt cipher name');
-        $cipher = $config[1];
+        $cipher = isset($config[1]) ? $config[1] : MCRYPT_RIJNDAEL_256;
 
         if (!in_array($cipher, mcrypt_list_algorithms()))
             throw new RuntimeError('Unsupport encrypt cipher: '. $cipher);
 
-        $mode = isset($config[2]) ? $config[2] : MCRYPT_MODE_ECB;
-        $device = isset($config[3]) ? $config[3] : MCRYPT_RAND;
+        $mode = isset($config[2]) ? $config[2] : MCRYPT_MODE_CBC;
+        if (!in_array($mode, mcrypt_list_modes()))
+            throw new RuntimeError('Unsupport encrypt mode: '. $mode);
+
+        if (isset($config[3])) {
+            $device = $config[3];
+        } elseif (defined('MCRYPT_DEV_URANDOM')) {
+            $device = MCRYPT_DEV_URANDOM;
+        } elseif (defined('MCRYPT_DEV_RANDOM')) {
+            $device = MCRYPT_DEV_RANDOM;
+        } else {
+            mt_srand();
+            $device = MCRYPT_RAND;
+        }
 
         return array($salt, $cipher, $mode, $device);
+    }
+
+    // 用PKCS7兼容字符串补全加密块
+    protected function pad($string, $block = 32) {
+        $pad = $block - (strlen($string) % $block);
+        return $string . str_repeat(chr($pad), $pad);
+    }
+
+    // 去掉填充的PKCS7兼容字符串
+    protected function unpad($string, $block = 32) {
+        $pad = ord(substr($string, -1));
+
+        if ($pad and $pad < $block) {
+            if (!preg_match('/'.chr($pad).'{'.$pad.'}$/', $string))
+                return false;
+
+            return substr($string, 0, strlen($string) - $pad);
+        }
+
+        return $string;
     }
 
     // 生成数字签名

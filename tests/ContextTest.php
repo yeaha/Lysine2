@@ -58,12 +58,12 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
             $mock_cookie->reset();
 
             $handler = new \Lysine\CookieContextHandler($config);
-            $handler->set('test', 'abc');
+            $handler->set('test', 'abc 中文');
 
             $mock_cookie->apply();
             $handler->reset();
 
-            $this->assertEquals($handler->get('test'), 'abc', $msg);
+            $this->assertEquals($handler->get('test'), 'abc 中文', $msg);
         }
     }
 
