@@ -202,6 +202,8 @@ abstract class Data {
             case 'int':
             case 'integer':
                 return (int)$val;
+            case 'numeric':
+                return $val * 1;
             case 'text':
             case 'string':
                 return (string)$val;
