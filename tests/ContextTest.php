@@ -7,7 +7,7 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
     }
 
     protected function setUp() {
-        \Test\Mock\Environment::init('/', 'GET');
+        \Test\Mock\Environment::begin('/', 'GET');
     }
 
     protected function tearDown() {

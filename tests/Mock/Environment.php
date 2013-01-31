@@ -2,10 +2,15 @@
 namespace Test\Mock;
 
 class Environment {
-    static public function init($uri, $method, array $params = array(), array $options = array()) {
+    static protected $current_path = '/';
+
+    static public function begin($uri = '/', $method = 'GET', array $params = array()) {
         self::reset();
 
         $uri = parse_url($uri);
+
+        static::$current_path = $uri['path'];
+
         $method = strtoupper($method);
 
         $_SERVER['REQUEST_URI'] = $uri;
@@ -22,15 +27,13 @@ class Environment {
             $_POST = $params;
         }
 
-        if (isset($options['ajax']) && $options['ajax'])
-            self::useAjax();
+        \Test\Mock\Cookie::getInstance()->apply( static::$current_path );
 
-        if (isset($options['header']))
-            foreach ($options['header'] as $key => $val)
-                self::setHeader($key, $val);
-
-        \Test\Mock\Cookie::getInstance()->apply( $uri['path'] );
         $_REQUEST = array_merge($_GET, $_POST, $_COOKIE);
+    }
+
+    static public function end() {
+        \Test\Mock\Cookie::getInstance()->apply( static::$current_path );
     }
 
     static public function reset() {
@@ -39,6 +42,8 @@ class Environment {
         $_REQUEST = array();
         $_SERVER = array();
         $_SESSION = \Lysine\Session::getInstance();
+
+        \Test\Mock\Cookie::getInstance()->reset();
 
         resp()->reset();
     }

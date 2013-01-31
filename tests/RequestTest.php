@@ -9,7 +9,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testAccept() {
-        ENV::init('/', 'GET');
+        ENV::begin('/', 'GET');
         ENV::setHeader('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8');
         ENV::setHeader('Accept-Encoding', 'gzip,deflate,sdch');
         ENV::setHeader('Accept-Language', 'en-US,en;q=0.8');
