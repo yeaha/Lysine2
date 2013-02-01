@@ -317,9 +317,9 @@ class View {
     protected function findFile($view) {
         $file = $this->dir .DIRECTORY_SEPARATOR. $view .'.php';
 
-        if (!$result = realpath($file))
+        if (!is_file($file))
             throw new \Lysine\RuntimeError('View file '.$file.' not exist!');
 
-        return $result;
+        return $file;
     }
 }
