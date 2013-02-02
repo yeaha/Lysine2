@@ -14,6 +14,8 @@ class Sandbox {
     }
 
     public function request($uri = '/', $method = 'GET', array $params = array()) {
+        resp()->reset();
+        $_GET = $_POST = $_REQUEST = $_SERVER = $_COOKIE = array();
         $_SESSION = \Lysine\Session::getInstance();
 
         $uri = parse_url($uri);
@@ -42,16 +44,18 @@ class Sandbox {
     }
 
     public function requestEnd() {
-        $_GET = $_POST = $_REQUEST = $_SERVER = $_SESSION = $_COOKIE = array();
-
         $this->cookie->apply( $this->path );
-        resp()->reset();
+    }
+
+    public function refresh() {
+        $this->requestEnd();
     }
 
     public function reset() {
         $this->path = '/';
-        $this->requestEnd();
         $this->cookie->reset();
+
+        $_GET = $_POST = $_REQUEST = $_SERVER = $_SESSION = $_COOKIE = array();
     }
 
     public function useAjax() {
