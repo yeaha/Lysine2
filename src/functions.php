@@ -206,4 +206,64 @@ namespace Lysine {
 
         return $result;
     }
+
+    // 2到62，任意进制转换
+    function base_convert($number, $from, $to) {
+        $base = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        // 任意进制转换为十进制
+        $any2dec = function($number, $from) use ($base) {
+            if ($from === 10)
+                return $number;
+
+            $base = substr($base, 0, $from);
+            $dec = 0;
+            $number = (string)$number;
+
+            for ($i = 0, $len = strlen($number); $i < $len; $i++) {
+                $c = substr($number, $i , 1);
+                $n = strpos($base, $c);
+                if ($n === false)   // 出现了当前进制不支持的数字
+                    trigger_error('Unexpected base character: '. $c, E_USER_ERROR);
+
+                $pos = $len - $i - 1;
+                $dec += $n * pow($from, $pos);
+            }
+
+            return $dec;
+        };
+
+        // 十进制转换为任意进制
+        $dec2any = function($number, $to) use ($base) {
+            if ($to === 10)
+                return $number;
+
+            $base = substr($base, 0, $to);
+            $any = '';
+
+            while ($number >= $to) {
+                list($number, $c) = array((int)($number / $to), $number % $to);
+                $any = substr($base, $c, 1) . $any;
+            }
+
+            $any = substr($base, $number, 1) . $any;
+            return $any;
+        };
+
+        $from = (int)$from;
+        $to = (int)$to;
+
+        $min_base = 2;
+        $max_base = strlen($base);
+
+        if ($from < $min_base || $from > $max_base || $to < $min_base || $to > $max_base)
+            trigger_error("Only support base between {$min_base} and {$max_base}", E_USER_ERROR);
+
+        if ($from === $to)
+            return $number;
+
+        // 转换为10进制
+        $dec = ($from === 10) ? $number : $any2dec($number, $from);
+        return $dec2any($dec, $to);
+    }
 }
