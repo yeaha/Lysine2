@@ -372,9 +372,11 @@ class RedisContextHandler extends ContextHandler {
         $redis = $this->getService();
         $token = $this->getToken();
 
-        return $key === null
-             ? $redis->hGetAll($token)
-             : $redis->hGet($token, $key);
+        if ($key === null)
+            return $redis->hGetAll($token);
+
+        $val = $redis->hGet($token, $key);
+        return ($val === false) ? null : $val;
     }
 
     public function has($key) {

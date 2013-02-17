@@ -34,6 +34,9 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
 
             $this->assertFalse($handler->has('test'), "{$class}->has()");
 
+            $this->assertNull($handler->get('test'));
+            $this->assertSame(array(), $handler->get());
+
             $handler->set('test', 'abc');
             $this->assertEquals($handler->get('test'), 'abc', "{$class}->get() exists key");
 
