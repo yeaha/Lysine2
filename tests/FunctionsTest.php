@@ -32,16 +32,22 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase {
         foreach ($test as $expected => $args)
             $this->assertEquals($expected, call_user_func_array('\Lysine\base_convert', $args));
 
+        $test = false;
         try {
             \Lysine\base_convert(10, 10, 64);
-        } catch (\Exception $ex) {
+        } catch (\ErrorException $ex) {
+            $test = true;
             $this->assertEquals('Only support base between 2 and 62', $ex->getMessage());
         }
+        $this->assertTrue($test);
 
+        $test = false;
         try {
             \Lysine\base_convert('A37334', 16, 2);
-        } catch (\Exception $ex) {
+        } catch (\ErrorException $ex) {
+            $test = true;
             $this->assertEquals('Unexpected base character: A', $ex->getMessage());
         }
+        $this->assertTrue($test);
     }
 }
