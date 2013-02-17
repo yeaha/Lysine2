@@ -56,10 +56,10 @@ DEMO
     Directories:                                          2
     Files:                                               21
 
-    Lines of Code (LOC):                               4053
+    Lines of Code (LOC):                               4153
       Cyclomatic Complexity / Lines of Code:           0.15
-    Comment Lines of Code (CLOC):                       351
-    Non-Comment Lines of Code (NCLOC):                 3702
+    Comment Lines of Code (CLOC):                       365
+    Non-Comment Lines of Code (NCLOC):                 3788
 
     Namespaces:                                          11
     Interfaces:                                           2
@@ -68,18 +68,18 @@ DEMO
       Abstract:                                           5 (9.62%)
       Concrete:                                          47 (90.38%)
       Average Class Length (NCLOC):                      65
-    Methods:                                            357
+    Methods:                                            359
       Scope:
-        Non-Static:                                     318 (89.08%)
-        Static:                                          39 (10.92%)
+        Non-Static:                                     320 (89.14%)
+        Static:                                          39 (10.86%)
       Visibility:
-        Public:                                         241 (67.51%)
-        Non-Public:                                     116 (32.49%)
+        Public:                                         241 (67.13%)
+        Non-Public:                                     118 (32.87%)
       Average Method Length (NCLOC):                      9
       Cyclomatic Complexity / Number of Methods:       2.38
 
-    Anonymous Functions:                                  3
-    Functions:                                           20
+    Anonymous Functions:                                  5
+    Functions:                                           21
 
     Constants:                                           57
       Global constants:                                   5
