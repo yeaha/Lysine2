@@ -210,9 +210,10 @@ namespace Lysine {
     // 2到62，任意进制转换
     function base_convert($number, $from, $to) {
         $base = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $bcmath = extension_loaded('bcmath');
 
         // 任意进制转换为十进制
-        $any2dec = function($number, $from) use ($base) {
+        $any2dec = function($number, $from) use ($base, $bcmath) {
             if ($from === 10)
                 return $number;
 
@@ -227,14 +228,19 @@ namespace Lysine {
                     trigger_error('Unexpected base character: '. $c, E_USER_ERROR);
 
                 $pos = $len - $i - 1;
-                $dec += $n * pow($from, $pos);
+
+                if ($bcmath) {
+                    $dec = bcadd($dec, bcmul($n, bcpow($from, $pos)));
+                } else {
+                    $dec += $n * pow($from, $pos);
+                }
             }
 
             return $dec;
         };
 
         // 十进制转换为任意进制
-        $dec2any = function($number, $to) use ($base) {
+        $dec2any = function($number, $to) use ($base, $bcmath) {
             if ($to === 10)
                 return $number;
 
@@ -242,7 +248,11 @@ namespace Lysine {
             $any = '';
 
             while ($number >= $to) {
-                list($number, $c) = array((int)($number / $to), $number % $to);
+                if ($bcmath) {
+                    list($number, $c) = array(bcdiv($number, $to), bcmod($number, $to));
+                } else {
+                    list($number, $c) = array((int)($number / $to), $number % $to);
+                }
                 $any = substr($base, $c, 1) . $any;
             }
 
