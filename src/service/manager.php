@@ -64,6 +64,10 @@ class Manager {
         return $service;
     }
 
+    public function getInstances() {
+        return $this->instances;
+    }
+
     protected function getConfig($name) {
         if (!isset($this->config[$name]))
             throw new \Lysine\Service\RuntimeError('Undefined Service: '. $name);
