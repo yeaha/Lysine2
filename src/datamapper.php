@@ -532,9 +532,25 @@ class Meta {
 }
 
 class Registry {
+    static private $enabled = true;
     static private $members = array();
 
+    static public function enable() {
+        self::$enabled = true;
+    }
+
+    static public function disable() {
+        self::$enabled = false;
+    }
+
+    static public function isEnabled() {
+        return self::$enabled;
+    }
+
     static public function set(Data $data) {
+        if (!self::$enabled)
+            return false;
+
         if ($data->isFresh())
             return false;
 
@@ -546,6 +562,9 @@ class Registry {
     }
 
     static public function get($class, $id) {
+        if (!self::$enabled)
+            return false;
+
         $key = self::key($class, $id);
         return isset(self::$members[$key])
              ? self::$members[$key]
@@ -553,6 +572,9 @@ class Registry {
     }
 
     static public function remove($class, $id) {
+        if (!self::$enabled)
+            return false;
+
         $key = self::key($class, $id);
         unset(self::$members[$key]);
     }
