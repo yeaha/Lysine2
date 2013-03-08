@@ -173,6 +173,42 @@ class DataMapperData extends \PHPUnit_Framework_TestCase {
         $this->assertTrue($test);
     }
 
+    public function testPrimaryKey() {
+        $this->setPropsMeta(array(
+            'id' => array('type' => 'integer', 'primary_key' => true),
+        ));
+
+        $class = $this->class;
+        $data = new $class(array(
+            'id' => 1
+        ));
+
+        $this->assertEquals(1, $data->id());
+
+        $data->save();
+        $test = false;
+        try {
+            $data->id = 2;
+        } catch (\Lysine\DataMapper\RefuseUpdateError $ex) {
+            $test = true;
+        }
+        $this->assertTrue($test);
+
+        // 复合主键
+        $this->setPropsMeta(array(
+            'a' => array('type' => 'integer', 'primary_key' => true),
+            'b' => array('type' => 'integer', 'primary_key' => true),
+        ));
+
+        $class = $this->class;
+        $data = new $class(array(
+            'a' => 1,
+            'b' => 2,
+        ));
+
+        $this->assertSame(array('a' => 1, 'b' => 2), $data->id());
+    }
+
     public function testStrictProp() {
         $this->setPropsMeta(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
