@@ -579,6 +579,10 @@ class Registry {
         unset(self::$members[$key]);
     }
 
+    static public function clear() {
+        self::$members = array();
+    }
+
     static private function key($class, $id) {
         $key = '';
         if (is_array($id)) {
