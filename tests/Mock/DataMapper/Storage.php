@@ -7,6 +7,9 @@ class Storage implements \Lysine\Service\IService {
     public function __construct(array $config = array()) {
     }
 
+    public function disconnect() {
+    }
+
     public function find($table, $id) {
         $key = $this->keyOfId($id);
 

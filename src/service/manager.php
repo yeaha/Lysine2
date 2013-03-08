@@ -87,4 +87,6 @@ class Manager {
 
 interface IService {
     public function __construct(array $config = array());
+
+    public function disconnect();
 }
