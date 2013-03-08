@@ -16,10 +16,11 @@ class Mapper extends \Lysine\DataMapper\Mapper {
     }
 
     protected function doInsert(\Lysine\DataMapper\Data $data, IService $storage = null, $collection = null) {
+        $record = $this->propsToRecord($data->toArray());
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
 
-        if (!$storage->insert($collection, $data->toArray(), $data->id()))
+        if (!$storage->insert($collection, $record, $data->id()))
             return false;
 
         $id = array();
@@ -38,10 +39,11 @@ class Mapper extends \Lysine\DataMapper\Mapper {
     }
 
     protected function doUpdate(\Lysine\DataMapper\Data $data, IService $storage = null, $collection = null) {
+        $record = $this->propsToRecord($data->toArray(true));
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
 
-        return $storage->update($collection, $data->toArray(true), $data->id());
+        return $storage->update($collection, $record, $data->id());
     }
 
     protected function doDelete(\Lysine\DataMapper\Data $data, IService $storage = null, $collection = null) {
