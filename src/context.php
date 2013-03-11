@@ -323,25 +323,18 @@ class CookieContextHandler extends ContextHandler {
 
     // 获得计算数字签名的salt字符串
     protected function getSignSalt($string) {
-        do {
-            if (!$salt = $this->getConfig('sign_salt'))
-                break;
+        if (($salt = $this->getConfig('sign_salt')) === null)
+            throw new RuntimeError('Require signature salt');
 
-            if (is_callable($salt))
-                $salt = call_user_func($salt, $string);
+        if (is_callable($salt) && (!$salt = call_user_func($salt, $string)))
+            throw new RuntimeError('Salt function return noting');
 
-            if (!$salt)
-                break;
+        if ($this->getConfig('bind_ip')) {
+            $ip = req()->ip();
+            $salt .= long2ip(ip2long($ip) & ip2long('255.255.255.0'));     // 192.168.1.123 -> 192.168.1.0
+        }
 
-            if ($this->getConfig('bind_ip')) {
-                $ip = req()->ip();
-                $salt .= long2ip(ip2long($ip) & ip2long('255.255.255.0'));     // 192.168.1.123 -> 192.168.1.0
-            }
-
-            return $salt;
-        } while (false);
-
-        throw new RuntimeError('Require signature salt string');
+        return $salt;
     }
 }
 
