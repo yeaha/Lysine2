@@ -272,7 +272,11 @@ class Response {
         }
         $this->cookie = array();
 
-        echo $body;
+        if (is_callable($body)) {
+            echo call_user_func($body);
+        } else {
+            echo $body;
+        }
     }
 
     public function setCode($code) {
@@ -315,7 +319,7 @@ class Response {
     public function compile() {
         $body = in_array($this->getCode(), array(204, 301, 302, 303, 304))
               ? ''
-              : (string)$this->body;
+              : $this->body;
 
         return array(
             $this->compileHeader(),
