@@ -208,9 +208,21 @@ namespace Lysine {
     }
 
     // 2到62，任意进制转换
-    function base_convert($number, $from, $to) {
+    // $number: 转换的数字
+    // $from: 本来的进制
+    // $to: 转换到进制
+    // $bcmatch: 是否使用bcmatch模块处理超大数字
+    function base_convert($number, $from, $to, $bcmatch = null) {
         $base = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $bcmath = extension_loaded('bcmath');
+
+        if ($bcmatch === null) {
+            $bcmath = extension_loaded('bcmath');
+        } else {
+            $bcmatch = (bool)$bcmatch;
+
+            if ($bcmatch && !extension_loaded('bcmatch'))
+                throw new \Lysine\RuntimeError('Require bcmatch extension!');
+        }
 
         // 任意进制转换为十进制
         $any2dec = function($number, $from) use ($base, $bcmath) {
