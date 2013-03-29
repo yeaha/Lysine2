@@ -3,7 +3,7 @@ namespace Test;
 
 use \Lysine\DataMapper\Data;
 
-class DataMapperData extends \PHPUnit_Framework_TestCase {
+class DataTest extends \PHPUnit_Framework_TestCase {
     protected $class = '\Test\Mock\DataMapper\Data';
 
     protected function tearDown() {
@@ -233,5 +233,47 @@ class DataMapperData extends \PHPUnit_Framework_TestCase {
 
         $data->name = 'abc';
         $this->assertTrue(isset($data->name), 'strict属性应该允许->设置');
+    }
+
+    public function testFindRegistry() {
+        $class = $this->class;
+        $registry = \Lysine\DataMapper\Registry::getInstance();
+
+        $this->assertTrue($registry->isEnabled($class));
+
+        $class::disableFindRegistry();
+        $this->assertFalse($registry->isEnabled($class));
+
+        $class::enableFindRegistry();
+        $this->assertTrue($registry->isEnabled($class));
+
+        $this->setPropsMeta(array(
+            'id' => array('type' => 'integer', 'primary_key' => true),
+            'name' => array('type' => 'string', 'strict' => true),
+            'address' => array('type' => 'string'),
+        ));
+
+        $data = new $class;
+        $data->id = 9999999;
+        $data->name = 'name';
+        $data->address = 'address';
+        $data->save();
+
+        $id = $data->id();
+
+        $data1 = $class::find($id);
+        $data2 = $class::find($id);
+
+        $this->assertEquals(spl_object_hash($data1), spl_object_hash($data2));
+
+        $class::disableFindRegistry();
+        $data3 = $class::find($id);
+
+        $this->assertNotEquals(spl_object_hash($data1), spl_object_hash($data3));
+
+        $class::enableFindRegistry();
+        $data4 = $class::find($id);
+
+        $this->assertEquals(spl_object_hash($data1), spl_object_hash($data4));
     }
 }

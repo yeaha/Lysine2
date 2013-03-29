@@ -277,6 +277,14 @@ abstract class Data {
 
         return $meta;
     }
+
+    static public function enableFindRegistry() {
+        Registry::getInstance()->enable(get_called_class());
+    }
+
+    static public function disableFindRegistry() {
+        Registry::getInstance()->disable(get_called_class());
+    }
 }
 
 abstract class Mapper {
@@ -307,7 +315,8 @@ abstract class Mapper {
     }
 
     public function find($id, $refresh = false) {
-        $data = Registry::get($this->class, $id);
+        $registry = Registry::getInstance();
+        $data = $registry->get($this->class, $id);
 
         if ($data && !$refresh)
             return $data;
@@ -319,7 +328,7 @@ abstract class Mapper {
 
         // 假设直接使用id通过find()查询的对象是关注度比较高的数据
         // 所以把结果对象在此运行期内缓存在对象注册表内
-        Registry::set($data);
+        $registry->set($data);
 
         return $data;
     }
@@ -356,7 +365,7 @@ abstract class Mapper {
             return false;
         $data->__triggerEvent(Data::AFTER_DELETE_EVENT);
 
-        Registry::remove($this->class, $data->id());
+        Registry::getInstance()->remove($this->class, $data->id());
 
         return true;
     }
@@ -532,23 +541,31 @@ class Meta {
 }
 
 class Registry {
-    static private $enabled = true;
-    static private $members = array();
+    use \Lysine\Traits\Singleton;
 
-    static public function enable() {
-        self::$enabled = true;
+    private $ignore_class = array();
+    private $members = array();
+
+    // 通过Data::enableFindRegistry()调用
+    public function enable($class) {
+        $class = trim(strtolower($class), '\\');
+        unset($this->ignore_class[$class]);
     }
 
-    static public function disable() {
-        self::$enabled = false;
+    // 通过Data::disableFindRegistry()调用
+    public function disable($class) {
+        $class = trim(strtolower($class), '\\');
+        $this->ignore_class[$class] = 1;
     }
 
-    static public function isEnabled() {
-        return self::$enabled;
+    public function isEnabled($class) {
+        $class = trim(strtolower($class), '\\');
+        return !isset($this->ignore_class[$class]);
     }
 
-    static public function set(Data $data) {
-        if (!self::$enabled)
+    public function set(Data $data) {
+        $class = get_class($data);
+        if (!$this->isEnabled($class))
             return false;
 
         if ($data->isFresh())
@@ -557,30 +574,30 @@ class Registry {
         if (!$id = $data->id())
             return false;
 
-        $key = self::key(get_class($data), $id);
-        self::$members[$key] = $data;
+        $key = self::key($class, $id);
+        $this->members[$key] = $data;
     }
 
-    static public function get($class, $id) {
-        if (!self::$enabled)
+    public function get($class, $id) {
+        if (!$this->isEnabled($class))
             return false;
 
         $key = self::key($class, $id);
-        return isset(self::$members[$key])
-             ? self::$members[$key]
+        return isset($this->members[$key])
+             ? $this->members[$key]
              : false;
     }
 
-    static public function remove($class, $id) {
-        if (!self::$enabled)
+    public function remove($class, $id) {
+        if (!$this->isEnabled($class))
             return false;
 
         $key = self::key($class, $id);
-        unset(self::$members[$key]);
+        unset($this->members[$key]);
     }
 
-    static public function clear() {
-        self::$members = array();
+    public function clear() {
+        $this->members = array();
     }
 
     static private function key($class, $id) {
