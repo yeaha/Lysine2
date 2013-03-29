@@ -548,23 +548,23 @@ class Registry {
 
     // 通过Data::enableFindRegistry()调用
     public function enable($class) {
-        $class = trim(strtolower($class), '\\');
+        $class = self::normalizeClassName($class);
         unset($this->ignore_class[$class]);
     }
 
     // 通过Data::disableFindRegistry()调用
     public function disable($class) {
-        $class = trim(strtolower($class), '\\');
+        $class = self::normalizeClassName($class);
         $this->ignore_class[$class] = 1;
     }
 
     public function isEnabled($class) {
-        $class = trim(strtolower($class), '\\');
+        $class = self::normalizeClassName($class);
         return !isset($this->ignore_class[$class]);
     }
 
     public function set(Data $data) {
-        $class = get_class($data);
+        $class = self::normalizeClassName(get_class($data));
         if (!$this->isEnabled($class))
             return false;
 
@@ -579,6 +579,7 @@ class Registry {
     }
 
     public function get($class, $id) {
+        $class = self::normalizeClassName($class);
         if (!$this->isEnabled($class))
             return false;
 
@@ -589,6 +590,7 @@ class Registry {
     }
 
     public function remove($class, $id) {
+        $class = self::normalizeClassName($class);
         if (!$this->isEnabled($class))
             return false;
 
@@ -613,7 +615,11 @@ class Registry {
             $key = $id;
         }
 
-        return strtolower($class.'@'.$key);
+        return $class.'@'.$key;
+    }
+
+    static private function normalizeClassName($class) {
+        return trim(strtolower($class), '\\');
     }
 }
 
