@@ -18,7 +18,7 @@ class MetaTest extends \PHPUnit_Framework_TestCase {
     public function testPropMeta() {
         $this->setPropsMeta(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
-            'time' => array('type' => 'datetime', 'helper' => '\Lysine\DataMapper\Helper\DateTime', 'default' => 'now'),
+            'time' => array('type' => 'datetime', 'default' => 'now'),
         ));
 
         $class = $this->class;
@@ -32,7 +32,6 @@ class MetaTest extends \PHPUnit_Framework_TestCase {
 
         $time_meta = $meta->getPropMeta('time');
         $this->assertEquals('time', $time_meta['name']);
-        $this->assertEquals('\Lysine\DataMapper\Helper\DateTime', $time_meta['helper']);
         $this->assertFalse($time_meta['primary_key']);
         $this->assertEquals('now', $time_meta['default']);
     }

@@ -45,11 +45,11 @@ class HelperTest extends \PHPUnit_Framework_TestCase {
 
         foreach ($expect as $prop => $class) {
             $prop_meta = $meta->getPropMeta($prop);
-            $this->assertInstanceof($class, $manager->getPropHelper($prop_meta));
+            $this->assertInstanceof($class, $manager->getHelper($prop_meta['type']));
         }
 
-        $manager->registerHelper('foo', '\Lysine\DataMapper\Helper\Json');
-        $this->assertInstanceof('\Lysine\DataMapper\Helper\Json', $manager->getPropHelper($meta->getPropMeta('g')));
+        $manager->registerType('foo', '\Lysine\DataMapper\Helper\Json');
+        $this->assertInstanceof('\Lysine\DataMapper\Helper\Json', $manager->getHelper('foo'));
     }
 
     public function testDatetime() {

@@ -190,8 +190,9 @@ abstract class Data {
     }
 
     protected function getDefaultValue(array $prop_meta) {
-        $helper = HelperManager::getInstance()->getPropHelper($prop_meta);
-        return $helper->getDefaultValue($prop_meta);
+        return HelperManager::getInstance()
+                    ->getHelper($prop_meta['type'])
+                    ->getDefaultValue($prop_meta);
     }
 
     protected function getPropMeta($prop = null) {
@@ -199,8 +200,9 @@ abstract class Data {
     }
 
     protected function formatProp($val, array $prop_meta) {
-        $helper = HelperManager::getInstance()->getPropHelper($prop_meta);
-        return $helper->normalize($val, $prop_meta);
+        return HelperManager::getInstance()
+                    ->getHelper($prop_meta['type'])
+                    ->normalize($val, $prop_meta);
     }
 
     final private function changeProp($prop, $val) {
@@ -424,7 +426,7 @@ abstract class Mapper {
 
         foreach ($props as $prop => $data) {
             $prop_meta = $meta->getPropMeta($prop);
-            $props[$prop] = $manager->getPropHelper($prop_meta)->store($data, $prop_meta);
+            $props[$prop] = $manager->getHelper($prop_meta['type'])->store($data, $prop_meta);
         }
 
         return $props;
@@ -437,7 +439,7 @@ abstract class Mapper {
 
         foreach ($record as $prop => $data) {
             if ($prop_meta = $meta->getPropMeta($prop))
-                $record[$prop] = $manager->getPropHelper($prop_meta)->restore($data, $prop_meta);
+                $record[$prop] = $manager->getHelper($prop_meta['type'])->restore($data, $prop_meta);
         }
 
         return $record;
@@ -456,7 +458,6 @@ class Meta {
     static private $default_prop_meta = array(
         'name' => NULL,
         'type' => NULL,
-        'helper' => NULL,
         'primary_key' => FALSE,
         'auto_increase' => FALSE,
         'refuse_update' => FALSE,
@@ -550,38 +551,27 @@ class HelperManager {
         'datetime' => '\Lysine\DataMapper\Helper\DateTime',
     );
 
-    public function getPropHelper(array $prop_meta) {
-        $class = $prop_meta['helper'] ?: $this->getHelperClass($prop_meta['type']);
-        return $this->construct($class);
+    public function getHelper($type) {
+        $type = strtolower($type);
+        $class = isset($this->type_helper[$type])
+               ? $this->type_helper[$type]
+               : $this->default_helper;
+
+        $key = strtolower(trim($class, '\\'));
+        if (!isset($this->helper[$key]))
+            $this->helper[$key] = new $class;
+
+        return $this->helper[$key];
     }
 
-    // 注册新的数据类型helper
-    public function registerHelper($type, $helper) {
+    // 注册新的数据类型
+    public function registerType($type, $helper) {
         $type = strtolower($type);
+
+        if (!is_subclass_of($helper, $this->default_helper))
+            throw new \Lysine\RuntimeError('Invalid helper class');
+
         $this->type_helper[$type] = $helper;
-    }
-
-    // 根据数据类型获得对应的helper class
-    protected function getHelperClass($type) {
-        $type = strtolower($type);
-
-        return isset($this->type_helper[$type])
-             ? $this->type_helper[$type]
-             : $this->default_helper;
-    }
-
-    // 构建指定的helper实例
-    protected function construct($class) {
-        $class = strtolower(trim($class, '\\'));
-
-        if (!isset($this->helper[$class])) {
-            if (!is_a($class, $this->default_helper, true))
-                throw new \Lysine\RuntimeError('Invalid helper class');
-
-            $this->helper[$class] = new $class;
-        }
-
-        return $this->helper[$class];
     }
 }
 
