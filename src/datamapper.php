@@ -15,11 +15,6 @@ abstract class Data {
     const BEFORE_SAVE_EVENT = 'BEFORE SAVE EVENT';
     const BEFORE_UPDATE_EVENT = 'BEFORE UPDATE EVENT';
 
-    const CURRENT_TIMESTAMP = 'current_timestamp';      // time()
-    const CURRENT_DATETIME = 'current_datetime';        // strftime('%F %T')
-    const CURRENT_DATE = 'current_date';                // strftime('%F')
-    const CURRENT_TIME = 'current_time';                // strftime('%T')
-
     static protected $storage;
     static protected $collection;
     static protected $props_meta = array();
@@ -186,7 +181,7 @@ abstract class Data {
         if ($prop_meta['pattern'] && !preg_match($prop_meta['pattern'], $val))
             throw new UnexpectedValueError(get_class() .": Property {$prop} mismatching pattern {$prop_meta['pattern']}");
 
-        $val = $this->formatProp($val, $prop_meta);
+        $val = static::getMapper()->getMeta()->getPropHelper($prop_meta)->normalize($val, $prop_meta);
 
         if (!array_key_exists($prop, $this->props) || $val !== $this->props[$prop])
             $this->changeProp($prop, $val);
@@ -194,38 +189,9 @@ abstract class Data {
         return true;
     }
 
-    protected function formatProp($val, array $prop_meta) {
-        if ($val === null || $val === '')
-            return null;
-
-        switch ($prop_meta['type']) {
-            case 'int':
-            case 'integer':
-                return (int)$val;
-            case 'numeric':
-                return $val * 1;
-            case 'text':
-            case 'string':
-                return (string)$val;
-        }
-
-        return $val;
-    }
-
     protected function getDefaultValue($prop_meta) {
-        $default = $prop_meta['default'];
-
-        if ($default === self::CURRENT_TIMESTAMP) {
-            return time();
-        } elseif ($default === self::CURRENT_DATETIME) {
-            return strftime('%F %T');
-        } elseif ($default === self::CURRENT_DATE) {
-            return strftime('%F');
-        } elseif ($default === self::CURRENT_TIME) {
-            return strftime('%T');
-        } else {
-            return $default;
-        }
+        $helper = static::getMapper()->getMeta()->getPropHelper($prop_meta);
+        return $helper->getDefaultValue($prop_meta);
     }
 
     protected function getPropMeta($prop = null) {
@@ -447,14 +413,26 @@ abstract class Mapper {
     }
 
     // 把属性值转换为存储记录
-    // 可以重载此方法实现预处理逻辑
     protected function propsToRecord(array $props) {
+        $meta = $this->getMeta();
+
+        foreach ($props as $prop => $data) {
+            $prop_meta = $meta->getPropMeta($prop);
+            $props[$prop] = $meta->getPropHelper($prop_meta)->store($data, $prop_meta);
+        }
+
         return $props;
     }
 
     // 把存储记录转换为属性值
-    // 可以重载此方法实现预处理逻辑
     protected function recordToProps(array $record) {
+        $meta = $this->getMeta();
+
+        foreach ($record as $prop => $data) {
+            $prop_meta = $meta->getPropMeta($prop);
+            $record[$prop] = $meta->getPropHelper($prop_meta)->restore($data, $prop_meta);
+        }
+
         return $record;
     }
 
@@ -466,10 +444,24 @@ abstract class Mapper {
 }
 
 class Meta {
+    static public $type_helper = array(
+        'int' => '\Lysine\DataMapper\Helper\Integer',
+        'integer' => '\Lysine\DataMapper\Helper\Integer',
+        'numeric' => '\Lysine\DataMapper\Helper\Numeric',
+        'text' => '\Lysine\DataMapper\Helper\String',
+        'string' => '\Lysine\DataMapper\Helper\String',
+        'json' => '\Lysine\DataMapper\Helper\Json',
+        'datetime' => '\Lysine\DataMapper\Helper\DateTime',
+        'mixed' => '\Lysine\DataMapper\Helper\Mixed',
+    );
+
     static protected $instance = array();
+    static protected $helper = array();
+
     static private $default_prop_meta = array(
         'name' => NULL,
         'type' => NULL,
+        'helper' => NULL,
         'primary_key' => FALSE,
         'auto_increase' => FALSE,
         'refuse_update' => FALSE,
@@ -492,13 +484,27 @@ class Meta {
         $this->storage = $meta['storage'];
         $this->collection = $meta['collection'];
 
-        foreach ($meta['props'] as $prop => &$prop_meta) {
+        $type_helper = self::$type_helper;
+
+        foreach ($meta['props'] as $prop => $prop_meta) {
             $prop_meta = array_merge(self::$default_prop_meta, $prop_meta);
 
             $prop_meta['name'] = $prop;
 
             if ($prop_meta['primary_key'])
                 $this->primary_key[] = $prop;
+
+            if ($prop_meta['helper']) {
+                if (!is_subclass_of($prop_meta['helper'], $type_helper['mixed']))
+                    throw new \Lysine\RuntimeError('Invalid property helper class');
+            } else {
+                $type = strtolower($prop_meta['type']);
+                $prop_meta['helper'] = isset($type_helper[$type])
+                                     ? $type_helper[$type]
+                                     : $type_helper['mixed'];
+            }
+
+            $meta['props'][$prop] = $prop_meta;
         }
 
         if (!$this->primary_key)
@@ -531,6 +537,17 @@ class Meta {
         return $prop === null
              ? $this->props_meta
              : (isset($this->props_meta[$prop]) ? $this->props_meta[$prop] : false);
+    }
+
+    public function getPropHelper($prop) {
+        $prop_meta = is_array($prop) ? $prop : $this->getPropMeta($prop);
+        $class = $prop_meta['helper'];
+        $key = strtolower(trim($class, '\\'));
+
+        if (!self::$helper[$key])
+            self::$helper[$key] = new $class;
+
+        return self::$helper[$key];
     }
 
     static public function factory($class) {
@@ -788,5 +805,107 @@ class DBSelect extends \Lysine\Service\DB\Select {
             $result[$data->id()] = $data;
 
         return $result;
+    }
+}
+
+namespace Lysine\DataMapper\Helper;
+
+class Mixed {
+    // 格式化数据
+    public function normalize($data, array $meta) {
+        if ($data === NULL || $val === '')
+            return NULL;
+
+        return $data;
+    }
+
+    // 转换为存储格式
+    public function store($data, array $meta) {
+        return $data;
+    }
+
+    // 从存储格式恢复
+    public function restore($data, array $meta) {
+        return $data;
+    }
+
+    // 获取默认值
+    public function getDefaultValue(array $meta) {
+        return $meta['default'];
+    }
+}
+
+class Integer extends Mixed {
+    public function normalize($data, array $meta) {
+        if ($data === NULL || $data === '')
+            return NULL;
+
+        return (int)$data;
+    }
+}
+
+class Numeric extends Mixed {
+    public function normalize($data, array $meta) {
+        if ($data === NULL || $data === '')
+            return NULL;
+
+        return $data * 1;
+    }
+}
+
+class String extends Mixed {
+    public function normalize($data, array $meta) {
+        if ($data === NULL || $data === '')
+            return NULL;
+
+        return (string)$data;
+    }
+}
+
+class Json extends Mixed {
+    public function store($data, array $meta) {
+        return ($data === NULL) ? NULL : json_encode($data);
+    }
+
+    public function restore($data, array $meta) {
+        return ($data === NULL) ? NULL : json_decode($data, true);
+    }
+}
+
+class DateTime extends Mixed {
+    public function normalize($data, array $meta) {
+        return $this->create($data, $meta);
+    }
+
+    public function store($data, array $meta) {
+        if ( !($data instanceof \DateTime) )
+            return $data;
+
+        $format = isset($meta['format']) ? $meta['format'] : 'c'; // ISO 8601
+        return $data->format($format);
+    }
+
+    public function restore($data, array $meta) {
+        return $this->create($data, $meta);
+    }
+
+    public function getDefaultValue(array $meta) {
+        return ($meta['default'] === NULL) ? NULL : new \DateTime($meta['default']);
+    }
+
+    protected function create($data, array $meta) {
+        if ($data === NULL)
+            return NULL;
+
+        if ($data instanceof \DateTime)
+            return $data;
+
+        if (!isset($meta['format']))
+            return new \DateTime($data);
+
+        if (!$data = \DateTime::createFromFormat($meta['format'], $data))
+            throw new \Exception('Create datetime from format ['.$meta['format'].'] failed!');
+
+        return $data;
     }
 }
