@@ -548,7 +548,7 @@ class Meta {
         $class = $prop_meta['helper'];
         $key = strtolower(trim($class, '\\'));
 
-        if (!self::$helper[$key])
+        if (!isset(self::$helper[$key]))
             self::$helper[$key] = new $class;
 
         return self::$helper[$key];
@@ -817,7 +817,7 @@ namespace Lysine\DataMapper\Helper;
 class Mixed {
     // 格式化数据
     public function normalize($data, array $meta) {
-        if ($data === NULL || $val === '')
+        if ($data === NULL || $data === '')
             return NULL;
 
         return $data;
