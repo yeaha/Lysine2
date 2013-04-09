@@ -15,6 +15,43 @@ class HelperTest extends \PHPUnit_Framework_TestCase {
         \Test\Mock\DataMapper\Data::setPropsMeta($props_meta);
     }
 
+    public function testManager() {
+        $this->setPropsMeta(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+            'a' => array('type' => 'int'),
+            'b' => array('type' => 'numeric'),
+            'c' => array('type' => 'text'),
+            'd' => array('type' => 'string'),
+            'e' => array('type' => 'datetime'),
+            'f' => array('type' => 'json'),
+            'g' => array('type' => 'foo'),
+        ));
+
+        $class = $this->class;
+
+        $expect = array(
+            'a' => '\Lysine\DataMapper\Helper\Integer',
+            'b' => '\Lysine\DataMapper\Helper\Integer',
+            'b' => '\Lysine\DataMapper\Helper\Numeric',
+            'c' => '\Lysine\DataMapper\Helper\String',
+            'd' => '\Lysine\DataMapper\Helper\String',
+            'e' => '\Lysine\DataMapper\Helper\DateTime',
+            'f' => '\Lysine\DataMapper\Helper\Json',
+            'g' => '\Lysine\DataMapper\Helper\Mixed',
+        );
+
+        $meta = $class::getMapper()->getMeta();
+        $manager = \Lysine\DataMapper\HelperManager::getInstance();
+
+        foreach ($expect as $prop => $class) {
+            $prop_meta = $meta->getPropMeta($prop);
+            $this->assertInstanceof($class, $manager->getPropHelper($prop_meta));
+        }
+
+        $manager->registerHelper('foo', '\Lysine\DataMapper\Helper\Json');
+        $this->assertInstanceof('\Lysine\DataMapper\Helper\Json', $manager->getPropHelper($meta->getPropMeta('g')));
+    }
+
     public function testDatetime() {
         $this->setPropsMeta(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),

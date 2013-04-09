@@ -10,6 +10,7 @@ return array(
     'lysine\datamapper\dbmapper' => 'datamapper.php',
     'lysine\datamapper\dbselect' => 'datamapper.php',
     'lysine\datamapper\data' => 'datamapper.php',
+    'lysine\datamapper\helpermanager' => 'datamapper.php',
     'lysine\datamapper\helper\datetime' => 'datamapper.php',
     'lysine\datamapper\helper\integer' => 'datamapper.php',
     'lysine\datamapper\helper\json' => 'datamapper.php',
