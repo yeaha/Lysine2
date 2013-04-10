@@ -572,6 +572,7 @@ class HelperManager {
             throw new \Lysine\RuntimeError('Invalid helper class');
 
         $this->type_helper[$type] = $helper;
+        return $this;
     }
 }
 
