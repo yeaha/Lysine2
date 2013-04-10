@@ -421,12 +421,11 @@ abstract class Mapper {
 
     // 把属性值转换为存储记录
     protected function propsToRecord(array $props) {
-        $manager = HelperManager::getInstance();
-        $meta = $this->getMeta();
+        $hm = HelperManager::getInstance();
 
-        foreach ($props as $prop => $data) {
-            $prop_meta = $meta->getPropMeta($prop);
-            $props[$prop] = $manager->getHelper($prop_meta['type'])->store($data, $prop_meta);
+        foreach ($this->getMeta()->getPropMeta() as $prop => $meta) {
+            if (isset($props[$prop]))
+                $props[$prop] = $hm->getHelper($meta['type'])->store($props[$prop], $meta);
         }
 
         return $props;
@@ -434,12 +433,11 @@ abstract class Mapper {
 
     // 把存储记录转换为属性值
     protected function recordToProps(array $record) {
-        $manager = HelperManager::getInstance();
-        $meta = $this->getMeta();
+        $hm = HelperManager::getInstance();
 
-        foreach ($record as $prop => $data) {
-            if ($prop_meta = $meta->getPropMeta($prop))
-                $record[$prop] = $manager->getHelper($prop_meta['type'])->restore($data, $prop_meta);
+        foreach ($this->getMeta()->getPropMeta() as $prop => $meta) {
+            if (isset($record[$prop]))
+                $record[$prop] = $hm->getHelper($meta['type'])->restore($record[$prop], $meta);
         }
 
         return $record;
