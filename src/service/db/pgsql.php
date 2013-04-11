@@ -126,42 +126,27 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
 
     // postgresql hstore -> php array
     static public function decodeHstore($hstore) {
-        $re = '/"(.+)(?<!\\\)"=>(""|NULL|".+(?<!\\\)"),?/U';
+        if (!$hstore || !preg_match_all('/"(.+)(?<!\\\)"=>(""|NULL|".+(?<!\\\)"),?/U', $hstore, $match, PREG_SET_ORDER))
+            return array();
+
         $array = array();
 
-        if ($hstore === '' || $hstore === NULL)
-            return $array;
-
-        do {
-            // 匹配一对key=>value
-            if (!preg_match($re, $hstore, $match))
-                break;
-
-            $s = $match[0];
-            $k = $match[1];
-            $v = $match[2];
+        foreach ($match as $set) {
+            list(, $k, $v) = $set;
 
             $v = $v === 'NULL'
                ? NULL
-               : substr($v, 1, -1); // 如果value不是NULL，匹配到的结果需要去掉两边的"
+               : substr($v, 1, -1);
 
-            // 反转key value的转义字符
             $search = array('\"', '\\\\');
             $replace = array('"', '\\');
+
             $k = str_replace($search, $replace, $k);
             if ($v !== NULL)
                 $v = str_replace($search, $replace, $v);
 
             $array[$k] = $v;
-
-            // 把匹配到的key=>value从字符串中去掉，继续下一次匹配
-            $hstore = substr($hstore, strlen($s));
-            if (substr($hstore, 0, 2) == ', ')
-                $hstore = substr($hstore, 2);
-
-            if (!$hstore)
-                break;
-        } while (true);
+        }
 
         return $array;
     }
