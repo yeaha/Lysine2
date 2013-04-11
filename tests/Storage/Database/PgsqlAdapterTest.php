@@ -1,6 +1,8 @@
 <?php
 namespace Test\Storage\Database;
 
+use \Lysine\Service\DB\Adapter\Pgsql;
+
 class PgsqlAdapterTest extends \PHPUnit_Framework_TestCase {
     protected $adapter;
 
@@ -98,5 +100,49 @@ class PgsqlAdapterTest extends \PHPUnit_Framework_TestCase {
         $sth = $adapter->prepareDelete($table, 'account_id = ?');
         $this->assertInstanceof('\PDOStatement', $sth);
         $this->assertEquals($except, (string)$sth);
+    }
+
+    public function testHstore() {
+        $this->assertEquals('aaa', Pgsql::encodeHstore('aaa'));
+        $this->assertNull(Pgsql::encodeHstore(''));
+        $this->assertNull(Pgsql::encodeHstore(NULL));
+        $this->assertNull(Pgsql::encodeHstore(array()));
+
+        $this->assertSame(array(), Pgsql::decodeHstore(''));
+        $this->assertSame(array(), Pgsql::decodeHstore(NULL));
+
+        $data = array(
+            'a' => NULL,
+            'b' => 'b',
+            'c' => 'a"b',
+            'd' => 'a\'b',
+            'e' => 'a\\b',
+            'f' => 123,
+            'g' => '',
+            'h' => 'a"b\'c\\d',
+            'i' => 'a=>b',
+            'j' => '"a"=>"b", ',
+            'k=>' => 'ab',
+            '"l=>' => 'a=>b',
+            'm' => 'a,b',
+            'n' => 0,
+        );
+
+        $expr = Pgsql::encodeHstore($data);
+        $this->assertInstanceof('\Lysine\Service\DB\Expr', $expr);
+
+        $adapter = $this->adapter;
+        $hstore = $adapter->execute('select '. $expr)->getCol();
+        $this->assertInternalType('string', $hstore);
+
+        $decoded = Pgsql::decodeHstore($hstore);
+
+        foreach ($decoded as $key => $val) {
+            $this->assertArrayHasKey($key, $data);
+
+            // 恢复回来的数据除NULL外，全部都是字符串类型
+            $expect = ($data[$key] === NULL) ? NULL : (string)$data[$key];
+            $this->assertSame($expect, $decoded[$key]);
+        }
     }
 }

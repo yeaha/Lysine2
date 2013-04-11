@@ -124,49 +124,76 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
         return $array ? sprintf('{"%s"}', implode('","', $array)) : null;
     }
 
+    // postgresql hstore -> php array
     static public function decodeHstore($hstore) {
-        $result = array();
-        if (!$hstore) return $result;
+        $re = '/"(.+)(?<!\\\)"=>(""|NULL|".+(?<!\\\)"),?/U';
+        $array = array();
 
-        foreach (preg_split('/"\s*,\s*"/', $hstore) as $pair) {
-            $pair = explode('=>', $pair);
-            if (count($pair) !== 2) continue;
+        if ($hstore === '' || $hstore === NULL)
+            return $array;
 
-            list($k, $v) = $pair;
-            $k = trim($k, '\'" ');
-            $v = trim($v, '\'" ');
-            $result[$k] = $v;
-        }
-        return $result;
+        do {
+            // 匹配一对key=>value
+            if (!preg_match($re, $hstore, $match))
+                break;
+
+            $s = $match[0];
+            $k = $match[1];
+            $v = $match[2];
+
+            if ($v === 'NULL') {
+                $v = NULL;
+            } else {
+                // 如果value不是NULL，匹配到的结果需要去掉两边的"
+                $v = substr($v, 1, -1);
+            }
+
+            // 反转key value的转义字符
+            $search = array('\"', '\\\\');
+            $replace = array('"', '\\');
+            $k = str_replace($search, $replace, $k);
+            if ($v !== NULL)
+                $v = str_replace($search, $replace, $v);
+
+            $array[$k] = $v;
+
+            // 把匹配到的key=>value从字符串中去掉，继续下一次匹配
+            $hstore = substr($hstore, strlen($s));
+            if (substr($hstore, 0, 2) == ', ')
+                $hstore = substr($hstore, 2);
+
+            if (!$hstore)
+                break;
+        } while (true);
+
+        return $array;
     }
 
-    static public function encodeHstore(array $array, $new_style = false) {
-        if (!$array) return null;
+    // php array -> postgresql hstore
+    static public function encodeHstore($array, $new_style = false) {
+        if (!$array)
+            return NULL;
 
-        if (!$new_style) {
-            $result = array();
-            foreach ($array as $k => $v) {
-                $v = str_replace('\\', '\\\\\\\\', $v);
-                $v = str_replace('"', '\\\\"', $v);
-                $v = str_replace("'", "\\'", $v);
-                $result[] = sprintf('"%s"=>"%s"', $k, $v);
-            }
-            return new Expr('E\''. implode(',', $result) .'\'::hstore');
-        } else {
-            $result = 'hstore(ARRAY[%s], ARRAY[%s])';
-            $cols = $vals = array();
-            foreach ($array as $k => $v) {
-                $v = str_replace('\\', '\\\\', $v);
-                $v = str_replace("'", "\\'", $v);
-                $cols[] = $k;
-                $vals[] = $v;
-            }
+        if (!is_array($array))
+            return $array;
 
-            return new Expr(sprintf(
-                $result,
-                "'". implode("','", $cols) ."'",
-                "E'". implode("',E'", $vals) ."'"
-            ));
+        $expr = array();
+
+        foreach ($array as $key => $val) {
+            if ($key === NULL)
+                continue;
+
+            $search = array('\\', "'", '"');
+            $replace = array('\\\\', "''", '\"');
+
+            $key = str_replace($search, $replace, $key);
+            $val = $val === NULL
+                 ? 'NULL'
+                 : '"'.str_replace($search, $replace, $val).'"';
+
+            $expr[] = sprintf('"%s"=>%s', $key, $val);
         }
+
+        return new Expr(sprintf("'%s'::hstore", implode(',', $expr)));
     }
 }
