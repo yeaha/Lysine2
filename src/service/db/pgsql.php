@@ -141,12 +141,9 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
             $k = $match[1];
             $v = $match[2];
 
-            if ($v === 'NULL') {
-                $v = NULL;
-            } else {
-                // 如果value不是NULL，匹配到的结果需要去掉两边的"
-                $v = substr($v, 1, -1);
-            }
+            $v = $v === 'NULL'
+               ? NULL
+               : substr($v, 1, -1); // 如果value不是NULL，匹配到的结果需要去掉两边的"
 
             // 反转key value的转义字符
             $search = array('\"', '\\\\');
@@ -170,7 +167,7 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
     }
 
     // php array -> postgresql hstore
-    static public function encodeHstore($array, $new_style = false) {
+    static public function encodeHstore($array) {
         if (!$array)
             return NULL;
 
@@ -180,9 +177,6 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
         $expr = array();
 
         foreach ($array as $key => $val) {
-            if ($key === NULL)
-                continue;
-
             $search = array('\\', "'", '"');
             $replace = array('\\\\', "''", '\"');
 
