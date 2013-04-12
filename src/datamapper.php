@@ -830,7 +830,7 @@ namespace Lysine\DataMapper\Helper;
 class Mixed {
     // 格式化数据
     public function normalize($data, array $meta) {
-        if ($data === NULL || $data === '')
+        if ($data === '')
             return NULL;
 
         return $data;
