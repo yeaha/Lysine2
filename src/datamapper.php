@@ -911,7 +911,7 @@ class DateTime extends Mixed {
     }
 
     protected function create($data, array $meta) {
-        if ($data === NULL)
+        if ($data === NULL || $data === '')
             return NULL;
 
         if ($data instanceof \DateTime)
