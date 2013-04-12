@@ -128,7 +128,7 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
 
         // 过滤掉会导致解析或保存失败的异常字符
         $array = preg_replace("/[,']/", '', $array);
-        return new Expr(sprintf("ARRAY['%s']", implode("','", $array)));
+        return new Expr(sprintf('\'{"%s"}\'', implode('","', $array)));
     }
 
     // postgresql hstore -> php array
