@@ -16,6 +16,8 @@ return array(
     'lysine\datamapper\helper\json' => 'datamapper.php',
     'lysine\datamapper\helper\mixed' => 'datamapper.php',
     'lysine\datamapper\helper\numeric' => 'datamapper.php',
+    'lysine\datamapper\helper\pgsqlarray' => 'datamapper.php',
+    'lysine\datamapper\helper\pgsqlhstore' => 'datamapper.php',
     'lysine\datamapper\helper\string' => 'datamapper.php',
     'lysine\datamapper\mapper' => 'datamapper.php',
     'lysine\datamapper\meta' => 'datamapper.php',
