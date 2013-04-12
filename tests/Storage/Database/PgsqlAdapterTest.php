@@ -145,4 +145,31 @@ class PgsqlAdapterTest extends \PHPUnit_Framework_TestCase {
             $this->assertSame($expect, $decoded[$key]);
         }
     }
+
+    public function testPgArray() {
+        $this->assertNull(Pgsql::encodeArray(NULL));
+        $this->assertNull(Pgsql::encodeArray(array()));
+
+        $this->assertSame(array(), Pgsql::decodeArray(''));
+        $this->assertSame(array(), Pgsql::decodeArray(NULL));
+
+        $data_set = array(
+            array(1, 2, 3),
+            array('a', 'b', 'c'),
+            array('a\'', 'b,'),
+        );
+
+        $adapter = $this->adapter;
+        foreach ($data_set as $data) {
+            $expr = Pgsql::encodeArray($data);
+            $this->assertInstanceof('\Lysine\Service\DB\Expr', $expr);
+
+            $pg_array = $adapter->execute('select '. $expr)->getCol();
+            $this->assertInternalType('string', $pg_array);
+
+            $decoded = Pgsql::decodeArray($pg_array);
+            $this->assertInternalType('array', $decoded);
+            $this->assertEquals(count($data), count($decoded));
+        }
+    }
 }

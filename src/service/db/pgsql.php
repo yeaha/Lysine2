@@ -116,12 +116,19 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
     //////////////////// static method ////////////////////
 
     static public function decodeArray($array) {
-        $array = explode(',', trim($array, '{}'));
-        return $array;
+        return $array ? explode(',', trim($array, '{}')) : array();
     }
 
-    static public function encodeArray(array $array) {
-        return $array ? sprintf('{"%s"}', implode('","', $array)) : null;
+    static public function encodeArray($array) {
+        if (!$array)
+            return NULL;
+
+        if (!is_array($array))
+            return $array;
+
+        // 过滤掉会导致解析或保存失败的异常字符
+        $array = preg_replace("/[,']/", '', $array);
+        return new Expr(sprintf("ARRAY['%s']", implode("','", $array)));
     }
 
     // postgresql hstore -> php array
