@@ -547,6 +547,8 @@ class HelperManager {
         'string' => '\Lysine\DataMapper\Helper\String',
         'json' => '\Lysine\DataMapper\Helper\Json',
         'datetime' => '\Lysine\DataMapper\Helper\DateTime',
+        'pg_hstore' => '\Lysine\DataMapper\Helper\PgsqlHstore',
+        'pg_array' => '\Lysine\DataMapper\Helper\PgsqlArray',
     );
 
     public function getHelper($type) {
@@ -924,5 +926,25 @@ class DateTime extends Mixed {
             throw new \Exception('Create datetime from format ['.$meta['format'].'] failed!');
 
         return $data;
+    }
+}
+
+class PgsqlHstore extends Mixed {
+    public function store($data, array $meta) {
+        return \Lysine\Service\DB\Adapter\Pgsql::encodeHstore($data);
+    }
+
+    public function restore($data, array $meta) {
+        return \Lysine\Service\DB\Adapter\Pgsql::decodeHstore($data);
+    }
+}
+
+class PgsqlArray extends Mixed {
+    public function store($data, array $meta) {
+        return \Lysine\Service\DB\Adapter\Pgsql::encodeArray($data);
+    }
+
+    public function restore($data, array $meta) {
+        return \Lysine\Service\DB\Adapter\Pgsql::decodeArray($data);
     }
 }
