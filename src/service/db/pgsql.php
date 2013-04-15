@@ -116,7 +116,14 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
     //////////////////// static method ////////////////////
 
     static public function decodeArray($array) {
-        return $array ? explode(',', trim($array, '{}')) : array();
+        if (!$array)
+            return array();
+
+        $array = explode(',', trim($array, '{}'));
+        foreach ($array as $k => $v)
+            $array[$k] = trim($v, '"');
+
+        return $array;
     }
 
     static public function encodeArray($array) {
@@ -127,7 +134,7 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
             return $array;
 
         // 过滤掉会导致解析或保存失败的异常字符
-        $array = preg_replace("/[,']/", '', $array);
+        $array = preg_replace("/[,'\"]/", '', $array);
         return new Expr(sprintf('\'{"%s"}\'', implode('","', $array)));
     }
 
