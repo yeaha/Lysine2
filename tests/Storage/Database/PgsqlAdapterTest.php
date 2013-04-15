@@ -156,7 +156,7 @@ class PgsqlAdapterTest extends \PHPUnit_Framework_TestCase {
         $data_set = array(
             array(1, 2, 3),
             array('a', 'b', 'c'),
-            array('a\'', 'b,'),
+            array('a\'', 'b,', 'c"'),
         );
 
         $adapter = $this->adapter;
