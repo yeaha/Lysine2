@@ -263,14 +263,16 @@ class Response {
 
         \Lysine\Session::getInstance()->commit();
 
-        array_map('header', $header);
-        $this->header = array();
+        if (!headers_sent()) {
+            array_map('header', $header);
+            $this->header = array();
 
-        foreach ($this->cookie as $config) {
-            list($name, $value, $expire, $path, $domain, $secure, $httponly) = $config;
-            setCookie($name, $value, $expire, $path, $domain, $secure, $httponly);
+            foreach ($this->cookie as $config) {
+                list($name, $value, $expire, $path, $domain, $secure, $httponly) = $config;
+                setCookie($name, $value, $expire, $path, $domain, $secure, $httponly);
+            }
+            $this->cookie = array();
         }
-        $this->cookie = array();
 
         if (is_callable($body)) {
             echo call_user_func($body);
