@@ -137,6 +137,10 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
 
         $array = array();
 
+        // 每次循环解析出一个元素，每解析到一个元素，就在字符串内去掉这个元素
+        // 字符串内的元素分两种情况，头尾有"或没有
+        // 用"包含起来的元素里面会包含逃逸后的特殊字符串，需要用正则表达式来解析
+        // 不用"包含的元素比较简单，直接找到最近的","来确定元素
         do {
             if (substr($pg_array, 0, 1) === '"') {
                 if (!preg_match('/^"(.*)(?<!\\\)",?/U', $pg_array, $match))
