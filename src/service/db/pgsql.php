@@ -120,8 +120,16 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
             return array();
 
         $array = explode(',', trim($array, '{}'));
-        foreach ($array as $k => $v)
-            $array[$k] = trim($v, '"');
+        foreach ($array as $k => $v) {
+            if (substr($v, 0, 1) == '"')
+                $v = substr($v, 1, -1);
+
+            $search = array('\"', '\\\\');
+            $replace = array('"', '\\');
+            $v = str_replace($search, $replace , $v);
+
+            $array[$k] = $v;
+        }
 
         return $array;
     }
@@ -134,7 +142,10 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
             return $array;
 
         // 过滤掉会导致解析或保存失败的异常字符
-        $array = preg_replace("/[,'\"]/", '', $array);
+        $search = array(',', '\\', "'", '"');
+        $replace = array('', '\\\\', "''", '\"');
+        $array = str_replace($search, $replace, $array);
+
         return new Expr(sprintf('\'{"%s"}\'', implode('","', $array)));
     }
 

@@ -156,7 +156,7 @@ class PgsqlAdapterTest extends \PHPUnit_Framework_TestCase {
         $data_set = array(
             array(1, 2, 3),
             array('a', 'b', 'c'),
-            array('a\'', 'b,', 'c"'),
+            array('a\'', 'b,', 'c"', 'd\\'),
         );
 
         $adapter = $this->adapter;
@@ -164,7 +164,7 @@ class PgsqlAdapterTest extends \PHPUnit_Framework_TestCase {
             $expr = Pgsql::encodeArray($data);
             $this->assertInstanceof('\Lysine\Service\DB\Expr', $expr);
 
-            $pg_array = $adapter->execute('select '. $expr)->getCol();
+            $pg_array = $adapter->execute("select ({$expr})::varchar[]")->getCol();
             $this->assertInternalType('string', $pg_array);
 
             $decoded = Pgsql::decodeArray($pg_array);
