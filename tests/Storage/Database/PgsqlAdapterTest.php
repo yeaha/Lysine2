@@ -154,9 +154,11 @@ class PgsqlAdapterTest extends \PHPUnit_Framework_TestCase {
         $this->assertSame(array(), Pgsql::decodeArray(NULL));
 
         $data_set = array(
-            array(1, 2, 3),
+            array('1', '2', '3'),
             array('a', 'b', 'c'),
-            array('a\'', 'b,', 'c"', 'd\\'),
+            array('a\'', 'b,', 'c"', 'd\\d', 'e'),
+            array('', NULL, 'a'),
+            array('1', NULL, 'c"'),
         );
 
         $adapter = $this->adapter;
@@ -169,7 +171,7 @@ class PgsqlAdapterTest extends \PHPUnit_Framework_TestCase {
 
             $decoded = Pgsql::decodeArray($pg_array);
             $this->assertInternalType('array', $decoded);
-            $this->assertEquals(count($data), count($decoded));
+            $this->assertSame($data, $decoded);
         }
     }
 }

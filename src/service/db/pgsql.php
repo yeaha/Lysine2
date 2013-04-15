@@ -115,25 +115,64 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
 
     //////////////////// static method ////////////////////
 
-    static public function decodeArray($array) {
-        if (!$array)
+    // postgresql array -> php array
+    static public function decodeArray($pg_array) {
+        if (!$pg_array)
             return array();
 
-        $array = explode(',', trim($array, '{}'));
-        foreach ($array as $k => $v) {
-            if (substr($v, 0, 1) == '"')
-                $v = substr($v, 1, -1);
+        $pg_array = trim($pg_array, '{}');
 
-            $search = array('\"', '\\\\');
-            $replace = array('"', '\\');
-            $v = str_replace($search, $replace , $v);
+        // 如果没有包含"，直接简单的用,拆分
+        if (strpos($pg_array, '"') === false) {
+            $array = explode(',', $pg_array);
+            foreach ($array as $key => $val) {
+                if ($val === 'NULL')
+                    $array[$key] = NULL;
+            }
 
-            $array[$k] = $v;
+            return $array;
+        }
+
+        ////////////////////////////////////////////////////////////
+
+        $array = array();
+
+        do {
+            if (substr($pg_array, 0, 1) === '"') {
+                if (!preg_match('/^"(.*)(?<!\\\)",?/U', $pg_array, $match))
+                    break;
+
+                $array[] = $match[1];
+                $pg_array = substr($pg_array, strlen($match[0])+1);
+            } else {
+                $pos = strpos($pg_array, ',');
+                if ($pos === false) {
+                    $val = $pg_array;
+                    $pg_array = '';
+                } else {
+                    $val = substr($pg_array, 0, $pos);
+                    $pg_array = substr($pg_array, $pos+1);
+                }
+
+                if ($val === 'NULL')
+                    $val = NULL;
+
+                $array[] = $val;
+            }
+        } while($pg_array);
+
+        foreach ($array as $key => $val) {
+            if ($val !== NULL) {
+                $search = array('\"', '\\\\');
+                $replace = array('"', '\\');
+                $array[$key] = str_replace($search, $replace , $val);
+            }
         }
 
         return $array;
     }
 
+    // php array -> postgresql array
     static public function encodeArray($array) {
         if (!$array)
             return NULL;
@@ -142,11 +181,21 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
             return $array;
 
         // 过滤掉会导致解析或保存失败的异常字符
-        $search = array(',', '\\', "'", '"');
-        $replace = array('', '\\\\', "''", '\"');
-        $array = str_replace($search, $replace, $array);
+        foreach ($array as $key => $val) {
+            if ($val === NULL) {
+                $val = 'NULL';
+            } else {
+                $val = rtrim($val, '\\');       // 以\结尾的字符串，在decode时会导致正则表达式无法解析
 
-        return new Expr(sprintf('\'{"%s"}\'', implode('","', $array)));
+                $search = array('\\', "'", '"');
+                $replace = array('\\\\', "''", '\"');
+                $val = '"'.str_replace($search, $replace, $val).'"';
+            }
+
+            $array[$key] = $val;
+        }
+
+        return new Expr(sprintf("'{%s}'", implode(',', $array)));
     }
 
     // postgresql hstore -> php array
@@ -191,9 +240,13 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
             $replace = array('\\\\', "''", '\"');
 
             $key = str_replace($search, $replace, $key);
-            $val = $val === NULL
-                 ? 'NULL'
-                 : '"'.str_replace($search, $replace, $val).'"';
+
+            if ($val === NULL) {
+                $val = 'NULL';
+            } else {
+                $val = rtrim($val, '\\');       // 以\结尾的字符串，无法用正则表达式解析
+                $val = '"'.str_replace($search, $replace, $val).'"';
+            }
 
             $expr[] = sprintf('"%s"=>%s', $key, $val);
         }
