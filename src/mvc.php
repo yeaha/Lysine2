@@ -247,13 +247,15 @@ class View {
         $file = $this->findFile($view);
         $vars = $vars ? array_merge($this->vars, $vars) : $this->vars;
 
+        $ob_level = ob_get_level();
         ob_start();
 
         try {
             extract($vars);
             require $file;
         } catch (\Exception $ex) {
-            while (ob_get_level())
+            // 外面可能已经调用过ob_start()，所以这里不能全部删除干净
+            while (ob_get_level() > $ob_level)
                 ob_end_clean();
 
             throw $ex;
