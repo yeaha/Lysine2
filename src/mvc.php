@@ -10,6 +10,8 @@ class Application {
 
     protected $include_path = array();
 
+    protected $loaded_css = array();
+
     public function __construct(array $options = array()) {
         if (isset($options['include_path']) && is_array($options['include_path']))
             $this->include_path = $options['include_path'];
@@ -323,5 +325,23 @@ class View {
             throw new \Lysine\RuntimeError('View file '.$file.' not exist!');
 
         return $file;
+    }
+
+    // 此方法的主要目的是用于视图片段中加载css，避免某个css在多个视图片段内重复加载
+    // $this->loadCss('a.css', 'b.css');
+    protected function loadCss($file, $other = NULL) {
+        if ($other === NULL) {
+            $files = is_array($file) ? $file : array($file);
+        } else {
+            $files = func_get_args();
+        }
+
+        foreach ($files as $file) {
+            if (isset($this->loaded_css[$file]))
+                continue;
+
+            echo '<link rel="stylesheet" type="text/css" href="'.$file.'"/>';
+            $this->loaded_css[$file] = 1;
+        }
     }
 }
