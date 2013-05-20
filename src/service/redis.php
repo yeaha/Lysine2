@@ -11,6 +11,7 @@ class Redis implements \Lysine\Service\IService {
         'timeout' => 0,
         'prefix' => null,
         'persistent' => 0,
+        'persistent_id' => '',
      // 'unix_socket' => '/tmp/redis.sock',
      // 'password' => 'your password',
      // 'database' => 0,    // dbindex, the database number to switch to
@@ -44,6 +45,9 @@ class Redis implements \Lysine\Service\IService {
         $conn_args = isset($config['unix_socket'])
                    ? array($config['unix_socket'])
                    : array($config['host'], $config['port'], $config['timeout']);
+
+        if ($config['persistent'] && !isset($config['unix_socket']))
+            $conn_args[] = $config['persistent_id'];
 
         $conn = $config['persistent']
               ? call_user_func_array(array($handler, 'pconnect'), $conn_args)
