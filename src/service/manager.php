@@ -19,6 +19,7 @@ class Manager {
 
     public function importConfig(array $config) {
         $this->config = array_merge($this->config, $config);
+        return $this;
     }
 
     public function setDispatcher($name, $callback) {
