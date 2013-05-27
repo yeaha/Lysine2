@@ -404,6 +404,9 @@ class RedisContextHandler extends ContextHandler {
         if (!$service = $this->getConfig('service'))
             throw new RuntimeError('Require redis service for context');
 
+        if ($service instanceof \Lysine\Service\Redis)
+            return $service;
+
         return service($service);
     }
 }
