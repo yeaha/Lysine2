@@ -22,6 +22,7 @@ abstract class Adapter implements \Lysine\Service\IService {
 
     public function __sleep() {
         $this->disconnect();
+        return array('config');
     }
 
     public function __call($method, array $args) {
