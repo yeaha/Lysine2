@@ -156,7 +156,7 @@ class Request {
         return server('http_referer');
     }
 
-    public function ip($proxy = false) {
+    public function ip($proxy = null) {
         $ip = $proxy
             ? server('http_client_ip') ?: server('http_x_forwarded_for') ?: server('remote_addr')
             : server('remote_addr');
