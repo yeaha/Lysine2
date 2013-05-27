@@ -348,6 +348,7 @@ class CookieContextHandler extends ContextHandler {
 // $handler = new RedisContextHandler($config);
 class RedisContextHandler extends ContextHandler {
     protected $data;
+    protected $saved_keys;
     protected $dirty = false;
 
     public function __construct(array $config) {
@@ -357,6 +358,7 @@ class RedisContextHandler extends ContextHandler {
         $token = $this->getToken();
 
         $this->data = $redis->hGetAll($token) ?: array();
+        $this->saved_keys = array_keys($this->data);
     }
 
     public function __destruct() {
@@ -380,6 +382,9 @@ class RedisContextHandler extends ContextHandler {
     }
 
     public function remove($key) {
+        if (!isset($this->data[$key]))
+            return false;
+
         unset($this->data[$key]);
         $this->dirty = true;
     }
@@ -405,10 +410,13 @@ class RedisContextHandler extends ContextHandler {
         $redis = $this->getService();
         $token = $this->getToken();
 
-        if (!$data = $this->data)
-            return $redis->delete($token);
+        if (!$data = $this->data) {
+            $redis->delete($token);
+            $this->saved_keys = array();
+            return true;
+        }
 
-        $removed_keys = array_diff($redis->hKeys($token), array_keys($data));
+        $removed_keys = array_diff($this->saved_keys, array_keys($data));
 
         $redis->multi(\Redis::PIPELINE);
 
@@ -422,6 +430,7 @@ class RedisContextHandler extends ContextHandler {
 
         $redis->exec();
 
+        $this->saved_keys = array_keys($data);
         return true;
     }
 
