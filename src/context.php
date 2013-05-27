@@ -347,57 +347,46 @@ class CookieContextHandler extends ContextHandler {
 // $handler = ContextHandler::factory('redis', $config);
 // $handler = new RedisContextHandler($config);
 class RedisContextHandler extends ContextHandler {
-    public function set($key, $val) {
+    protected $data;
+    protected $dirty = false;
+
+    public function __construct(array $config) {
+        parent::__construct($config);
+
         $redis = $this->getService();
         $token = $this->getToken();
 
-        if ($ttl = (int)$this->getConfig('ttl')) {
-            $redis->multi(\Redis::PIPELINE)
-                  ->hSet($token, $key, $val)
-                  ->setTimeout($token, $ttl)
-                  ->exec();
-        } else {
-            $redis->hSet($token, $key, $val);
-        }
+        $this->data = $redis->hGetAll($token) ?: array();
+    }
+
+    public function __destruct() {
+        $this->save();
+    }
+
+    public function set($key, $val) {
+        $this->data[$key] = $val;
+        $this->dirty = true;
     }
 
     public function get($key = null) {
-        $redis = $this->getService();
-        $token = $this->getToken();
-
         if ($key === null)
-            return $redis->hGetAll($token);
+            return $this->data;
 
-        $val = $redis->hGet($token, $key);
-        return ($val === false) ? null : $val;
+        return isset($this->data[$key]) ? $this->data[$key] : null;
     }
 
     public function has($key) {
-        $redis = $this->getService();
-        $token = $this->getToken();
-
-        return $redis->hExists($token, $key);
+        return isset($this->data[$key]);
     }
 
     public function remove($key) {
-        $redis = $this->getService();
-        $token = $this->getToken();
-
-        if ($ttl = (int)$this->getConfig('ttl')) {
-            $redis->multi(\Redis::PIPELINE)
-                  ->hDel($token, $key)
-                  ->setTimeout($token, $ttl)
-                  ->exec();
-        } else {
-            $redis->hDel($token, $key);
-        }
+        unset($this->data[$key]);
+        $this->dirty = true;
     }
 
     public function clear() {
-        $redis = $this->getService();
-        $token = $this->getToken();
-
-        $redis->delete($token);
+        $this->data = array();
+        $this->dirty = true;
     }
 
     public function setTimeout($ttl) {
@@ -405,6 +394,35 @@ class RedisContextHandler extends ContextHandler {
         $token = $this->getToken();
 
         return $redis->setTimeout($token, $ttl);
+    }
+
+    public function save() {
+        if (!$this->dirty)
+            return true;
+
+        $this->dirty = false;
+
+        $redis = $this->getService();
+        $token = $this->getToken();
+
+        if (!$data = $this->data)
+            return $redis->delete($token);
+
+        $removed_keys = array_diff($redis->hKeys($token), array_keys($data));
+
+        $redis->multi(\Redis::PIPELINE);
+
+        foreach ($removed_keys as $key)
+            $redis->hDel($token, $key);
+
+        $redis->hMSet($token, $data);
+
+        if ($ttl = (int)$this->getConfig('ttl'))
+            $redis->setTimeout($token, $ttl);
+
+        $redis->exec();
+
+        return true;
     }
 
     protected function getService() {

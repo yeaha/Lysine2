@@ -40,6 +40,9 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
             $handler->set('test', 'abc');
             $this->assertEquals($handler->get('test'), 'abc', "{$class}->get() exists key");
 
+            if ($handler instanceof \Lysine\RedisContextHandler)
+                $handler->save();
+
             $handler->remove('test');
             $this->assertFalse($handler->has('test'), "{$class}->has() not exists key");
 
@@ -162,5 +165,38 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         $handler->reset();
         $_SERVER['REMOTE_ADDR'] = '192.168.2.1';
         $this->assertNull($handler->get('test'), '不同子网IP取值');
+    }
+
+    public function testRedisContext() {
+        $config = array('token' => uniqid(), 'ttl' => 300, 'service' => 'redis.local');
+        $handler = new \Test\Mock\Context\RedisHandler($config);
+
+        $this->assertSame(array(), $handler->get());
+        $this->assertFalse($handler->isDirty());
+
+        $handler->set('foo', 1);
+        $this->assertTrue($handler->isDirty());
+
+        $handler->set('bar', 2);
+        $this->assertTrue($handler->save());
+        $this->assertFalse($handler->isDirty());
+
+        $ttl = $handler->getTimeout();
+        $this->assertTrue($ttl && $ttl > 0);
+
+        $handler = new \Test\Mock\Context\RedisHandler($config);
+        $this->assertEquals(1, $handler->get('foo'));
+        $this->assertEquals(2, $handler->get('bar'));
+
+        $handler->remove('bar');
+        $this->assertTrue($handler->isDirty());
+        $this->assertTrue($handler->save());
+
+        $handler = new \Test\Mock\Context\RedisHandler($config);
+        $this->assertTrue($handler->has('foo'));
+        $this->assertFalse($handler->has('bar'));
+
+        $handler->clear();
+        $handler->save();
     }
 }
