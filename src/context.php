@@ -400,6 +400,13 @@ class RedisContextHandler extends ContextHandler {
         $redis->delete($token);
     }
 
+    public function setTimeout($ttl) {
+        $redis = $this->getService();
+        $token = $this->getToken();
+
+        return $redis->setTimeout($token, $ttl);
+    }
+
     protected function getService() {
         if (!$service = $this->getConfig('service'))
             throw new RuntimeError('Require redis service for context');
