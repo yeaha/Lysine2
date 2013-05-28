@@ -158,7 +158,7 @@ class Request {
 
     public function ip($proxy = null) {
         $ip = $proxy
-            ? server('http_client_ip') ?: server('http_x_forwarded_for') ?: server('remote_addr')
+            ? server('http_x_forwarded_for') ?: server('remote_addr')
             : server('remote_addr');
 
         if (strpos($ip, ',') === false)
