@@ -8,9 +8,11 @@ class Sandbox {
 
     protected $path = '/';
     protected $cookie;
+    protected $_server;
 
     protected function __construct() {
         $this->cookie = \Test\Mock\Cookie::getInstance();
+        $this->_server = $_SERVER;
     }
 
     public function request($uri = '/', $method = 'GET', array $params = array()) {
@@ -55,7 +57,8 @@ class Sandbox {
         $this->path = '/';
         $this->cookie->reset();
 
-        $_GET = $_POST = $_REQUEST = $_SERVER = $_SESSION = $_COOKIE = array();
+        $_GET = $_POST = $_REQUEST = $_SESSION = $_COOKIE = array();
+        $_SERVER = $this->_server;
     }
 
     public function useAjax() {
