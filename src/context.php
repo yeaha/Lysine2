@@ -366,6 +366,9 @@ class RedisContextHandler extends ContextHandler {
     }
 
     public function set($key, $val) {
+        if (isset($this->data[$key]) && $this->data[$key] === $val)
+            return true;
+
         $this->data[$key] = $val;
         $this->dirty = true;
     }

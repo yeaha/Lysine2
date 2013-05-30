@@ -196,6 +196,18 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         $this->assertTrue($handler->has('foo'));
         $this->assertFalse($handler->has('bar'));
 
+        $handler = new \Test\Mock\Context\RedisHandler($config);
+        $handler->set('foo', '1');
+        $this->assertFalse($handler->isDirty());
+        $handler->set('foo', 2);
+        $this->assertTrue($handler->isDirty());
+
+        $handler = new \Test\Mock\Context\RedisHandler($config);
+        $handler->remove('foobar');
+        $this->assertFalse($handler->isDirty());
+        $handler->remove('foo');
+        $this->assertTrue($handler->isDirty());
+
         $handler->clear();
         $handler->save();
     }
