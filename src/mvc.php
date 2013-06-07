@@ -11,8 +11,14 @@ class Application {
     protected $include_path = array();
 
     public function __construct(array $options = array()) {
-        if (isset($options['include_path']) && is_array($options['include_path']))
-            $this->include_path = $options['include_path'];
+        if (isset($options['include_path']) && is_array($options['include_path'])) {
+            foreach ($options['include_path'] as $path) {
+                if (!$path = realpath($path))
+                    continue;
+
+                $this->include_path[] = $path . DIRECTORY_SEPARATOR;
+            }
+        }
 
         spl_autoload_register(array($this, 'loadClass'));
     }
@@ -49,11 +55,14 @@ class Application {
     public function loadClass($class) {
         $file = str_replace('\\', DIRECTORY_SEPARATOR, strtolower($class)) .'.php';
         foreach ($this->include_path as $path) {
-            $f = $path .DIRECTORY_SEPARATOR. $file;
-            if (!is_file($f)) continue;
+            if (!$file = realpath($path . $file))
+                continue;
 
-            require $f;
-            break;
+            if (strpos($file, $path) !== 0)
+                continue;
+
+            require $file;
+            return true;
         }
     }
 }
