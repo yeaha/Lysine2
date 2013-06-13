@@ -50,8 +50,6 @@ class Application {
              : resp()->setBody($response);
     }
 
-    //////////////////// protected method ////////////////////
-
     public function loadClass($class) {
         $file = str_replace('\\', DIRECTORY_SEPARATOR, strtolower($class)) .'.php';
         foreach ($this->include_path as $path) {
