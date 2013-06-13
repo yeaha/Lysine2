@@ -124,6 +124,7 @@ class Router {
     // return array($class, $params, $path)
     public function dispatch($uri) {
         $path = $this->normalizePath( parse_url($uri, PHP_URL_PATH) );
+        $exception_more = array();
 
         do {
             if ($base_uri = $this->base_uri) {
@@ -133,16 +134,24 @@ class Router {
                 $path = $this->normalizePath(substr($path, strlen($base_uri)));
             }
 
+            $exception_more['path'] = $path;
+
             if (!$result = $this->rewrite($path) ?: $this->convert($path))
                 break;
 
-            if (!class_exists($result[0]))
+            list($class, $params,) = $result;
+            $exception_more['controller'] = $class;
+            $exception_more['params'] = $params;
+
+            if (!class_exists($class))
                 break;
 
             return $result;
         } while (false);
 
-        throw HTTP\Error::factory(HTTP::NOT_FOUND);
+        $exception = HTTP\Error::factory(HTTP::NOT_FOUND);
+        $exception->setMore($exception_more);
+        throw $exception;
     }
 
     //////////////////// protected method ////////////////////

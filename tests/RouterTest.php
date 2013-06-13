@@ -15,10 +15,25 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
     }
 
     protected function assertController($uri, $expect, $router = null) {
-        $router = $router ?: $this->router;
-        list($controller,) = $router->dispatch($uri);
+        list($controller,) = $this->dispatch($uri, $router);
 
         $this->assertEquals($expect, $controller);
+    }
+
+    protected function dispatch($uri, $router = null) {
+        $router = $router ?: $this->router;
+
+        try {
+            return $router->dispatch($uri);
+        } catch (\Lysine\HTTP\Error $error) {
+            if (!$controller = $error->getMore('controller'))
+                throw $error;
+
+            $params = $error->getMore('params') ?: array();
+            $path = $error->getMore('path') ?: $uri;
+
+            return array($controller, $params, $path);
+        }
     }
 
     public function testNamespace() {
@@ -65,14 +80,14 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
             '#^/news/(\d{4}\-\d{1,2}\-\d{1,2})/(\d+)#' => '\Controller\News',
         ));
 
-        list($class, $params) = $this->router->dispatch('/topic/123');
+        list($class, $params) = $this->dispatch('/topic/123');
         $this->assertEquals('\Controller\Topic', $class);
         $this->assertContains(123, $params);
 
-        list($class, $params) = $this->router->dispatch('/news/2012-08-23/123');
+        list($class, $params) = $this->dispatch('/news/2012-08-23/123');
         $this->assertSame(array('2012-08-23', '123'), $params);
 
-        list($class, $params) = $this->router->dispatch('/news/2012-08-23/123/comment');
+        list($class, $params) = $this->dispatch('/news/2012-08-23/123/comment');
         $this->assertEquals('\Controller\News\Comment', $class);
         $this->assertSame(array('2012-08-23', '123'), $params);
 
@@ -80,10 +95,10 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testExtension() {
-        list($class,) = $this->router->dispatch('/topic');
+        list($class,) = $this->dispatch('/topic');
         $this->assertEquals('\Controller\Topic', $class);
 
-        list($class,) = $this->router->dispatch('/topic.json');
+        list($class,) = $this->dispatch('/topic.json');
         $this->assertEquals('\Controller\Topic', $class);
 
         $this->router->setRewrite(array(
@@ -91,7 +106,7 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
             '#^/topic#' => '\Controller\Topic',
         ));
 
-        list($class,) = $this->router->dispatch('/topic.json');
+        list($class,) = $this->dispatch('/topic.json');
         $this->assertEquals('\Controller\JsonTopic', $class);
     }
 
