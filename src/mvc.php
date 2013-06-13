@@ -199,8 +199,11 @@ class View {
 
     protected $include_views = array();
 
-    public function __construct($dir) {
-        $this->dir = $dir;
+    public function __construct($view_dir) {
+        if (!$dir = realpath($view_dir))
+            throw new \Lysine\RuntimeError('View directory '.$view_dir.' not exist!');
+
+        $this->dir = $dir.DIRECTORY_SEPARATOR;
     }
 
     public function __clone() {
@@ -246,9 +249,16 @@ class View {
     //////////////////// protected method ////////////////////
 
     protected function includes($view, array $vars = array(), $return_content = false) {
+        $view_file = $this->dir.$view.'.php';
+
+        if (!$file = realpath($view_file))
+            throw new \Lysine\RuntimeError('View file '.$view_file.' not exist!');
+
+        if (strpos($file, $this->dir) !== 0)
+            throw new \Lysine\RuntimeError('Invalid view file '. $file);
+
         $this->include_views[$view] = 1;
 
-        $file = $this->findFile($view);
         $vars = $vars ? array_merge($this->vars, $vars) : $this->vars;
 
         $ob_level = ob_get_level();
@@ -318,14 +328,5 @@ class View {
 
     protected function extend($view) {
         $this->extend = $view;
-    }
-
-    protected function findFile($view) {
-        $file = $this->dir .DIRECTORY_SEPARATOR. $view .'.php';
-
-        if (!is_file($file))
-            throw new \Lysine\RuntimeError('View file '.$file.' not exist!');
-
-        return $file;
     }
 }
