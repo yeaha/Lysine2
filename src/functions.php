@@ -102,6 +102,10 @@ namespace {
 namespace Lysine {
     // 计算分页 calculate page
     function cal_page($total, $page_size, $current_page = 1) {
+        $total = (int)$total;
+        $page_size = (int)$page_size;
+        $current_page = (int)$current_page;
+
         $page_count = ceil($total / $page_size) ?: 1;
 
         if ($current_page > $page_count) {
