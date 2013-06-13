@@ -91,16 +91,6 @@ class Router {
 
         \Lysine\logger()->debug('Dispatch to controller: '. $class);
 
-        if (!$class || !class_exists($class)) {
-            $exception = HTTP\Error::factory(HTTP::NOT_FOUND);
-            $exception->setMore(array(
-                'class' => $class,
-                'path' => $path,
-            ));
-
-            throw $exception;
-        }
-
         $this->fireEvent(self::BEFORE_DISPATCH_EVENT, array($class, $path));
 
         $controller = new $class;
@@ -135,15 +125,22 @@ class Router {
     public function dispatch($uri) {
         $path = $this->normalizePath( parse_url($uri, PHP_URL_PATH) );
 
-        if ($base_uri = $this->base_uri) {
-            if (strpos($path.'/', $base_uri.'/') !== 0)
-                throw HTTP\Error::factory(HTTP::NOT_FOUND);
+        do {
+            if ($base_uri = $this->base_uri) {
+                if (strpos($path.'/', $base_uri.'/') !== 0)
+                    break;
 
-            $path = $this->normalizePath(substr($path, strlen($base_uri)));
-        }
+                $path = $this->normalizePath(substr($path, strlen($base_uri)));
+            }
 
-        $dest = $this->rewrite($path) ?: $this->convert($path);
-        if ($dest) return $dest;
+            if (!$result = $this->rewrite($path) ?: $this->convert($path))
+                break;
+
+            if (!class_exists($result[0]))
+                break;
+
+            return $result;
+        } while (false);
 
         throw HTTP\Error::factory(HTTP::NOT_FOUND);
     }
