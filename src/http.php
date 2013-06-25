@@ -274,7 +274,7 @@ class Response {
             $this->cookie = array();
         }
 
-        if (is_callable($body)) {
+        if ($body instanceof \Closure) {
             echo call_user_func($body);
         } else {
             echo $body;
