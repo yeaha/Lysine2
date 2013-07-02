@@ -33,8 +33,15 @@ class UnexpectedValueError extends Error {
 namespace Lysine\HTTP;
 
 class Error extends \Lysine\Error {
-    static public function factory($code) {
-        return new static(\Lysine\HTTP::getStatusMessage($code), $code);
+    static public function factory($code, $body = null, array $header = array()) {
+        $error = new static(\Lysine\HTTP::getStatusMessage($code), $code);
+
+        $more = array();
+        if ($body) $more['body'] = $body;
+        if ($header) $more['header'] = $header;
+        $error->setMore($more);
+
+        return $error;
     }
 }
 
