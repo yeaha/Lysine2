@@ -311,6 +311,10 @@ class Select {
         return $sql;
     }
 
+    public function getAdapter() {
+        return $this->adapter;
+    }
+
     public function setCols($cols) {
         $this->cols = is_array($cols) ? $cols : func_get_args();
         return $this;
