@@ -79,6 +79,6 @@ class Redis implements \Lysine\Service\IService {
 
     protected function isPersistent() {
         $config = $this->config;
-        return $config['persistent_id'] && (!isset($config['unix_socket']) || !$config['unix_socket']);
+        return $config['persistent_id'] && !$config['unix_socket'];
     }
 }
