@@ -10,11 +10,10 @@ class Redis implements \Lysine\Service\IService {
         'port' => 6379,
         'timeout' => 0,
         'prefix' => null,
-        'persistent' => 0,
         'persistent_id' => '',
-     // 'unix_socket' => '/tmp/redis.sock',
-     // 'password' => 'your password',
-     // 'database' => 0,    // dbindex, the database number to switch to
+        'unix_socket' => '',        // eg: /tmp/redis.sock
+        'password' => '',
+        'database' => 0,    // dbindex, the database number to switch to
     );
 
     protected $handler;
@@ -25,7 +24,8 @@ class Redis implements \Lysine\Service\IService {
     }
 
     public function __destruct() {
-        $this->disconnect();
+        if (!$this->isPersistent())
+            $this->disconnect();
     }
 
     public function __call($fn, array $args) {
@@ -42,24 +42,24 @@ class Redis implements \Lysine\Service\IService {
         $handler = new \Redis;
 
         // 优先使用unix socket
-        $conn_args = isset($config['unix_socket'])
+        $conn_args = $config['unix_socket']
                    ? array($config['unix_socket'])
                    : array($config['host'], $config['port'], $config['timeout']);
 
-        if ($config['persistent'] && !isset($config['unix_socket']))
+        if ($this->isPersistent()) {
             $conn_args[] = $config['persistent_id'];
-
-        $conn = $config['persistent']
-              ? call_user_func_array(array($handler, 'pconnect'), $conn_args)
-              : call_user_func_array(array($handler, 'connect'), $conn_args);
+            $conn = call_user_func_array(array($handler, 'pconnect'), $conn_args);
+        } else {
+            $conn = call_user_func_array(array($handler, 'connect'), $conn_args);
+        }
 
         if (!$conn)
             throw new \Lysine\Service\ConnectionError('Cannot connect redis');
 
-        if (isset($config['password']) && !$handler->auth($config['password']))
+        if ($config['password'] && !$handler->auth($config['password']))
             throw new \Lysine\Service\ConnectionError('Invalid redis password');
 
-        if (isset($config['database']) && !$handler->select($config['database']))
+        if ($config['database'] && !$handler->select($config['database']))
             throw new \Lysine\Service\ConnectionError('Select redis database['.$config['database'].'] failed');
 
         if (isset($config['prefix']))
@@ -75,5 +75,10 @@ class Redis implements \Lysine\Service\IService {
         }
 
         return $this;
+    }
+
+    protected function isPersistent() {
+        $config = $this->config;
+        return $config['persistent_id'] && (!isset($config['unix_socket']) || !$config['unix_socket']);
     }
 }
