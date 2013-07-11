@@ -23,6 +23,15 @@ class Redis implements \Lysine\Service\IService {
             $this->config = array_merge($this->config, $config);
     }
 
+    public function getConfig($key = null) {
+        if ($key === null)
+            return $this->config;
+
+        return isset($this->config[$key])
+             ? $this->config[$key]
+             : false;
+    }
+
     public function __destruct() {
         if (!$this->isPersistent())
             $this->disconnect();
