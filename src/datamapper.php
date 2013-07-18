@@ -780,6 +780,12 @@ abstract class CacheDBMapper extends DBMapper {
     abstract protected function deleteCache($id);
     abstract protected function saveCache($id, array $record);
 
+    public function refresh(Data $data) {
+        $this->deleteCache($data->id());
+
+        parent::refresh($data);
+    }
+
     protected function doFind($id, IService $storage = null, $collection = null) {
         if ($record = $this->getCache($id))
             return $record;
