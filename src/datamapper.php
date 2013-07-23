@@ -571,24 +571,24 @@ class HelperManager {
 class Registry {
     use \Lysine\Traits\Singleton;
 
-    private $enable = true;
+    private $enabled = true;
     private $members = array();
 
     public function enable() {
-        self::$enable = true;
+        $this->enabled = true;
     }
 
     public function disable() {
-        self::$enable = false;
+        $this->enabled = false;
     }
 
-    public function isEnabled($class) {
-        return self::$enable;
+    public function isEnabled() {
+        return $this->enabled;
     }
 
     public function set(Data $data) {
         $class = self::normalizeClassName(get_class($data));
-        if (!$this->isEnabled($class))
+        if (!$this->isEnabled())
             return false;
 
         if ($data->isFresh())
@@ -603,7 +603,7 @@ class Registry {
 
     public function get($class, $id) {
         $class = self::normalizeClassName($class);
-        if (!$this->isEnabled($class))
+        if (!$this->isEnabled())
             return false;
 
         $key = self::key($class, $id);
@@ -614,7 +614,7 @@ class Registry {
 
     public function remove($class, $id) {
         $class = self::normalizeClassName($class);
-        if (!$this->isEnabled($class))
+        if (!$this->isEnabled())
             return false;
 
         $key = self::key($class, $id);
