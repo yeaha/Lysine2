@@ -250,14 +250,6 @@ abstract class Data {
 
         return $meta;
     }
-
-    static public function enableFindRegistry() {
-        Registry::getInstance()->enable(get_called_class());
-    }
-
-    static public function disableFindRegistry() {
-        Registry::getInstance()->disable(get_called_class());
-    }
 }
 
 abstract class Mapper {
@@ -579,24 +571,19 @@ class HelperManager {
 class Registry {
     use \Lysine\Traits\Singleton;
 
-    private $ignore_class = array();
+    private $enable = true;
     private $members = array();
 
-    // 通过Data::enableFindRegistry()调用
-    public function enable($class) {
-        $class = self::normalizeClassName($class);
-        unset($this->ignore_class[$class]);
+    public function enable() {
+        self::$enable = true;
     }
 
-    // 通过Data::disableFindRegistry()调用
-    public function disable($class) {
-        $class = self::normalizeClassName($class);
-        $this->ignore_class[$class] = 1;
+    public function disable() {
+        self::$enable = false;
     }
 
     public function isEnabled($class) {
-        $class = self::normalizeClassName($class);
-        return !isset($this->ignore_class[$class]);
+        return self::$enable;
     }
 
     public function set(Data $data) {
