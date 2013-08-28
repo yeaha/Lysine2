@@ -684,9 +684,6 @@ class DBMapper extends Mapper {
 
         $select = $storage->select($collection);
 
-        $props = array_keys($this->getMeta()->getPropMeta());
-        $select->setCols($props);
-
         list($where, $params) = $this->whereId($storage, $id);
         $select->where($where, $params);
 
