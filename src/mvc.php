@@ -52,7 +52,7 @@ class Application {
 
     public function loadClass($class) {
         $file = str_replace('\\', DIRECTORY_SEPARATOR, strtolower($class)) .'.php';
-        if (!preg_match('/[0-9a-z\._\\\\]+/', $file))
+        if (!preg_match('/[0-9a-z\._\/\\\\]+/', $file))
             return false;
 
         foreach ($this->include_path as $path) {
