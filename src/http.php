@@ -6,6 +6,8 @@ class HTTP {
     const CREATED = 201;
     const ACCEPTED = 202;
     const NO_CONTENT = 204;
+    const RESET_CONTENT = 205;
+    const PARTIAL_CONTENT = 206;
     const MOVED_PERMANENTLY = 301;
     const FOUND = 302;
     const SEE_OTHER = 303;
