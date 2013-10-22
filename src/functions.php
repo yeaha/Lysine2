@@ -215,21 +215,18 @@ namespace Lysine {
     // $number: 转换的数字
     // $from: 本来的进制
     // $to: 转换到进制
-    // $bcmatch: 是否使用bcmatch模块处理超大数字
-    function base_convert($number, $from, $to, $bcmatch = null) {
+    // $use_bcmath: 是否使用bcmath模块处理超大数字
+    function base_convert($number, $from, $to, $use_bcmath = null) {
         $base = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-        if ($bcmatch === null) {
-            $bcmath = extension_loaded('bcmath');
-        } else {
-            $bcmatch = (bool)$bcmatch;
+        $loaded = extension_loaded('bcmath');
+        if ($use_bcmath && !$loaded)
+            throw new \Lysine\RuntimeError('Require bcmath extension!');
 
-            if ($bcmatch && !extension_loaded('bcmatch'))
-                throw new \Lysine\RuntimeError('Require bcmatch extension!');
-        }
+        $use_bcmath = $loaded;
 
         // 任意进制转换为十进制
-        $any2dec = function($number, $from) use ($base, $bcmath) {
+        $any2dec = function($number, $from) use ($base, $use_bcmath) {
             if ($from === 10)
                 return $number;
 
@@ -245,7 +242,7 @@ namespace Lysine {
 
                 $pos = $len - $i - 1;
 
-                if ($bcmath) {
+                if ($use_bcmath) {
                     $dec = bcadd($dec, bcmul($n, bcpow($from, $pos)));
                 } else {
                     $dec += $n * pow($from, $pos);
@@ -256,7 +253,7 @@ namespace Lysine {
         };
 
         // 十进制转换为任意进制
-        $dec2any = function($number, $to) use ($base, $bcmath) {
+        $dec2any = function($number, $to) use ($base, $use_bcmath) {
             if ($to === 10)
                 return $number;
 
@@ -264,7 +261,7 @@ namespace Lysine {
             $any = '';
 
             while ($number >= $to) {
-                if ($bcmath) {
+                if ($use_bcmath) {
                     list($number, $c) = array(bcdiv($number, $to), bcmod($number, $to));
                 } else {
                     list($number, $c) = array((int)($number / $to), $number % $to);
@@ -276,6 +273,7 @@ namespace Lysine {
             return $any;
         };
 
+        ////////////////////////////////////////////////////////////////////////////////
         $from = (int)$from;
         $to = (int)$to;
 
