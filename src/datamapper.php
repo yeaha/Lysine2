@@ -170,7 +170,7 @@ abstract class Data {
         if (!$strict && $prop_meta['strict'])
             return false;
 
-        if (!$this->is_fresh && ($prop_meta['refuse_update'] || $prop_meta['primary_key'])) {
+        if (!$this->is_fresh && $prop_meta['refuse_update']) {
             if (!$strict) return false;
             throw new RefuseUpdateError(get_class() .": Property {$prop} refuse update");
         }
@@ -475,8 +475,12 @@ class Meta {
 
             $prop_meta['name'] = $prop;
 
-            if ($prop_meta['primary_key'])
+            if ($prop_meta['primary_key']) {
                 $this->primary_key[] = $prop;
+
+                $prop_meta['refuse_update'] = true;
+                $prop_meta['allow_null'] = false;
+            }
 
             $meta['props'][$prop] = $prop_meta;
         }
