@@ -219,16 +219,15 @@ class DataTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testFindRegistry() {
-        $class = $this->class;
         $registry = \Lysine\DataMapper\Registry::getInstance();
 
-        $this->assertTrue($registry->isEnabled($class));
+        $this->assertTrue($registry->isEnabled());
 
-        $class::disableFindRegistry();
-        $this->assertFalse($registry->isEnabled($class));
+        $registry->disable();
+        $this->assertFalse($registry->isEnabled());
 
-        $class::enableFindRegistry();
-        $this->assertTrue($registry->isEnabled($class));
+        $registry->enable();
+        $this->assertTrue($registry->isEnabled());
 
         $this->setPropsMeta(array(
             'id' => array('type' => 'integer', 'primary_key' => true),
@@ -236,6 +235,7 @@ class DataTest extends \PHPUnit_Framework_TestCase {
             'address' => array('type' => 'string'),
         ));
 
+        $class = $this->class;
         $data = new $class;
         $data->id = 9999999;
         $data->name = 'name';
@@ -249,12 +249,12 @@ class DataTest extends \PHPUnit_Framework_TestCase {
 
         $this->assertEquals(spl_object_hash($data1), spl_object_hash($data2));
 
-        $class::disableFindRegistry();
+        $registry->disable();
         $data3 = $class::find($id);
 
         $this->assertNotEquals(spl_object_hash($data1), spl_object_hash($data3));
 
-        $class::enableFindRegistry();
+        $registry->enable();
         $data4 = $class::find($id);
 
         $this->assertEquals(spl_object_hash($data1), spl_object_hash($data4));
