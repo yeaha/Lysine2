@@ -401,9 +401,6 @@ abstract class Mapper {
                 if (isset($props_data[$prop]))
                     break;
 
-                if ($prop_meta['primary_key'] && $prop_meta['auto_increase'])
-                    break;
-
                 throw new NullNotAllowedError($this->class .": Property {$prop} not allow null");
             } while (false);
         }
@@ -481,6 +478,9 @@ class Meta {
                 $prop_meta['refuse_update'] = true;
                 $prop_meta['allow_null'] = false;
             }
+
+            if ($prop_meta['auto_increase'])
+                $prop_meta['allow_null'] = true;
 
             $meta['props'][$prop] = $prop_meta;
         }
