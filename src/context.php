@@ -34,6 +34,10 @@ abstract class ContextHandler {
         return $token;
     }
 
+    // 保存上下文数据，根据需要重载
+    public function save() {
+    }
+
     static public function factory($type, array $config) {
         switch (strtolower($type)) {
             case 'session': return new SessionContextHandler($config);
@@ -150,7 +154,7 @@ class CookieContextHandler extends ContextHandler {
     }
 
     // 保存到cookie
-    protected function save() {
+    public function save() {
         $token = $this->getToken();
         $data = $this->data ? $this->encode($this->data) : '';
         if (!$expire = (int)$this->getConfig('expire_at'))

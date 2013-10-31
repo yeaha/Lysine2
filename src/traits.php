@@ -61,6 +61,10 @@ trait Context {
         return $this->getContextHandler()->clear();
     }
 
+    public function saveContext() {
+        return $this->getContextHandler()->save();
+    }
+
     protected function setContextHandler(\Lysine\ContextHandler $handler) {
         $this->context_handler = $handler;
     }

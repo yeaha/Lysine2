@@ -170,6 +170,8 @@ class Router {
     // 把路径转换为controller
     // return array($class, $params, $path)
     protected function convert($path) {
+        $path = strtolower($path);
+
         // 匹配controller之前，去掉路径里的文件扩展名
         $pathinfo = pathinfo($path);
         $path = $this->normalizePath( $pathinfo['dirname'] .'/'. $pathinfo['filename'] );
@@ -193,7 +195,7 @@ class Router {
     }
 
     protected function normalizePath($path) {
-        return '/'. trim(strtolower($path), '/');
+        return '/'. trim($path, '/');
     }
 }
 
