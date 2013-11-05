@@ -877,7 +877,7 @@ class String extends Mixed {
 
 class Json extends Mixed {
     public function store($data, array $meta) {
-        return ($data === NULL || $data === array()) ? NULL : json_encode($data);
+        return ($data === NULL || $data === array()) ? NULL : json_encode($data, JSON_UNESCAPED_UNICODE);
     }
 
     public function restore($data, array $meta) {
