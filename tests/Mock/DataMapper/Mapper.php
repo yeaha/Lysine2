@@ -4,8 +4,8 @@ namespace Test\Mock\DataMapper;
 use \Lysine\Service\IService;
 
 class Mapper extends \Lysine\DataMapper\Mapper {
-    public function getMeta() {
-        return Meta::factory($this->class);
+    public function setProperties(array $properties) {
+        $this->normalizeProperties($properties);
     }
 
     protected function doFind($id, IService $storage = null, $collection = null) {
@@ -24,7 +24,7 @@ class Mapper extends \Lysine\DataMapper\Mapper {
             return false;
 
         $id = array();
-        foreach ($this->getMeta()->getPrimaryKey() as $prop => $prop_meta) {
+        foreach ($this->getPrimaryKey() as $prop => $prop_meta) {
             $last_id = $prop_meta['auto_increase']
                      ? $storage->getLastId($collection, $prop)
                      : $record[$prop];

@@ -20,7 +20,6 @@ return array(
     'lysine\datamapper\helper\pgsqlhstore' => 'datamapper.php',
     'lysine\datamapper\helper\string' => 'datamapper.php',
     'lysine\datamapper\mapper' => 'datamapper.php',
-    'lysine\datamapper\meta' => 'datamapper.php',
     'lysine\datamapper\nullnotallowederror' => 'error.php',
     'lysine\datamapper\refuseupdateerror' => 'error.php',
     'lysine\datamapper\registry' => 'datamapper.php',

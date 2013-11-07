@@ -94,7 +94,7 @@ abstract class Data {
     // )
     // 否则直接返回值
     public function id() {
-        $props = array_keys(static::getMapper()->getMeta()->getPrimaryKey());
+        $props = array_keys(static::getMapper()->getPrimaryKey());
 
         $id = array();
         foreach ($props as $prop)
@@ -196,7 +196,7 @@ abstract class Data {
     }
 
     protected function getPropMeta($prop = null) {
-        return static::getMapper()->getMeta()->getPropMeta($prop);
+        return static::getMapper()->getPropMeta($prop);
     }
 
     protected function formatProp($val, array $prop_meta) {
@@ -254,7 +254,24 @@ abstract class Data {
 
 abstract class Mapper {
     static private $instance = array();
+
+    static private $default_prop_meta = array(
+        'name' => NULL,
+        'type' => NULL,
+        'primary_key' => FALSE,
+        'auto_increase' => FALSE,
+        'refuse_update' => FALSE,
+        'allow_null' => FALSE,
+        'default' => NULL,
+        'pattern' => NULL,
+        'strict' => FALSE,
+    );
+
     protected $class;
+    protected $storage;
+    protected $collection;
+    protected $primary_key = array();
+    protected $properties = array();
 
     abstract protected function doFind($id, \Lysine\Service\IService $storage = null, $collection = null);
     abstract protected function doInsert(\Lysine\DataMapper\Data $data, \Lysine\Service\IService $storage = null, $collection = null);
@@ -263,20 +280,44 @@ abstract class Mapper {
 
     protected function __construct($class) {
         $this->class = $class;
-    }
 
-    public function getMeta() {
-        return Meta::factory($this->class);
+        $meta = $class::getMeta();
+        $this->storage = $meta['storage'];
+        $this->collection = $meta['collection'];
+
+        $this->normalizeProperties($meta['props']);
     }
 
     public function getStorage() {
-        return \Lysine\Service\Manager::getInstance()->get(
-            $this->getMeta()->getStorage()
-        );
+        if (!$this->storage)
+            throw new RuntimeError("{$this->class}: Undefined storage service");
+
+        return \Lysine\Service\Manager::getInstance()->get($this->storage);
     }
 
     public function getCollection() {
-        return $this->getMeta()->getCollection();
+        if (!$this->collection)
+            throw new RuntimeError("{$this->class}: Undefined collection");
+
+        return $this->collection;
+    }
+
+    public function getPrimaryKey() {
+        if (!$this->primary_key)
+            throw new RuntimeError("{$this->class}: Undefined primary key");
+
+        $keys = array();
+
+        foreach ($this->primary_key as $prop)
+            $keys[$prop] = $this->properties[$prop];
+
+        return $keys;
+    }
+
+    public function getPropMeta($prop = null) {
+        return $prop === null
+             ? $this->properties
+             : (isset($this->properties[$prop]) ? $this->properties[$prop] : false);
     }
 
     public function find($id, $refresh = false) {
@@ -349,6 +390,27 @@ abstract class Mapper {
         return $data;
     }
 
+    protected function normalizeProperties(array $properties) {
+        $this->properties = array();
+        $this->primary_key = array();
+
+        foreach ($properties as $prop => $prop_meta) {
+            $prop_meta = array_merge(self::$default_prop_meta, $prop_meta, array('name' => $prop));
+
+            if ($prop_meta['primary_key']) {
+                $this->primary_key[] = $prop;
+
+                $prop_meta['refuse_update'] = true;
+                $prop_meta['allow_null'] = false;
+            }
+
+            if ($prop_meta['auto_increase'])
+                $prop_meta['allow_null'] = true;
+
+            $this->properties[$prop] = $prop_meta;
+        }
+    }
+
     protected function insert(Data $data) {
         $data->__triggerEvent(Data::BEFORE_INSERT_EVENT);
 
@@ -382,7 +444,7 @@ abstract class Mapper {
     protected function inspectData(Data $data) {
         // 如果是新对象，就要检查所有的属性
         // 否则就只检查修改过的属性
-        $props_meta = $this->getMeta()->getPropMeta();
+        $props_meta = $this->getPropMeta();
         if ($data->isFresh()) {
             $props_data = $data->toArray();
             $props = array_keys($props_meta);
@@ -412,7 +474,7 @@ abstract class Mapper {
     protected function propsToRecord(array $props) {
         $hm = HelperManager::getInstance();
 
-        foreach ($this->getMeta()->getPropMeta() as $prop => $meta) {
+        foreach ($this->getPropMeta() as $prop => $meta) {
             if (isset($props[$prop]))
                 $props[$prop] = $hm->getHelper($meta['type'])->store($props[$prop], $meta);
         }
@@ -424,97 +486,12 @@ abstract class Mapper {
     protected function recordToProps(array $record) {
         $hm = HelperManager::getInstance();
 
-        foreach ($this->getMeta()->getPropMeta() as $prop => $meta) {
+        foreach ($this->getPropMeta() as $prop => $meta) {
             if (isset($record[$prop]))
                 $record[$prop] = $hm->getHelper($meta['type'])->restore($record[$prop], $meta);
         }
 
         return $record;
-    }
-
-    static public function factory($class) {
-        if (!isset(self::$instance[$class]))
-            self::$instance[$class] = new static($class);
-        return self::$instance[$class];
-    }
-}
-
-class Meta {
-    static protected $instance = array();
-
-    static private $default_prop_meta = array(
-        'name' => NULL,
-        'type' => NULL,
-        'primary_key' => FALSE,
-        'auto_increase' => FALSE,
-        'refuse_update' => FALSE,
-        'allow_null' => FALSE,
-        'default' => NULL,
-        'pattern' => NULL,
-        'strict' => FALSE,
-    );
-
-    private $class;
-    private $storage;
-    private $collection;
-    private $primary_key = array();
-    private $props_meta;
-
-    private function __construct($class) {
-        $meta = $class::getMeta();
-
-        $this->class = $class;
-        $this->storage = $meta['storage'];
-        $this->collection = $meta['collection'];
-
-        foreach ($meta['props'] as $prop => $prop_meta) {
-            $prop_meta = array_merge(self::$default_prop_meta, $prop_meta);
-
-            $prop_meta['name'] = $prop;
-
-            if ($prop_meta['primary_key']) {
-                $this->primary_key[] = $prop;
-
-                $prop_meta['refuse_update'] = true;
-                $prop_meta['allow_null'] = false;
-            }
-
-            if ($prop_meta['auto_increase'])
-                $prop_meta['allow_null'] = true;
-
-            $meta['props'][$prop] = $prop_meta;
-        }
-
-        if (!$this->primary_key)
-            throw new RuntimeError("{$class}: Undefined primary key");
-
-        $this->props_meta = $meta['props'];
-    }
-
-    public function getStorage() {
-        if (!$this->storage)
-            throw new RuntimeError("{$this->class}: Undefined storage service");
-        return $this->storage;
-    }
-
-    public function getCollection() {
-        if (!$this->collection)
-            throw new RuntimeError("{$this->class}: Undefined collection");
-        return $this->collection;
-    }
-
-    public function getPrimaryKey() {
-        $keys = array();
-        foreach ($this->primary_key as $prop)
-            $keys[$prop] = $this->props_meta[$prop];
-
-        return $keys;
-    }
-
-    public function getPropMeta($prop = null) {
-        return $prop === null
-             ? $this->props_meta
-             : (isset($this->props_meta[$prop]) ? $this->props_meta[$prop] : false);
     }
 
     static public function factory($class) {
@@ -666,7 +643,7 @@ class DBMapper extends Mapper {
     public function select(IService $storage = null, $collection = null) {
         $storage = $storage ?: $this->getStorage();
         $collection = $collection ?: $this->getCollection();
-        $primary_key = $this->getMeta()->getPrimaryKey();
+        $primary_key = $this->getPrimaryKey();
 
         if (count($primary_key) == 1) {
             $select = new DBSelect($storage, $collection);
@@ -703,7 +680,7 @@ class DBMapper extends Mapper {
             return false;
 
         $id = array();
-        foreach ($this->getMeta()->getPrimaryKey() as $prop => $prop_meta) {
+        foreach ($this->getPrimaryKey() as $prop => $prop_meta) {
             $last_id = $prop_meta['auto_increase']
                      ? $storage->lastId($collection, $prop)
                      : $record[$prop];
@@ -737,7 +714,7 @@ class DBMapper extends Mapper {
     }
 
     protected function whereId(IService $storage, $id) {
-        $primary_key = $this->getMeta()->getPrimaryKey();
+        $primary_key = $this->getPrimaryKey();
         $key_count = count($primary_key);
 
         if ($key_count == 1 && !is_array($id)) {

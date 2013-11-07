@@ -6,13 +6,9 @@ use \Lysine\DataMapper\Data;
 class HelperTest extends \PHPUnit_Framework_TestCase {
     protected $class = '\Test\Mock\DataMapper\Data';
 
-    protected function tearDown() {
-        \Test\Mock\DataMapper\Meta::reset();
-    }
-
     protected function setPropsMeta(array $props_meta) {
-        \Test\Mock\DataMapper\Meta::reset();
-        \Test\Mock\DataMapper\Data::setPropsMeta($props_meta);
+        $class = $this->class;
+        $class::getMapper()->setProperties($props_meta);
     }
 
     public function testManager() {
@@ -40,11 +36,11 @@ class HelperTest extends \PHPUnit_Framework_TestCase {
             'g' => '\Lysine\DataMapper\Helper\Mixed',
         );
 
-        $meta = $class::getMapper()->getMeta();
+        $mapper = $class::getMapper();
         $manager = \Lysine\DataMapper\HelperManager::getInstance();
 
         foreach ($expect as $prop => $class) {
-            $prop_meta = $meta->getPropMeta($prop);
+            $prop_meta = $mapper->getPropMeta($prop);
             $this->assertInstanceof($class, $manager->getHelper($prop_meta['type']));
         }
 

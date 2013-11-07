@@ -6,16 +6,14 @@ use \Lysine\DataMapper\Data;
 class DataTest extends \PHPUnit_Framework_TestCase {
     protected $class = '\Test\Mock\DataMapper\Data';
 
-    protected function tearDown() {
-        \Test\Mock\DataMapper\Meta::reset();
-    }
-
     protected function setPropsMeta(array $props_meta) {
-        \Test\Mock\DataMapper\Meta::reset();
-        \Test\Mock\DataMapper\Data::setPropsMeta($props_meta);
+        $class = $this->class;
+        $class::getMapper()->setProperties($props_meta);
     }
 
     public function testDefaultValue() {
+        $class = $this->class;
+
         $this->setPropsMeta(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
             'p' => array('type' => 'integer', 'default' => 0),
