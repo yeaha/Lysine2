@@ -322,7 +322,13 @@ abstract class Mapper {
 
     public function find($id, $refresh = false) {
         $registry = Registry::getInstance();
-        $data = $registry->get($this->class, $id);
+
+        if ($id instanceof \Lysine\DataMapper\Data) {
+            $data = $id;
+            $id = $data->id();
+        } else {
+            $data = $registry->get($this->class, $id);
+        }
 
         if ($data && !$refresh)
             return $data;
@@ -377,7 +383,7 @@ abstract class Mapper {
     }
 
     public function refresh(Data $data) {
-        return $this->find($data->id(), true);
+        return $this->find($data, true);
     }
 
     public function package(array $record, Data $data = null) {
