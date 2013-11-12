@@ -410,9 +410,6 @@ abstract class Mapper {
                 $prop_meta['allow_null'] = false;
             }
 
-            if ($prop_meta['auto_increase'])
-                $prop_meta['allow_null'] = true;
-
             $this->properties[$prop] = $prop_meta;
         }
     }
@@ -450,8 +447,10 @@ abstract class Mapper {
     protected function inspectData(Data $data) {
         // 如果是新对象，就要检查所有的属性
         // 否则就只检查修改过的属性
+        $is_fresh = $data->isFresh();
         $props_meta = $this->getPropMeta();
-        if ($data->isFresh()) {
+
+        if ($is_fresh) {
             $props_data = $data->toArray();
             $props = array_keys($props_meta);
         } else {
@@ -464,6 +463,9 @@ abstract class Mapper {
 
             do {
                 if ($prop_meta['allow_null'])
+                    break;
+
+                if ($prop_meta['auto_increase'] && $is_fresh)
                     break;
 
                 if (isset($props_data[$prop]))
