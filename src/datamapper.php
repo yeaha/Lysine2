@@ -512,50 +512,48 @@ abstract class Mapper {
 class Types {
     use \Lysine\Traits\Singleton;
 
-    // 默认type
-    protected $default_type = '\Lysine\DataMapper\Types\Mixed';
-
     // type实例
-    // 每个type class只产生一个实例
     protected $types = array();
 
-    // 内置的数据类型
-    protected $type_classes = array(
-        'int' => '\Lysine\DataMapper\Types\Integer',
-        'integer' => '\Lysine\DataMapper\Types\Integer',
-        'numeric' => '\Lysine\DataMapper\Types\Numeric',
-        'text' => '\Lysine\DataMapper\Types\String',
-        'string' => '\Lysine\DataMapper\Types\String',
-        'json' => '\Lysine\DataMapper\Types\Json',
-        'datetime' => '\Lysine\DataMapper\Types\DateTime',
-        'pg_hstore' => '\Lysine\DataMapper\Types\PgsqlHstore',
-        'pg_array' => '\Lysine\DataMapper\Types\PgsqlArray',
-    );
+    protected $type_classes = array();
 
     public function get($type) {
         $type = strtolower($type);
-        $class = isset($this->type_classes[$type])
-               ? $this->type_classes[$type]
-               : $this->default_type;
 
-        $key = strtolower(trim($class, '\\'));
-        if (!isset($this->types[$key]))
-            $this->types[$key] = new $class;
+        if ($type == 'int') {
+            $type = 'integer';
+        } elseif ($type == 'text') {
+            $type = 'string';
+        }
 
-        return $this->types[$key];
+        if (!isset($this->type_classes[$type]))
+            $type = 'mixed';
+
+        if (isset($this->types[$type]))
+            return $this->types[$type];
+
+        $class = $this->type_classes[$type];
+        return $this->types[$type] = new $class;
     }
 
     // 注册新的数据类型
     public function register($type, $class) {
         $type = strtolower($type);
-
-        if (!is_subclass_of($class, $this->default_type))
-            throw new \Lysine\RuntimeError('Invalid type class');
-
         $this->type_classes[$type] = $class;
+
         return $this;
     }
 }
+
+\Lysine\DataMapper\Types::getInstance()
+    ->register('mixed', '\Lysine\DataMapper\Types\Mixed')
+    ->register('integer', '\Lysine\DataMapper\Types\Integer')
+    ->register('numeric', '\Lysine\DataMapper\Types\Numeric')
+    ->register('string', '\Lysine\DataMapper\Types\String')
+    ->register('json', '\Lysine\DataMapper\Types\Json')
+    ->register('datetime', '\Lysine\DataMapper\Types\DateTime')
+    ->register('pg_hstore', '\Lysine\DataMapper\Types\PgsqlHstore')
+    ->register('pg_array', '\Lysine\DataMapper\Types\PgsqlArray');
 
 class Registry {
     use \Lysine\Traits\Singleton;
