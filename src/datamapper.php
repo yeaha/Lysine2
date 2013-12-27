@@ -809,10 +809,7 @@ namespace Lysine\DataMapper\Types;
 class Mixed {
     // 格式化数据
     public function normalize($data, array $meta) {
-        if ($data === '')
-            return NULL;
-
-        return $data;
+        return $data === '' ? NULL : $data;
     }
 
     // 转换为存储格式
@@ -822,7 +819,7 @@ class Mixed {
 
     // 从存储格式恢复
     public function restore($data, array $meta) {
-        return $data;
+        return $this->normalize($data, $meta);
     }
 
     // 获取默认值
@@ -859,37 +856,20 @@ class String extends Mixed {
 }
 
 class Json extends Mixed {
-    public function store($data, array $meta) {
-        return ($data === NULL || $data === array()) ? NULL : json_encode($data, JSON_UNESCAPED_UNICODE);
+    public function normalize($data, array $meta) {
+        if ($data === NULL || $data === '')
+            return NULL;
+
+        return is_array($data) ? $data : json_decode($data, true);
     }
 
-    public function restore($data, array $meta) {
-        return ($data === NULL) ? NULL : json_decode($data, true);
+    public function store($data, array $meta) {
+        return ($data === NULL || $data === array()) ? NULL : json_encode($data, JSON_UNESCAPED_UNICODE);
     }
 }
 
 class DateTime extends Mixed {
     public function normalize($data, array $meta) {
-        return $this->create($data, $meta);
-    }
-
-    public function store($data, array $meta) {
-        if ( !($data instanceof \DateTime) )
-            return $data;
-
-        $format = isset($meta['format']) ? $meta['format'] : 'c'; // ISO 8601
-        return $data->format($format);
-    }
-
-    public function restore($data, array $meta) {
-        return $this->create($data, $meta);
-    }
-
-    public function getDefaultValue(array $meta) {
-        return ($meta['default'] === NULL) ? NULL : new \DateTime($meta['default']);
-    }
-
-    protected function create($data, array $meta) {
         if ($data === NULL || $data === '')
             return NULL;
 
@@ -903,6 +883,18 @@ class DateTime extends Mixed {
             throw new \Exception('Create datetime from format ['.$meta['format'].'] failed!');
 
         return $data;
+    }
+
+    public function store($data, array $meta) {
+        if ( !($data instanceof \DateTime) )
+            return $data;
+
+        $format = isset($meta['format']) ? $meta['format'] : 'c'; // ISO 8601
+        return $data->format($format);
+    }
+
+    public function getDefaultValue(array $meta) {
+        return ($meta['default'] === NULL) ? NULL : new \DateTime($meta['default']);
     }
 }
 
