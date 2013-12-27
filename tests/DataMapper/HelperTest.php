@@ -1,9 +1,9 @@
 <?php
 namespace Test;
 
-use \Lysine\DataMapper\Data;
+use \Lysine\DataMapper;
 
-class HelperTest extends \PHPUnit_Framework_TestCase {
+class TypesTest extends \PHPUnit_Framework_TestCase {
     protected $class = '\Test\Mock\DataMapper\Data';
 
     protected function setPropsMeta(array $props_meta) {
@@ -11,7 +11,7 @@ class HelperTest extends \PHPUnit_Framework_TestCase {
         $class::getMapper()->setProperties($props_meta);
     }
 
-    public function testManager() {
+    public function testTypes() {
         $this->setPropsMeta(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
             'a' => array('type' => 'int'),
@@ -26,26 +26,26 @@ class HelperTest extends \PHPUnit_Framework_TestCase {
         $class = $this->class;
 
         $expect = array(
-            'a' => '\Lysine\DataMapper\Helper\Integer',
-            'b' => '\Lysine\DataMapper\Helper\Integer',
-            'b' => '\Lysine\DataMapper\Helper\Numeric',
-            'c' => '\Lysine\DataMapper\Helper\String',
-            'd' => '\Lysine\DataMapper\Helper\String',
-            'e' => '\Lysine\DataMapper\Helper\DateTime',
-            'f' => '\Lysine\DataMapper\Helper\Json',
-            'g' => '\Lysine\DataMapper\Helper\Mixed',
+            'a' => '\Lysine\DataMapper\Types\Integer',
+            'b' => '\Lysine\DataMapper\Types\Integer',
+            'b' => '\Lysine\DataMapper\Types\Numeric',
+            'c' => '\Lysine\DataMapper\Types\String',
+            'd' => '\Lysine\DataMapper\Types\String',
+            'e' => '\Lysine\DataMapper\Types\DateTime',
+            'f' => '\Lysine\DataMapper\Types\Json',
+            'g' => '\Lysine\DataMapper\Types\Mixed',
         );
 
         $mapper = $class::getMapper();
-        $manager = \Lysine\DataMapper\HelperManager::getInstance();
+        $types = \Lysine\DataMapper\Types::getInstance();
 
         foreach ($expect as $prop => $class) {
             $prop_meta = $mapper->getPropMeta($prop);
-            $this->assertInstanceof($class, $manager->getHelper($prop_meta['type']));
+            $this->assertInstanceof($class, $types->get($prop_meta['type']));
         }
 
-        $manager->registerType('foo', '\Lysine\DataMapper\Helper\Json');
-        $this->assertInstanceof('\Lysine\DataMapper\Helper\Json', $manager->getHelper('foo'));
+        $types->register('foo', '\Lysine\DataMapper\Types\Json');
+        $this->assertInstanceof('\Lysine\DataMapper\Types\Json', $types->get('foo'));
     }
 
     public function testDatetime() {

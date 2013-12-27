@@ -190,8 +190,8 @@ abstract class Data {
     }
 
     protected function getDefaultValue(array $prop_meta) {
-        return HelperManager::getInstance()
-                    ->getHelper($prop_meta['type'])
+        return Types::getInstance()
+                    ->get($prop_meta['type'])
                     ->getDefaultValue($prop_meta);
     }
 
@@ -200,8 +200,8 @@ abstract class Data {
     }
 
     protected function formatProp($val, array $prop_meta) {
-        return HelperManager::getInstance()
-                    ->getHelper($prop_meta['type'])
+        return Types::getInstance()
+                    ->get($prop_meta['type'])
                     ->normalize($val, $prop_meta);
     }
 
@@ -480,11 +480,11 @@ abstract class Mapper {
 
     // 把属性值转换为存储记录
     protected function propsToRecord(array $props) {
-        $hm = HelperManager::getInstance();
+        $hm = Types::getInstance();
 
         foreach ($this->getPropMeta() as $prop => $meta) {
             if (isset($props[$prop]))
-                $props[$prop] = $hm->getHelper($meta['type'])->store($props[$prop], $meta);
+                $props[$prop] = $hm->get($meta['type'])->store($props[$prop], $meta);
         }
 
         return $props;
@@ -492,11 +492,11 @@ abstract class Mapper {
 
     // 把存储记录转换为属性值
     protected function recordToProps(array $record) {
-        $hm = HelperManager::getInstance();
+        $hm = Types::getInstance();
 
         foreach ($this->getPropMeta() as $prop => $meta) {
             if (isset($record[$prop]))
-                $record[$prop] = $hm->getHelper($meta['type'])->restore($record[$prop], $meta);
+                $record[$prop] = $hm->get($meta['type'])->restore($record[$prop], $meta);
         }
 
         return $record;
@@ -509,50 +509,50 @@ abstract class Mapper {
     }
 }
 
-class HelperManager {
+class Types {
     use \Lysine\Traits\Singleton;
 
-    // 默认helper
-    protected $default_helper = '\Lysine\DataMapper\Helper\Mixed';
+    // 默认type
+    protected $default_type = '\Lysine\DataMapper\Types\Mixed';
 
-    // helper实例
-    // 每个helper class只产生一个实例
-    protected $helper = array();
+    // type实例
+    // 每个type class只产生一个实例
+    protected $types = array();
 
-    // 内置的数据类型helper
-    protected $type_helper = array(
-        'int' => '\Lysine\DataMapper\Helper\Integer',
-        'integer' => '\Lysine\DataMapper\Helper\Integer',
-        'numeric' => '\Lysine\DataMapper\Helper\Numeric',
-        'text' => '\Lysine\DataMapper\Helper\String',
-        'string' => '\Lysine\DataMapper\Helper\String',
-        'json' => '\Lysine\DataMapper\Helper\Json',
-        'datetime' => '\Lysine\DataMapper\Helper\DateTime',
-        'pg_hstore' => '\Lysine\DataMapper\Helper\PgsqlHstore',
-        'pg_array' => '\Lysine\DataMapper\Helper\PgsqlArray',
+    // 内置的数据类型
+    protected $type_classes = array(
+        'int' => '\Lysine\DataMapper\Types\Integer',
+        'integer' => '\Lysine\DataMapper\Types\Integer',
+        'numeric' => '\Lysine\DataMapper\Types\Numeric',
+        'text' => '\Lysine\DataMapper\Types\String',
+        'string' => '\Lysine\DataMapper\Types\String',
+        'json' => '\Lysine\DataMapper\Types\Json',
+        'datetime' => '\Lysine\DataMapper\Types\DateTime',
+        'pg_hstore' => '\Lysine\DataMapper\Types\PgsqlHstore',
+        'pg_array' => '\Lysine\DataMapper\Types\PgsqlArray',
     );
 
-    public function getHelper($type) {
+    public function get($type) {
         $type = strtolower($type);
-        $class = isset($this->type_helper[$type])
-               ? $this->type_helper[$type]
-               : $this->default_helper;
+        $class = isset($this->type_classes[$type])
+               ? $this->type_classes[$type]
+               : $this->default_type;
 
         $key = strtolower(trim($class, '\\'));
-        if (!isset($this->helper[$key]))
-            $this->helper[$key] = new $class;
+        if (!isset($this->types[$key]))
+            $this->types[$key] = new $class;
 
-        return $this->helper[$key];
+        return $this->types[$key];
     }
 
     // 注册新的数据类型
-    public function registerType($type, $helper) {
+    public function register($type, $class) {
         $type = strtolower($type);
 
-        if (!is_subclass_of($helper, $this->default_helper))
-            throw new \Lysine\RuntimeError('Invalid helper class');
+        if (!is_subclass_of($class, $this->default_type))
+            throw new \Lysine\RuntimeError('Invalid type class');
 
-        $this->type_helper[$type] = $helper;
+        $this->type_classes[$type] = $class;
         return $this;
     }
 }
@@ -806,7 +806,7 @@ class DBSelect extends \Lysine\Service\DB\Select {
     }
 }
 
-namespace Lysine\DataMapper\Helper;
+namespace Lysine\DataMapper\Types;
 
 class Mixed {
     // 格式化数据
