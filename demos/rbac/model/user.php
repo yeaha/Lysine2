@@ -50,7 +50,7 @@ class User extends \Lysine\DataMapper\DBData {
     //////////////////// protected methods ////////////////////
     // 把密码转换为hash字符串
     protected function encodePasswd($passwd) {
-        return md5($passwd .'@'. $this->create_time);
+        return md5($passwd .'@'. $this->create_time->format('Y-m-d H:i:s'));
     }
 
     protected function formatProp($val, array $prop_meta) {
