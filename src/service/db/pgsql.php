@@ -204,7 +204,7 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
 
     // postgresql hstore -> php array
     static public function decodeHstore($hstore) {
-        if (!$hstore || !preg_match_all('/"(.+)(?<!\\\)"=>(NULL|""|".+(?<!\\\)"),?/U', $hstore, $match, PREG_SET_ORDER))
+        if (!$hstore || !preg_match_all('/"(.+)(?<!\\\)"=>(NULL|""|".+(?<!\\\)"),?/Us', $hstore, $match, PREG_SET_ORDER))
             return array();
 
         $array = array();
