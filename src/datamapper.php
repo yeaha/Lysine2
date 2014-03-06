@@ -400,7 +400,12 @@ abstract class Mapper {
         $this->properties = array();
         $this->primary_key = array();
 
+        $types = Types::getInstance();
+
         foreach ($properties as $prop => $prop_meta) {
+            $type = isset($prop_meta['type']) ? $prop_meta['type'] : null;
+            $prop_meta = $types->get($type)->normalizeMeta($prop_meta);
+
             $prop_meta = array_merge(self::$default_prop_meta, $prop_meta, array('name' => $prop));
 
             if ($prop_meta['primary_key']) {
@@ -480,11 +485,11 @@ abstract class Mapper {
 
     // 把属性值转换为存储记录
     protected function propsToRecord(array $props) {
-        $hm = Types::getInstance();
+        $types = Types::getInstance();
 
         foreach ($this->getPropMeta() as $prop => $meta) {
             if (isset($props[$prop]))
-                $props[$prop] = $hm->get($meta['type'])->store($props[$prop], $meta);
+                $props[$prop] = $types->get($meta['type'])->store($props[$prop], $meta);
         }
 
         return $props;
@@ -492,11 +497,11 @@ abstract class Mapper {
 
     // 把存储记录转换为属性值
     protected function recordToProps(array $record) {
-        $hm = Types::getInstance();
+        $types = Types::getInstance();
 
         foreach ($this->getPropMeta() as $prop => $meta) {
             if (isset($record[$prop]))
-                $record[$prop] = $hm->get($meta['type'])->restore($record[$prop], $meta);
+                $record[$prop] = $types->get($meta['type'])->restore($record[$prop], $meta);
         }
 
         return $record;
@@ -826,6 +831,11 @@ class Mixed {
     public function getDefaultValue(array $meta) {
         return $meta['default'];
     }
+
+    // 完善属性定义默认值
+    public function normalizeMeta(array $meta) {
+        return $meta;
+    }
 }
 
 class Integer extends Mixed {
@@ -864,7 +874,17 @@ class Json extends Mixed {
     }
 
     public function store($data, array $meta) {
-        return ($data === NULL || $data === array()) ? NULL : json_encode($data, JSON_UNESCAPED_UNICODE);
+        if ($data === null || $data === array())
+            return null;
+
+        return json_encode($data, JSON_UNESCAPED_UNICODE);
+    }
+
+    public function normalizeMeta(array $meta) {
+        return array_merge(array(
+            'strict' => TRUE,
+            'default' => array(),
+        ), $meta);
     }
 }
 
@@ -899,21 +919,61 @@ class DateTime extends Mixed {
 }
 
 class PgsqlHstore extends Mixed {
+    public function normalize($data, array $meta) {
+        if ($data === NULL)
+            return array();
+
+        if (!is_array($data))
+            throw new \UnexpectedValueException('Postgresql hstore must be of the type array');
+
+        return $data;
+    }
+
     public function store($data, array $meta) {
+        if ($data === array())
+            return null;
+
         return \Lysine\Service\DB\Adapter\Pgsql::encodeHstore($data);
     }
 
     public function restore($data, array $meta) {
         return \Lysine\Service\DB\Adapter\Pgsql::decodeHstore($data);
     }
+
+    public function normalizeMeta(array $meta) {
+        return array_merge(array(
+            'strict' => TRUE,
+            'default' => array(),
+        ), $meta);
+    }
 }
 
 class PgsqlArray extends Mixed {
+    public function normalize($data, array $meta) {
+        if ($data === NULL)
+            return array();
+
+        if (!is_array($data))
+            throw new \UnexpectedValueException('Postgresql array must be of the type array');
+
+        return $data;
+    }
+
     public function store($data, array $meta) {
+        if ($data === array())
+            return null;
+
         return \Lysine\Service\DB\Adapter\Pgsql::encodeArray($data);
     }
 
     public function restore($data, array $meta) {
         return \Lysine\Service\DB\Adapter\Pgsql::decodeArray($data);
+    }
+
+    public function normalizeMeta(array $meta) {
+        return array_merge(array(
+            'strict' => TRUE,
+            'default' => array(),
+        ), $meta);
     }
 }

@@ -257,4 +257,23 @@ class DataTest extends \PHPUnit_Framework_TestCase {
 
         $this->assertEquals(spl_object_hash($data1), spl_object_hash($data4));
     }
+
+    public function testNestedType() {
+        $this->setPropsMeta(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+            'json' => array('type' => 'json'),
+            'hstore' => array('type' => 'pg_hstore'),
+            'array' => array('type' => 'pg_array'),
+        ));
+
+        $class = $this->class;
+        $mapper = $class::getMapper();
+
+        foreach ($mapper->getPropMeta() as $meta) {
+            if ($meta['name'] == 'id') continue;
+
+            $this->assertSame($meta['default'], array());
+            $this->assertSame($meta['strict'], true);
+        }
+    }
 }
