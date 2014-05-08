@@ -181,8 +181,14 @@ class Request {
         $ip_set = array_map('trim', explode(',', $ip));
 
         // 检查是否私有地址，如果不是就直接返回
-        foreach ($ip_set as $ip) {
+        foreach ($ip_set as $key => $ip) {
             $long = ip2long($ip);
+
+            if ($long === false) {
+                unset($ip_set[$key]);
+                continue;
+            }
+
             $is_private = false;
 
             foreach ($private as $m) {
@@ -196,7 +202,7 @@ class Request {
             if (!$is_private) return $ip;
         }
 
-        return array_shift($ip_set);
+        return array_shift($ip_set) ?: '0.0.0.0';
     }
 
     public function getAcceptTypes() {
