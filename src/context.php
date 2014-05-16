@@ -201,12 +201,16 @@ class CookieContextHandler extends ContextHandler {
             $data = '_'. gzcompress($data, 9);
         }
 
-        return $data;
+        return base64_encode($data);
     }
 
     // 把保存为字符串的上下文数据恢复为数组
     // return array('c' => (array), 't' => (integer));
     protected function decode($string) {
+        $string = base64_decode($string);
+        if ($string === false)
+            return array();
+
         if ($this->getConfig('encrypt')) {      // 解密
             $string = $this->decrypt($string);
         } elseif ($this->getConfig('zip')) {    // 解压
