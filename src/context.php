@@ -207,7 +207,7 @@ class CookieContextHandler extends ContextHandler {
     // 把保存为字符串的上下文数据恢复为数组
     // return array('c' => (array), 't' => (integer));
     protected function decode($string) {
-        $string = base64_decode($string);
+        $string = base64_decode($string, true);
         if ($string === false)
             return array();
 
