@@ -175,13 +175,15 @@ abstract class Data {
             throw new RefuseUpdateError(get_class() .": Property {$prop} refuse update");
         }
 
+        $val = $this->formatProp($val, $prop_meta);
+
         if (!$prop_meta['allow_null'] && $val === null)
             throw new NullNotAllowedError(get_class() .": Property {$prop} not allow null");
 
         if ($prop_meta['pattern'] && !preg_match($prop_meta['pattern'], $val))
             throw new UnexpectedValueError(get_class() .": Property {$prop} mismatching pattern {$prop_meta['pattern']}");
 
-        $this->changeProp($prop, $this->formatProp($val, $prop_meta));
+        $this->changeProp($prop, $val);
 
         return true;
     }

@@ -76,7 +76,7 @@ class TypesTest extends \PHPUnit_Framework_TestCase {
     public function testString() {
         $this->setPropsMeta(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
-            'foo' => array('type' => 'string'),
+            'foo' => array('type' => 'string', 'allow_null' => true),
             'bar' => array('type' => 'string', 'default' => 'bar'),
         ));
         $class = $this->class;
@@ -95,7 +95,7 @@ class TypesTest extends \PHPUnit_Framework_TestCase {
     public function testInteger() {
         $this->setPropsMeta(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
-            'foo' => array('type' => 'integer'),
+            'foo' => array('type' => 'integer', 'allow_null' => true),
             'bar' => array('type' => 'integer', 'default' => 1),
         ));
         $class = $this->class;
@@ -117,7 +117,7 @@ class TypesTest extends \PHPUnit_Framework_TestCase {
     public function testNumeric() {
         $this->setPropsMeta(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
-            'foo' => array('type' => 'numeric'),
+            'foo' => array('type' => 'numeric', 'allow_null' => true),
         ));
         $class = $this->class;
 
