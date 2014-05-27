@@ -181,10 +181,7 @@ abstract class Data {
         if ($prop_meta['pattern'] && !preg_match($prop_meta['pattern'], $val))
             throw new UnexpectedValueError(get_class() .": Property {$prop} mismatching pattern {$prop_meta['pattern']}");
 
-        $val = $this->formatProp($val, $prop_meta);
-
-        if (!array_key_exists($prop, $this->props) || $val !== $this->props[$prop])
-            $this->changeProp($prop, $val);
+        $this->changeProp($prop, $this->formatProp($val, $prop_meta));
 
         return true;
     }
@@ -205,7 +202,10 @@ abstract class Data {
                     ->normalize($val, $prop_meta);
     }
 
-    final private function changeProp($prop, $val) {
+    final protected function changeProp($prop, $val) {
+        if (array_key_exists($prop, $this->props) && $val === $this->props[$prop])
+            return false;
+
         $this->props[$prop] = $val;
         $this->dirty_props[$prop] = 1;
     }
