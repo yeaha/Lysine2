@@ -4,7 +4,7 @@ namespace Lysine\MVC;
 use Lysine\HTTP;
 
 class Application {
-    static protected $support_methods = array('HEAD', 'GET', 'POST', 'PUT', 'DELETE');
+    static protected $support_methods = array('HEAD', 'GET', 'POST', 'PUT', 'DELETE', 'PATCH');
 
     protected $router;
 
