@@ -77,7 +77,7 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
             $this->markTestSkipped('没有加载mcrypt模块，无法测试cookie加密功能');
 
         $crypt = array(
-            'ciphers' => array(MCRYPT_RIJNDAEL_256, MCRYPT_3DES, MCRYPT_BLOWFISH, MCRYPT_CAST_256),
+            'ciphers' => array(MCRYPT_RIJNDAEL_256, MCRYPT_BLOWFISH, MCRYPT_CAST_256),
             'mode' => array(MCRYPT_MODE_ECB, MCRYPT_MODE_CBC, MCRYPT_MODE_CFB, MCRYPT_MODE_OFB, MCRYPT_MODE_NOFB),
         );
 
