@@ -414,9 +414,7 @@ class DBSelect extends \Lysine\Service\DB\Select {
 }
 
 class DBData extends \Lysine\DataMapper\Data {
-    static public function getMapper() {
-        return DBMapper::factory(get_called_class());
-    }
+    static protected $mapper = '\Lsyine\DataMapper\DBMapper';
 
     static public function select() {
         return static::getMapper()->select();

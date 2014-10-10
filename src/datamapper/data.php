@@ -2,6 +2,7 @@
 namespace Lysine\DataMapper;
 
 abstract class Data {
+    static protected $mapper = '\Lysine\DataMapper\Mapper';
     static protected $service;
     static protected $collection;
     static protected $attributes = array();
@@ -231,8 +232,9 @@ abstract class Data {
         $this->dirty[$key] = true;
     }
 
-    static public function getMapper() {
-        return Mapper::factory( get_called_class() );
+    final static public function getMapper() {
+        $class = static::$mapper;
+        return $class::factory( get_called_class() );
     }
 
     static public function find($id) {
