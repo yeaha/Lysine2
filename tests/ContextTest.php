@@ -25,7 +25,7 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
             $handler = $this->createHandler($type, $config);
             try {
                 $handler->clear();
-            } catch (\Lysine\Service\ConnectionError $ex) {
+            } catch (\Lysine\Service\ConnectionException $ex) {
                 $this->markTestSkipped('Redis连接不上，无法测试RedisContextHandler');
                 continue;
             }

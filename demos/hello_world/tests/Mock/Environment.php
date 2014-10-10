@@ -35,7 +35,7 @@ class Environment {
         $_POST = array();
         $_REQUEST = array();
         $_SERVER = array();
-        $_SESSION = \Lysine\Session::instance();
+        $_SESSION = \Lysine\Session::getInstance();
 
         resp()->reset();
     }

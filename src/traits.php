@@ -1,8 +1,6 @@
 <?php
 namespace Lysine\Traits;
 
-use Lysine\RuntimeError;
-
 // 事件方法
 trait Event {
     public function onEvent($event, $callback) {
@@ -29,7 +27,7 @@ trait Singleton {
     protected function __construct() {}
 
     public function __clone() {
-        throw new RuntimeError('Cloning '. __CLASS__ .' is not allowed');
+        throw new \RuntimeException('Cloning '. __CLASS__ .' is not allowed');
     }
 
     static public function getInstance() {
@@ -71,7 +69,7 @@ trait Context {
 
     protected function getContextHandler() {
         if (!$this->context_handler)
-            throw new RuntimeError('Please set context handler before use');
+            throw new \RuntimeException('Please set context handler before use');
 
         return $this->context_handler;
     }

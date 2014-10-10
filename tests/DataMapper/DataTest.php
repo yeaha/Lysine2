@@ -206,7 +206,7 @@ class DataTest extends \PHPUnit_Framework_TestCase {
                 'address' => 'def',
                 'other' => 'xyz',
             ));
-        } catch (\Lysine\DataMapper\UndefinedPropertyError $ex) {
+        } catch (\UnexpectedValueException $ex) {
             $this->fail('merge()没有忽略不存在的属性');
         }
         $this->assertFalse(isset($data->name), 'merge()没有忽略strict属性');

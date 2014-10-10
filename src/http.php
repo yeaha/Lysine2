@@ -108,7 +108,7 @@ class Request {
         if ($uri = server('request_uri'))
             return $this->request_uri = $uri;
 
-        throw new \Lysine\RuntimeError('Unknown request URI');
+        throw new \RuntimeException('Unknown request URI');
     }
 
     public function method() {

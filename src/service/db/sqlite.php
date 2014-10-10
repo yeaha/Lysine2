@@ -4,7 +4,7 @@ namespace Lysine\Service\DB\Adapter;
 use Lysine\Service\DB\Expr;
 
 if (!extension_loaded('pdo_sqlite'))
-    throw new \Lysine\Service\RuntimeError('Require pdo_sqlite extension!');
+    throw new \RuntimeException('Require pdo_sqlite extension!');
 
 class Sqlite extends \Lysine\Service\DB\Adapter {
     protected $savepoint = array();

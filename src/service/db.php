@@ -46,7 +46,7 @@ abstract class Adapter implements \Lysine\Service\IService {
         try {
             $handler = new \PDO($dsn, $user, $password, $options);
         } catch (\PDOException $ex) {
-            throw new Service\ConnectionError('Database connect failed!', 0, $ex, array(
+            throw new Service\ConnectionException('Database connect failed!', 0, $ex, array(
                 'dsn' => $dsn,
             ));
         }
@@ -108,7 +108,7 @@ abstract class Adapter implements \Lysine\Service\IService {
                  : $this->connect()->prepare($sql);
             $sth->execute($params);
         } catch (\PDOException $ex) {
-            throw new Service\RuntimeError($ex->getMessage(), $ex->errorInfo[1], $ex, array(
+            throw new \Lysine\Exception($ex->getMessage(), $ex->errorInfo[1], $ex, array(
                 'sql' => (string)$sql,
                 'params' => $params,
                 'native_code' => $ex->errorInfo[0],
@@ -440,8 +440,9 @@ class Select {
     }
 
     public function setProcessor($processor) {
-        if ($processor && !is_callable($processor))
-            throw new \Lysine\UnexpectedValueError('Select processor is not callable');
+        if ($processor && !is_callable($processor)) {
+            throw new \UnexpectedValueException('Select processor is not callable');
+        }
 
         $this->processor = $processor;
         return $this;

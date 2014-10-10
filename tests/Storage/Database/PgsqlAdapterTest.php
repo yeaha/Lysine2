@@ -13,7 +13,7 @@ class PgsqlAdapterTest extends \PHPUnit_Framework_TestCase {
     protected function setUp() {
         try {
             $this->adapter->connect();
-        } catch (\Lysine\Service\ConnectionError $ex) {
+        } catch (\Lysine\Service\ConnectionException $ex) {
             $this->markTestSkipped('Postgresql连接不上，无法测试Postgresql adapter');
         }
     }

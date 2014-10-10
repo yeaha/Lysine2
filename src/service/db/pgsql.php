@@ -4,7 +4,7 @@ namespace Lysine\Service\DB\Adapter;
 use Lysine\Service\DB\Expr;
 
 if (!extension_loaded('pdo_pgsql'))
-    throw new \Lysine\Service\RuntimeError('Require pdo_pgsql extension!');
+    throw new \RuntimeException('Require pdo_pgsql extension!');
 
 class Pgsql extends \Lysine\Service\DB\Adapter {
     protected $savepoint = array();

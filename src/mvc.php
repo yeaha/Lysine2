@@ -35,7 +35,7 @@ class Application {
     public function execute($uri = null, $method = null) {
         $method = $method ?: req()->method();
         if (!in_array($method, self::$support_methods))
-            throw HTTP\Error::factory(HTTP::NOT_IMPLEMENTED);
+            throw HTTP\Exception::factory(HTTP::NOT_IMPLEMENTED);
 
         $uri = $uri ?: req()->requestUri();
 
@@ -110,7 +110,7 @@ class Router {
         if ($method == 'HEAD') $method = 'GET';
 
         if (!is_callable(array($controller, $method)))
-            throw HTTP\Error::factory(HTTP::METHOD_NOT_ALLOWED);
+            throw HTTP\Exception::factory(HTTP::METHOD_NOT_ALLOWED);
 
         $response = $params
                   ? call_user_func_array(array($controller, $method), $params)
@@ -152,7 +152,7 @@ class Router {
             return $result;
         } while (false);
 
-        $exception = HTTP\Error::factory(HTTP::NOT_FOUND);
+        $exception = HTTP\Exception::factory(HTTP::NOT_FOUND);
         $exception->setMore($exception_more);
         throw $exception;
     }
@@ -215,7 +215,7 @@ class View {
 
     public function __construct($view_dir) {
         if (!$dir = realpath($view_dir))
-            throw new \Lysine\RuntimeError('View directory '.$view_dir.' not exist!');
+            throw new \RuntimeException('View directory '.$view_dir.' not exist!');
 
         $this->dir = $dir.DIRECTORY_SEPARATOR;
     }
@@ -266,10 +266,10 @@ class View {
         $view_file = $this->dir.$view.'.php';
 
         if (!$file = realpath($view_file))
-            throw new \Lysine\RuntimeError('View file '.$view_file.' not exist!');
+            throw new \RuntimeException('View file '.$view_file.' not exist!');
 
         if (strpos($file, $this->dir) !== 0)
-            throw new \Lysine\RuntimeError('Invalid view file '. $file);
+            throw new \RuntimeException('Invalid view file '. $file);
 
         $this->include_views[$view] = 1;
 

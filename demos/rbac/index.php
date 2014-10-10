@@ -8,7 +8,7 @@ set_exception_handler('__exception_handler');
 try {
     $app = require __DIR__ .'/config/boot.php';
     $response = $app->execute();
-} catch (HTTP\Error $exception) {
+} catch (HTTP\Exception $exception) {
     Lysine\logger()->debug( HTTP::getStatusHeader($exception->getCode()) );
     $response = __exception_response($exception->getCode(), $exception);
 } catch (\Exception $exception) {

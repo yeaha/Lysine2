@@ -1,8 +1,6 @@
 <?php
 namespace Lysine;
 
-use Lysine\RuntimeError;
-
 // 会话之间的上下文数据封装
 abstract class ContextHandler {
     protected $config;
@@ -29,7 +27,7 @@ abstract class ContextHandler {
 
     public function getToken() {
         if (!$token = $this->getConfig('token'))
-            throw new RuntimeError('Undefined context save token');
+            throw new \UnexpectedValueException('Undefined context save token');
 
         return $token;
     }
@@ -44,7 +42,7 @@ abstract class ContextHandler {
             case 'cookie': return new CookieContextHandler($config);
             case 'redis': return new RedisContextHandler($config);
             default:
-                throw new RuntimeError('Unknown context handler type: '. $type);
+                throw new \UnexpectedValueException('Unknown context handler type: '. $type);
         }
     }
 }
@@ -277,17 +275,17 @@ class CookieContextHandler extends ContextHandler {
         $config = $this->getConfig('encrypt') ?: array();
 
         if (!isset($config[0]) || !$config[0])
-            throw new RuntimeError('Require encrypt salt string');
+            throw new \RuntimeException('Require encrypt salt string');
         $salt = $config[0];
 
         $cipher = isset($config[1]) ? $config[1] : MCRYPT_RIJNDAEL_256;
 
         if (!in_array($cipher, mcrypt_list_algorithms()))
-            throw new RuntimeError('Unsupport encrypt cipher: '. $cipher);
+            throw new \RuntimeException('Unsupport encrypt cipher: '. $cipher);
 
         $mode = isset($config[2]) ? $config[2] : MCRYPT_MODE_CBC;
         if (!in_array($mode, mcrypt_list_modes()))
-            throw new RuntimeError('Unsupport encrypt mode: '. $mode);
+            throw new \RuntimeException('Unsupport encrypt mode: '. $mode);
 
         if (isset($config[3])) {
             $device = $config[3];
@@ -332,10 +330,10 @@ class CookieContextHandler extends ContextHandler {
     // 获得计算数字签名的salt字符串
     protected function getSignSalt($string) {
         if (($salt = $this->getConfig('sign_salt')) === null)
-            throw new RuntimeError('Require signature salt');
+            throw new \RuntimeException('Require signature salt');
 
         if (is_callable($salt) && (!$salt = call_user_func($salt, $string)))
-            throw new RuntimeError('Salt function return noting');
+            throw new \RuntimeException('Salt function return noting');
 
         if ($this->getConfig('bind_ip')) {
             $ip = req()->ip();
@@ -447,7 +445,7 @@ class RedisContextHandler extends ContextHandler {
 
     protected function getService() {
         if (!$service = $this->getConfig('service'))
-            throw new RuntimeError('Require redis service for context');
+            throw new \RuntimeException('Require redis service for context');
 
         if ($service instanceof \Lysine\Service\Redis)
             return $service;

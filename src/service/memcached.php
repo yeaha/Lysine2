@@ -2,7 +2,7 @@
 namespace Lysine\Service;
 
 if (!extension_loaded('memcached'))
-    throw new \Lysine\Service\RuntimeError('Require memcached extension');
+    throw new \RuntimeException('Require memcached extension');
 
 class Memcached implements \Lysine\Service\IService {
     protected $handler;
@@ -32,7 +32,7 @@ class Memcached implements \Lysine\Service\IService {
 
         $handler = new \Memcached;
         if (!$handler->addServers($servers))
-            throw new \Lysine\Service\ConnectionError('Cannot connect memcached');
+            throw new \Lysine\Service\ConnectionException('Cannot connect memcached');
 
         if (isset($config['options'])) {
             foreach ($config['options'] as $key => $val)
