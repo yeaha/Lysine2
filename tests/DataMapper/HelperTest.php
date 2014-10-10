@@ -6,14 +6,14 @@ use \Lysine\DataMapper;
 class TypesTest extends \PHPUnit_Framework_TestCase {
     protected $class = '\Test\Mock\DataMapper\Data';
 
-    protected function setPropsMeta(array $props_meta) {
+    protected function setAttributes(array $attributes) {
         $class = $this->class;
-        $class::getMapper()->setProperties($props_meta);
+        $class::getMapper()->setAttributes($attributes);
     }
 
     public function testTypes() {
-        $this->setPropsMeta(array(
-            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
             'a' => array('type' => 'int'),
             'b' => array('type' => 'numeric'),
             'c' => array('type' => 'text'),
@@ -39,9 +39,9 @@ class TypesTest extends \PHPUnit_Framework_TestCase {
         $mapper = $class::getMapper();
         $types = \Lysine\DataMapper\Types::getInstance();
 
-        foreach ($expect as $prop => $class) {
-            $prop_meta = $mapper->getPropMeta($prop);
-            $this->assertInstanceof($class, $types->get($prop_meta['type']));
+        foreach ($expect as $key => $class) {
+            $attribute = $mapper->getAttribute($key);
+            $this->assertInstanceof($class, $types->get($attribute['type']));
         }
 
         $types->register('foo', '\Lysine\DataMapper\Types\Json');
@@ -49,8 +49,8 @@ class TypesTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testDatetime() {
-        $this->setPropsMeta(array(
-            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
             'time' => array('type' => 'datetime', 'default' => 'now'),
             'other' => array('type' => 'datetime', 'format' => 'U'),
         ));
@@ -74,8 +74,8 @@ class TypesTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testString() {
-        $this->setPropsMeta(array(
-            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
             'foo' => array('type' => 'string', 'allow_null' => true),
             'bar' => array('type' => 'string', 'default' => 'bar'),
         ));
@@ -93,8 +93,8 @@ class TypesTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testInteger() {
-        $this->setPropsMeta(array(
-            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
             'foo' => array('type' => 'integer', 'allow_null' => true),
             'bar' => array('type' => 'integer', 'default' => 1),
         ));
@@ -115,8 +115,8 @@ class TypesTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testNumeric() {
-        $this->setPropsMeta(array(
-            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
             'foo' => array('type' => 'numeric', 'allow_null' => true),
         ));
         $class = $this->class;

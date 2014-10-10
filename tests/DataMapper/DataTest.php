@@ -6,16 +6,16 @@ use \Lysine\DataMapper\Data;
 class DataTest extends \PHPUnit_Framework_TestCase {
     protected $class = '\Test\Mock\DataMapper\Data';
 
-    protected function setPropsMeta(array $props_meta) {
+    protected function setAttributes(array $attributes) {
         $class = $this->class;
-        $class::getMapper()->setProperties($props_meta);
+        $class::getMapper()->setAttributes($attributes);
     }
 
     public function testDefaultValue() {
         $class = $this->class;
 
-        $this->setPropsMeta(array(
-            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
             'p' => array('type' => 'integer', 'default' => 0),
         ));
 
@@ -28,8 +28,8 @@ class DataTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testSetProp() {
-        $this->setPropsMeta(array(
-            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
             'email' => array('type' => 'string', 'refuse_update' => true, 'pattern' => "/^([a-z0-9_\-\.])+\@([a-z0-9_\-\.])+\.([a-z]{2,4})$/i"),
             'name' => array('type' => 'string', 'allow_null' => true),
         ));
@@ -41,7 +41,7 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $test = false;
         try {
             $data->email = 'yangyi';
-        } catch (\Lysine\DataMapper\UnexpectedValueError $ex) {
+        } catch (\UnexpectedValueException $ex) {
             $test = true;
         }
         $this->assertTrue($test, '属性pattern检查没有生效');
@@ -66,21 +66,21 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         try {
             $data->save();
             $this->fail('属性的not allow null没有生效');
-        } catch (\Lysine\DataMapper\NullNotAllowedError $ex) {
+        } catch (\UnexpectedValueException $ex) {
         }
 
         //////////////////// refuse update ////////////////////
-        $props = array(
+        $values = array(
             'id' => 1,
             'email' => 'yangyi.cn.gz@gmail.com',
             'name' => 'yangyi',
         );
-        $data = new $class($props, $is_fresh = false);
+        $data = new $class($values, array('fresh' => false));
 
         $test = false;
         try {
             $data->email = 'yangyi.cn.gz@gmail.com';
-        } catch (\Lysine\DataMapper\RefuseUpdateError $ex) {
+        } catch (\RuntimeException $ex) {
             $test = true;
         }
         $this->assertTrue($test, '属性的refuse update没有生效');
@@ -88,7 +88,7 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $test = false;
         try {
             $data->id = 2;
-        } catch (\Lysine\DataMapper\RefuseUpdateError $ex) {
+        } catch (\RuntimeException $ex) {
             $test = true;
         }
         $this->assertTrue($test, '主键应该refuse update');
@@ -99,7 +99,7 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $test = false;
         try {
             $data->save();
-        } catch (\Lysine\DataMapper\NullNotAllowedError $ex) {
+        } catch (\UnexpectedValueException $ex) {
             $test = true;
         }
         $this->assertTrue($test);
@@ -108,12 +108,12 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $data->email = 'yangyi.cn.gz@gmail.com';
         try {
             $data->save();
-        } catch (\Lysine\DataMapper\NullNotAllowedError $ex) {
+        } catch (\UnexpectedValueException $ex) {
             $test = true;
         }
         $this->assertFalse($test);
 
-        $this->setPropsMeta(array(
+        $this->setAttributes(array(
             'id' => array('type' => 'integer', 'primary_key' => true),
         ));
 
@@ -123,15 +123,15 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $test = false;
         try {
             $data->save();
-        } catch (\Lysine\DataMapper\NullNotAllowedError $ex) {
+        } catch (\UnexpectedValueException $ex) {
             $test = true;
         }
         $this->assertTrue($test);
     }
 
     public function testGetProp() {
-        $this->setPropsMeta(array(
-            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
             'email' => array('type' => 'string', 'refuse_update' => true),
             'name' => array('type' => 'string', 'allow_null' => true),
         ));
@@ -148,14 +148,14 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $test = false;
         try {
             $data->passwd;
-        } catch (\Lysine\DataMapper\UndefinedPropertyError $ex) {
+        } catch (\UnexpectedValueException $ex) {
             $test = true;
         }
         $this->assertTrue($test);
     }
 
     public function testPrimaryKey() {
-        $this->setPropsMeta(array(
+        $this->setAttributes(array(
             'id' => array('type' => 'integer', 'primary_key' => true),
         ));
 
@@ -170,13 +170,13 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $test = false;
         try {
             $data->id = 2;
-        } catch (\Lysine\DataMapper\RefuseUpdateError $ex) {
+        } catch (\RuntimeException $ex) {
             $test = true;
         }
         $this->assertTrue($test);
 
         // 复合主键
-        $this->setPropsMeta(array(
+        $this->setAttributes(array(
             'a' => array('type' => 'integer', 'primary_key' => true),
             'b' => array('type' => 'integer', 'primary_key' => true),
         ));
@@ -191,8 +191,8 @@ class DataTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testStrictProp() {
-        $this->setPropsMeta(array(
-            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
             'name' => array('type' => 'string', 'strict' => true),
             'address' => array('type' => 'string'),
         ));
@@ -201,16 +201,16 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $data = new $class;
 
         try {
-            $data->setProps(array(
+            $data->merge(array(
                 'name' => 'abc',
                 'address' => 'def',
                 'other' => 'xyz',
             ));
         } catch (\Lysine\DataMapper\UndefinedPropertyError $ex) {
-            $this->fail('setProps()没有忽略不存在的属性');
+            $this->fail('merge()没有忽略不存在的属性');
         }
-        $this->assertFalse(isset($data->name), 'setProps()没有忽略strict属性');
-        $this->assertTrue(isset($data->address), 'setProps()应该可以修改非strict属性');
+        $this->assertFalse(isset($data->name), 'merge()没有忽略strict属性');
+        $this->assertTrue(isset($data->address), 'merge()应该可以修改非strict属性');
 
         $data->name = 'abc';
         $this->assertTrue(isset($data->name), 'strict属性应该允许->设置');
@@ -227,7 +227,7 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $registry->enable();
         $this->assertTrue($registry->isEnabled());
 
-        $this->setPropsMeta(array(
+        $this->setAttributes(array(
             'id' => array('type' => 'integer', 'primary_key' => true),
             'name' => array('type' => 'string', 'strict' => true),
             'address' => array('type' => 'string'),
@@ -259,8 +259,8 @@ class DataTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testNestedType() {
-        $this->setPropsMeta(array(
-            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
             'json' => array('type' => 'json'),
             'hstore' => array('type' => 'pg_hstore'),
             'array' => array('type' => 'pg_array'),
@@ -269,11 +269,11 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $class = $this->class;
         $mapper = $class::getMapper();
 
-        foreach ($mapper->getPropMeta() as $meta) {
-            if ($meta['name'] == 'id') continue;
+        foreach ($mapper->getAttributes() as $key => $attribute) {
+            if ($key == 'id') continue;
 
-            $this->assertSame($meta['default'], array());
-            $this->assertSame($meta['strict'], true);
+            $this->assertSame($attribute['default'], array());
+            $this->assertSame($attribute['strict'], true);
         }
     }
 }
