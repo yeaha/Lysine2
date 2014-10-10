@@ -7,6 +7,7 @@ abstract class Data {
     static protected $collection;
     static protected $attributes = array();
     static protected $readonly = false;
+    static protected $strict = false;
 
     protected $fresh;
     protected $values = array();
@@ -252,6 +253,7 @@ abstract class Data {
             'collection' => static::$collection,
             'attributes' => static::$attributes,
             'readonly' => static::$readonly,
+            'strict' => static::$strict,
         );
 
         $called_class = get_called_class();
