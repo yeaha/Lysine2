@@ -1,15 +1,17 @@
 ## 2014-10-10
 
 DataMapper\Data
-- add method pick()
+- __before_\*() and __after_\*() change to public method
 - add method toJSON()
 - add static property Data::$mapper
-- remove method toArray()
 - rename method formatProp($prop, array $prop_meta) to normalize($key, $value, array $attribute)
+- rename method getProp() to get()
+- rename method hasProp() to has()
+- rename method setProp() to set()
 - rename method setProps() to merge()
+- rename method toArray() to pick()
 - rename static property Data::$props_meta to Data::$attributes
 - rename static property Data::$storage to Data::$service
-- __before_*() and __after_*() change to public method
 
 DataMapper\Mapper
 - add method getAttributes()
@@ -25,6 +27,7 @@ DataMapper\Mapper
 - rename method package() to pack()
 
 DataMapper\Types
+- add UUID type
 - add attribute "protected"
 - rename attribute "auto_increase" to "auto_generate"
 
