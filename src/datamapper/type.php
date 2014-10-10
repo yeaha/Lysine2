@@ -57,6 +57,7 @@ namespace Lysine\DataMapper {
             if ($attribute['primary_key']) {
                 $attribute['allow_null'] = false;
                 $attribute['refuse_update'] = true;
+                $attribute['strict'] = true;
             }
 
             if ($attribute['protected'] && $attribute['strict'] === null) {
@@ -94,6 +95,10 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function restore($value, array $attribute) {
+            if ($value === null) {
+                return null;
+            }
+
             return $this->normalize($value, $attribute);
         }
 
@@ -133,7 +138,17 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function normalize($value, array $attribute) {
-            return is_array($value) ? $value : json_decode($value, true);
+            if (is_array($value) || $value === null) {
+                return $value;
+            }
+
+            $value = json_decode($value, true);
+
+            if ($value === null && json_last_error() !== JSON_ERROR_NONE) {
+                throw new \UnexpectedValueException(json_last_error_msg(), json_last_error());
+            }
+
+            return $value;
         }
 
         public function store($value, array $attribute) {
@@ -141,7 +156,7 @@ namespace Lysine\DataMapper\Types {
                 return null;
             }
 
-            return json_encode($data, JSON_UNESCAPED_UNICODE);
+            return json_encode($value, JSON_UNESCAPED_UNICODE);
         }
     }
 
@@ -155,8 +170,9 @@ namespace Lysine\DataMapper\Types {
                 return new \DateTime($value);
             }
 
-            if (!$value = \DateTime::createFromFormat($attribute['format'], $value))
-                throw new \Exception('Create datetime from format ['.$attribute['format'].'] failed!');
+            if (!$value = \DateTime::createFromFormat($attribute['format'], $value)) {
+                throw new \UnexpectedValueException('Create datetime from format "'.$attribute['format'].'" failed!');
+            }
 
             return $value;
         }
@@ -197,7 +213,7 @@ namespace Lysine\DataMapper\Types {
 
             $uuid = self::generate();
 
-            if ($attribute['upper']) {
+            if (isset($attribute['upper']) && $attribute['upper']) {
                 $uuid = strtoupper($uuid);
             }
 
