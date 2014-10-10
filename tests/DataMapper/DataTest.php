@@ -11,269 +11,238 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $class::getMapper()->setAttributes($attributes);
     }
 
-    public function testDefaultValue() {
+    public function testConstruct() {
         $class = $this->class;
 
         $this->setAttributes(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
-            'p' => array('type' => 'integer', 'default' => 0),
+            'foo' => array('type' => 'string', 'default' => 'foo'),
+            'bar' => array('type' => 'string', 'default' => 'bar', 'allow_null' => true),
         ));
 
-        $class = $this->class;
-        $d = new $class;
-
-        $this->assertNull($d->id);
-
-        $this->assertEquals($d->p, 0);
-    }
-
-    public function testSetProp() {
-        $this->setAttributes(array(
-            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
-            'email' => array('type' => 'string', 'refuse_update' => true, 'pattern' => "/^([a-z0-9_\-\.])+\@([a-z0-9_\-\.])+\.([a-z]{2,4})$/i"),
-            'name' => array('type' => 'string', 'allow_null' => true),
-        ));
-
-        $class = $this->class;
         $data = new $class;
+
         $this->assertTrue($data->isFresh());
-
-        $test = false;
-        try {
-            $data->email = 'yangyi';
-        } catch (\UnexpectedValueException $ex) {
-            $test = true;
-        }
-        $this->assertTrue($test, '属性pattern检查没有生效');
-
-        $data->name = '';
-        $this->assertNull($data->name, '对string类型的属性赋值\'\'应该转换为null');
-
-        $data->email = 'yangyi.cn.gz@gmail.com';
-        $data->name = 'yangyi';
         $this->assertTrue($data->isDirty());
+        $this->assertEquals($data->foo, 'foo');
+        $this->assertNull($data->bar);
 
-        $data->save();
+        $data = new $class(array(
+            'bar' => 'bar'
+        ));
+
+        $this->assertEquals($data->bar, 'bar');
+
+        $data = new $class(array(), array('fresh' => false));
+
         $this->assertFalse($data->isFresh());
         $this->assertFalse($data->isDirty());
+        $this->assertNull($data->foo);
+    }
 
-        // 对属性设置同样的值，应该不会把属性标记为已修改
-        $data->name = 'yangyi';
+    /**
+     * @expectedException \RuntimeException
+     * @expectedExceptionMessageRegExp /primary key/
+     */
+    public function testBadConstruct() {
+        $this->setAttributes(array());
+    }
+
+    public function testSetStrict() {
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
+            'foo' => array('type' => 'string', 'strict' => true),
+        ));
+
+        $data = new $this->class;
+
+        $data->merge(array('foo' => 'foo'));
+        $this->assertFalse($data->isDirty('foo'));
+
+        $data->set('foo', 'foo', array('strict' => false));
+        $this->assertFalse($data->isDirty('foo'));
+
+        $data->set('foo', 'foo', array('strict' => true));
+        $this->assertTrue($data->isDirty('foo'));
+
+        $data->foo = 'bar';
+        $this->assertEquals($data->foo, 'bar');
+    }
+
+    public function testSetRefuseUpdate() {
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
+            'foo' => array('type' => 'string', 'refuse_update' => true),
+        ));
+
+        $class = $this->class;
+
+        $data = new $class;
+        $data->foo = 'foo';
+
+        $this->assertEquals($data->foo, 'foo');
+
+        $data = new $class(array('foo' => 'foo'), array('fresh' => false));
+
+        // test force set
+        $data->set('foo', 'bar', array('force' => true));
+        $this->assertEquals($data->foo, 'bar');
+
+        $this->setExpectedExceptionRegExp('\RuntimeException', '/refuse update/');
+        $data->foo = 'foo';
+    }
+
+    public function testSetNull() {
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
+            'foo' => array('type' => 'string', 'allow_null' => true),
+            'bar' => array('type' => 'string'),
+        ));
+
+        $data = new $this->class;
+
+        $data->foo = null;
+
+        $this->setExpectedExceptionRegExp('\UnexpectedValueException', '/not allow null/');
+        $data->bar = null;
+    }
+
+    public function testSetSame() {
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
+            'foo' => array('type' => 'string', 'allow_null' => true),
+            'bar' => array('type' => 'string'),
+        ));
+
+        $class = $this->class;
+        $data = new $class(array('bar' => 'bar'), array('fresh' => false));
+
         $this->assertFalse($data->isDirty());
-        $data->destroy();
 
-        $data = new $class;
-        try {
-            $data->save();
-            $this->fail('属性的not allow null没有生效');
-        } catch (\UnexpectedValueException $ex) {
-        }
+        $data->foo = null;
+        $this->assertFalse($data->isDirty('foo'));
 
-        //////////////////// refuse update ////////////////////
-        $values = array(
-            'id' => 1,
-            'email' => 'yangyi.cn.gz@gmail.com',
-            'name' => 'yangyi',
-        );
-        $data = new $class($values, array('fresh' => false));
-
-        $test = false;
-        try {
-            $data->email = 'yangyi.cn.gz@gmail.com';
-        } catch (\RuntimeException $ex) {
-            $test = true;
-        }
-        $this->assertTrue($test, '属性的refuse update没有生效');
-
-        $test = false;
-        try {
-            $data->id = 2;
-        } catch (\RuntimeException $ex) {
-            $test = true;
-        }
-        $this->assertTrue($test, '主键应该refuse update');
-
-        //////////////////// null not allowed ////////////////////
-        $data = new $class();
-
-        $test = false;
-        try {
-            $data->save();
-        } catch (\UnexpectedValueException $ex) {
-            $test = true;
-        }
-        $this->assertTrue($test);
-
-        $test = false;
-        $data->email = 'yangyi.cn.gz@gmail.com';
-        try {
-            $data->save();
-        } catch (\UnexpectedValueException $ex) {
-            $test = true;
-        }
-        $this->assertFalse($test);
-
-        $this->setAttributes(array(
-            'id' => array('type' => 'integer', 'primary_key' => true),
-        ));
-
-        $class = $this->class;
-        $data = new $class();
-
-        $test = false;
-        try {
-            $data->save();
-        } catch (\UnexpectedValueException $ex) {
-            $test = true;
-        }
-        $this->assertTrue($test);
+        $data->bar = 'bar';
+        $this->assertFalse($data->isDirty('bar'));
     }
 
-    public function testGetProp() {
+    public function testSetEmptyString() {
         $this->setAttributes(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
-            'email' => array('type' => 'string', 'refuse_update' => true),
-            'name' => array('type' => 'string', 'allow_null' => true),
+            'foo' => array('type' => 'string', 'allow_null' => true),
+            'bar' => array('type' => 'integer'),
         ));
 
-        $class = $this->class;
-        $data = new $class(array(
-            'email' => 'yangyi.cn.gz@gmail.com',
-            'name' => 'yangyi',
-        ));
+        $data = new $this->class;
 
-        $this->assertEquals($data->email, 'yangyi.cn.gz@gmail.com');
-        $this->assertEquals($data->name, 'yangyi');
+        $data->foo = '';
+        $this->assertNull($data->foo);
 
-        $test = false;
-        try {
-            $data->passwd;
-        } catch (\UnexpectedValueException $ex) {
-            $test = true;
-        }
-        $this->assertTrue($test);
+        $this->setExpectedExceptionRegExp('\UnexpectedValueException', '/not allow null/');
+        $data->bar = '';
     }
 
-    public function testPrimaryKey() {
-        $this->setAttributes(array(
-            'id' => array('type' => 'integer', 'primary_key' => true),
-        ));
-
-        $class = $this->class;
-        $data = new $class(array(
-            'id' => 1
-        ));
-
-        $this->assertEquals(1, $data->id());
-
-        $data->save();
-        $test = false;
-        try {
-            $data->id = 2;
-        } catch (\RuntimeException $ex) {
-            $test = true;
-        }
-        $this->assertTrue($test);
-
-        // 复合主键
-        $this->setAttributes(array(
-            'a' => array('type' => 'integer', 'primary_key' => true),
-            'b' => array('type' => 'integer', 'primary_key' => true),
-        ));
-
-        $class = $this->class;
-        $data = new $class(array(
-            'a' => 1,
-            'b' => 2,
-        ));
-
-        $this->assertSame(array('a' => 1, 'b' => 2), $data->id());
-    }
-
-    public function testStrictProp() {
+    public function testSetUndefined() {
         $this->setAttributes(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
-            'name' => array('type' => 'string', 'strict' => true),
-            'address' => array('type' => 'string'),
         ));
 
-        $class = $this->class;
-        $data = new $class;
+        $data = new $this->class;
 
-        try {
-            $data->merge(array(
-                'name' => 'abc',
-                'address' => 'def',
-                'other' => 'xyz',
-            ));
-        } catch (\UnexpectedValueException $ex) {
-            $this->fail('merge()没有忽略不存在的属性');
-        }
-        $this->assertFalse(isset($data->name), 'merge()没有忽略strict属性');
-        $this->assertTrue(isset($data->address), 'merge()应该可以修改非strict属性');
+        $data->set('bar', 'bar', array('strict' => false));
+        $data->merge(array('bar' => 'bar'));
 
-        $data->name = 'abc';
-        $this->assertTrue(isset($data->name), 'strict属性应该允许->设置');
+        $this->setExpectedExceptionRegExp('\UnexpectedValueException', '/undefined property/i');
+        $data->bar = 'bar';
     }
 
-    public function testFindRegistry() {
-        $registry = \Lysine\DataMapper\Registry::getInstance();
-
-        $this->assertTrue($registry->isEnabled());
-
-        $registry->disable();
-        $this->assertFalse($registry->isEnabled());
-
-        $registry->enable();
-        $this->assertTrue($registry->isEnabled());
-
-        $this->setAttributes(array(
-            'id' => array('type' => 'integer', 'primary_key' => true),
-            'name' => array('type' => 'string', 'strict' => true),
-            'address' => array('type' => 'string'),
-        ));
-
-        $class = $this->class;
-        $data = new $class;
-        $data->id = 9999999;
-        $data->name = 'name';
-        $data->address = 'address';
-        $data->save();
-
-        $id = $data->id();
-
-        $data1 = $class::find($id);
-        $data2 = $class::find($id);
-
-        $this->assertEquals(spl_object_hash($data1), spl_object_hash($data2));
-
-        $registry->disable();
-        $data3 = $class::find($id);
-
-        $this->assertNotEquals(spl_object_hash($data1), spl_object_hash($data3));
-
-        $registry->enable();
-        $data4 = $class::find($id);
-
-        $this->assertEquals(spl_object_hash($data1), spl_object_hash($data4));
-    }
-
-    public function testNestedType() {
+    public function testGetUndefined() {
         $this->setAttributes(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
-            'json' => array('type' => 'json'),
-            'hstore' => array('type' => 'pg_hstore'),
-            'array' => array('type' => 'pg_array'),
+        ));
+
+        $data = new $this->class;
+
+        $this->setExpectedExceptionRegExp('\UnexpectedValueException', '/undefined property/i');
+        $data->foo;
+    }
+
+    public function testPick() {
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
+            'foo' => array('type' => 'string', 'protected' => true),
+            'bar' => array('type' => 'string'),
         ));
 
         $class = $this->class;
-        $mapper = $class::getMapper();
 
-        foreach ($mapper->getAttributes() as $key => $attribute) {
-            if ($key == 'id') continue;
+        $data = new $class(array(
+            'foo' => 'foo',
+            'bar' => 'bar',
+        ), array('fresh' => false));
 
-            $this->assertSame($attribute['default'], array());
-            $this->assertSame($attribute['strict'], true);
-        }
+        $values = $data->pick();
+
+        $this->assertFalse(array_key_exists('id', $values));
+        $this->assertFalse(array_key_exists('foo', $values));
+        $this->assertTrue(array_key_exists('bar', $values));
+
+        $values = $data->pick('foo', 'bar', 'baz');
+
+        $this->assertTrue(array_key_exists('foo', $values));
+        $this->assertTrue(array_key_exists('bar', $values));
+        $this->assertFalse(array_key_exists('baz', $values));
     }
+
+    public function testGetID() {
+        $class = $this->class;
+
+        $this->setAttributes(array(
+            'foo' => array('type' => 'string', 'primary_key' => true),
+        ));
+
+        $data = new $class(array('foo' => 'foo'));
+        $this->assertEquals($data->id(), 'foo');
+
+        $this->setAttributes(array(
+            'foo' => array('type' => 'string', 'primary_key' => true),
+            'bar' => array('type' => 'string', 'primary_key' => true),
+        ));
+
+        $data = new $class(array('foo' => 'foo', 'bar' => 'bar'));
+        $this->assertSame($data->id(), array('foo' => 'foo', 'bar' => 'bar'));
+    }
+
+    public function testGetOptions() {
+        $foo_options = \Test\Mock\DataMapper\FooData::getOptions();
+
+        $this->assertEquals($foo_options['service'], 'foo.service');
+        $this->assertEquals($foo_options['collection'], 'foo.collection');
+        $this->assertEquals(count($foo_options['attributes']), 2);
+
+        $bar_options = \Test\Mock\DataMapper\BarData::getOptions();
+
+        $this->assertEquals($bar_options['service'], 'bar.service');
+        $this->assertEquals($bar_options['collection'], 'bar.collection');
+        $this->assertEquals(count($bar_options['attributes']), 3);
+    }
+}
+
+namespace Test\Mock\DataMapper;
+
+class FooData extends \Lysine\DataMapper\Data {
+    static protected $service = 'foo.service';
+    static protected $collection = 'foo.collection';
+    static protected $attributes = array(
+        'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
+        'foo' => array('type' => 'string'),
+    );
+}
+
+class BarData extends FooData {
+    static protected $service = 'bar.service';
+    static protected $collection = 'bar.collection';
+    static protected $attributes = array(
+        'bar' => array('type' => 'string'),
+    );
 }

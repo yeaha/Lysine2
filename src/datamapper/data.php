@@ -152,7 +152,12 @@ abstract class Data {
         $attributes = static::getMapper()->getAttributes();
 
         if ($keys === null) {
-            $keys = array_keys($attributes);
+            $keys = array();
+            foreach ($attributes as $key => $attribute) {
+                if (!$attribute['protected']) {
+                    $keys[] = $key;
+                }
+            }
         } else {
             $keys = is_array($keys) ? $keys : func_get_args();
         }
