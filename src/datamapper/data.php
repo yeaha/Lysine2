@@ -237,13 +237,13 @@ abstract class Data {
         $this->dirty[$key] = true;
     }
 
+    static public function find($id) {
+        return static::getMapper()->find($id);
+    }
+
     final static public function getMapper() {
         $class = static::$mapper;
         return $class::factory( get_called_class() );
-    }
-
-    static public function find($id) {
-        return static::getMapper()->find($id);
     }
 
     final static public function getOptions() {
@@ -251,6 +251,7 @@ abstract class Data {
             'service' => static::$service,
             'collection' => static::$collection,
             'attributes' => static::$attributes,
+            'readonly' => static::$readonly,
         );
 
         $called_class = get_called_class();

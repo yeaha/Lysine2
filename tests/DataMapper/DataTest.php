@@ -219,6 +219,7 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($foo_options['service'], 'foo.service');
         $this->assertEquals($foo_options['collection'], 'foo.collection');
         $this->assertEquals(count($foo_options['attributes']), 2);
+        $this->assertArrayHasKey('readonly', $foo_options);
 
         $bar_options = \Test\Mock\DataMapper\BarData::getOptions();
 
