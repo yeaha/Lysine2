@@ -228,8 +228,7 @@ abstract class Data {
         return static::getMapper()->destroy($this);
     }
 
-    protected function normalize($key, $value, array $attribute = null) {
-        $attribute = $attribute ?: static::getMapper()->getAttribute($key);
+    protected function normalize($key, $value, array $attribute) {
         return Types::getInstance()->get($attribute['type'])->normalize($value, $attribute);
     }
 
