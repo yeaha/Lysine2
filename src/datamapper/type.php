@@ -158,6 +158,14 @@ namespace Lysine\DataMapper\Types {
 
             return json_encode($value, JSON_UNESCAPED_UNICODE);
         }
+
+        public function restore($value, array $attribute) {
+            if ($value === null) {
+                return array();
+            }
+
+            return $this->normalize($value, $attribute);
+        }
     }
 
     class Datetime extends Mixed {
@@ -256,6 +264,10 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function restore($value, array $attribute) {
+            if ($value === null) {
+                return array();
+            }
+
             return \Lysine\Service\DB\Adapter\Pgsql::decodeArray($value);
         }
     }
@@ -285,6 +297,10 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function restore($value, array $attribute) {
+            if ($value === null) {
+                return array();
+            }
+
             return \Lysine\Service\DB\Adapter\Pgsql::decodeHstore($value);
         }
     }

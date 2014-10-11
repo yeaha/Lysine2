@@ -79,15 +79,9 @@ abstract class Mapper {
         $values = array();
 
         foreach ($record as $key => $value) {
-            if (!$attribute = $this->getAttribute($key)) {
-                continue;
+            if ($attribute = $this->getAttribute($key)) {
+                $values[$key] = $types->get($attribute['type'])->restore($value, $attribute);
             }
-
-            if ($value !== null) {
-                $value = $types->get($attribute['type'])->restore($value, $attribute);
-            }
-
-            $values[$key] = $value;
         }
 
         if ($data) {

@@ -112,10 +112,26 @@ class TypeTest extends \PHPUnit_Framework_TestCase {
         $this->assertNull($type->store(array(), array()));
         $this->assertEquals(json_encode($json), $type->store($json, array()));
 
-        $this->assertNull($type->restore(null, array()));
-
         $this->setExpectedException('\UnexpectedValueException');
         $type->restore('{"a"', array());
+    }
+
+    public function testRestoreNull() {
+        $expect = array(
+            'mixed' => null,
+            'string' => null,
+            'integer' => null,
+            'numerci' => null,
+            'uuid' => null,
+            'datetime' => null,
+            'json' => array(),
+            'pg_array' => array(),
+            'pg_hstore' => array(),
+        );
+
+        foreach ($expect as $type => $value) {
+            $this->assertSame($value, $this->getType($type)->restore(null, array()));
+        }
     }
 
     protected function getType($name) {
