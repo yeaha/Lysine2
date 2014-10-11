@@ -99,20 +99,17 @@ abstract class Mapper {
         $defaults = array('dirty' => false);
         $options = $options ? array_merge($defaults, $options) : $defaults;
 
-        $types = Types::getInstance();
-        $record = array();
+        $attributes = $this->getAttributes();
 
-        foreach($data->pick() as $key => $value) {
+        $record = array();
+        foreach ($data->pick(array_keys($attributes)) as $key => $value) {
             if ($options['dirty'] && !$data->isDirty($key)) {
                 continue;
             }
 
-            if (!$attribute = $this->getAttribute($key)) {
-                continue;
-            }
-
             if ($value !== null) {
-                $value = $types->get($attribute['type'])->store($value, $attribute);
+                $attribute = $attributes[$key];
+                $value = Types::factory($attribute['type'])->store($value, $attribute);
             }
 
             $record[$key] = $value;
