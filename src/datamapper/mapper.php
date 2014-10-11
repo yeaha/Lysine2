@@ -474,7 +474,7 @@ class DBMapper extends \Lysine\DataMapper\Mapper {
         $collection = $collection ?: $this->getCollection();
         $record = $this->unpack($data, array('dirty' => true));
 
-        list($where, $params) = $this->whereID($service, $id);
+        list($where, $params) = $this->whereID($service, $data->id());
 
         return $service->update($collection, $record, $where, $params);
     }
@@ -483,7 +483,7 @@ class DBMapper extends \Lysine\DataMapper\Mapper {
         $service = $service ?: $this->getService();
         $collection = $collection ?: $this->getCollection();
 
-        list($where, $params) = $this->whereID($service, $id);
+        list($where, $params) = $this->whereID($service, $data->id());
 
         return $service->delete($collection, $where, $params);
     }
