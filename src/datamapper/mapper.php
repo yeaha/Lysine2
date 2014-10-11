@@ -405,8 +405,8 @@ class DBSelect extends \Lysine\Service\DB\Select {
     public function get($limit = null) {
         $result = array();
 
-        foreach (parent::get($limit) as $row) {
-            $result[$data->id()] = $row;
+        foreach (parent::get($limit) as $data) {
+            $result[$data->id()] = $data;
         }
 
         return $result;
@@ -414,7 +414,7 @@ class DBSelect extends \Lysine\Service\DB\Select {
 }
 
 class DBData extends \Lysine\DataMapper\Data {
-    static protected $mapper = '\Lsyine\DataMapper\DBMapper';
+    static protected $mapper = '\Lysine\DataMapper\DBMapper';
 
     static public function select() {
         return static::getMapper()->select();
@@ -443,6 +443,8 @@ class DBMapper extends \Lysine\DataMapper\Mapper {
     }
 
     protected function doFind($id, \Lysine\Service\IService $service = null, $collection = null) {
+        $service = $service ?: $this->getService();
+        $collection = $collection ?: $this->getCollection();
         $select = $this->select($service, $collection);
 
         list($where, $params) = $this->whereID($service, $id);
