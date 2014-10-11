@@ -37,7 +37,7 @@ class DataTest extends \PHPUnit_Framework_TestCase {
 
         $this->assertFalse($data->isFresh());
         $this->assertFalse($data->isDirty());
-        $this->assertNull($data->foo);
+        $this->assertEquals('foo', $data->foo);
     }
 
     /**
