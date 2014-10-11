@@ -146,7 +146,9 @@ abstract class Data {
             throw new \UnexpectedValueException(get_class() .": Undefined property {$key}");
         }
 
-        return isset($this->values[$key]) ? $this->values[$key] : null;
+        return array_key_exists($key, $this->values)
+             ? $this->values[$key]
+             : Types::getInstance()->get($attribute['type'])->getDefaultValue($attribute);
     }
 
     public function pick($keys = null) {
