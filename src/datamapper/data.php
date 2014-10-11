@@ -47,7 +47,7 @@ abstract class Data {
                     continue;
                 }
 
-                $default = Types::getInstance()->get($attribute['type'])->getDefaultValue($attribute);
+                $default = Types::factory($attribute['type'])->getDefaultValue($attribute);
                 if ($default !== null) {
                     $this->change($key, $default);
                 }
@@ -148,7 +148,7 @@ abstract class Data {
 
         return array_key_exists($key, $this->values)
              ? $this->values[$key]
-             : Types::getInstance()->get($attribute['type'])->getDefaultValue($attribute);
+             : Types::factory($attribute['type'])->getDefaultValue($attribute);
     }
 
     public function pick($keys = null) {
@@ -231,7 +231,7 @@ abstract class Data {
     }
 
     protected function normalize($key, $value, array $attribute) {
-        return Types::getInstance()->get($attribute['type'])->normalize($value, $attribute);
+        return Types::factory($attribute['type'])->normalize($value, $attribute);
     }
 
     final protected function change($key, $value) {

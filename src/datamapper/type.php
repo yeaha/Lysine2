@@ -34,6 +34,10 @@ namespace Lysine\DataMapper {
             return $this;
         }
 
+        static public function factory($name) {
+            return static::getInstance()->get($name);
+        }
+
         static public function normalizeAttribute(array $attribute) {
             $defaults = array(
                 'allow_null' => false,
@@ -51,7 +55,7 @@ namespace Lysine\DataMapper {
 
             $attribute = array_merge(
                 $defaults,
-                self::getInstance()->get($type)->normalizeAttribute($attribute)
+                self::factory($type)->normalizeAttribute($attribute)
             );
 
             if ($attribute['primary_key']) {
