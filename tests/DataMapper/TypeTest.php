@@ -29,7 +29,9 @@ class TypeTest extends \PHPUnit_Framework_TestCase {
         $this->assertSame('foo', $type->store('foo', array()));
         $this->assertSame('foo', $type->restore('foo', array()));
         $this->assertSame('foo', $type->toJSON('foo', array()));
+
         $this->assertSame('foo', $type->getDefaultValue(array('default' => 'foo')));
+        $this->assertNull($type->getDefaultValue(array('default' => 'foo', 'allow_null' => true)));
     }
 
     public function testNumeric() {
@@ -98,7 +100,6 @@ class TypeTest extends \PHPUnit_Framework_TestCase {
     public function testJSON() {
         $attribute = DataMapper\Types::normalizeAttribute(array('type' => 'json'));
 
-        $this->assertSame($attribute['default'], array());
         $this->assertTrue($attribute['strict']);
 
         $type = $this->getType('json');
@@ -114,6 +115,9 @@ class TypeTest extends \PHPUnit_Framework_TestCase {
 
         $this->setExpectedException('\UnexpectedValueException');
         $type->restore('{"a"', array());
+
+        $this->assertSame(array(), $type->getDefaultValue(array()));
+        $this->assertSame(array(), $type->getDefaultValue(array('allow_null' => true)));
     }
 
     public function testRestoreNull() {

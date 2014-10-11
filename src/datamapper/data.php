@@ -43,7 +43,7 @@ abstract class Data {
 
         if ($this->isFresh()) {
             foreach ($attributes as $key => $attribute) {
-                if (isset($this->values[$key]) || $attribute['allow_null']) {
+                if (isset($this->values[$key])) {
                     continue;
                 }
 

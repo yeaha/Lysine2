@@ -103,6 +103,10 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function getDefaultValue(array $attribute) {
+            if (isset($attribute['allow_null']) && $attribute['allow_null']) {
+                return null;
+            }
+
             return $attribute['default'];
         }
 
@@ -132,7 +136,6 @@ namespace Lysine\DataMapper\Types {
     class Json extends Mixed {
         public function normalizeAttribute(array $attribute) {
             return array_merge(array(
-                'default' => array(),
                 'strict' => true,
             ), $attribute);
         }
@@ -165,6 +168,10 @@ namespace Lysine\DataMapper\Types {
             }
 
             return $this->normalize($value, $attribute);
+        }
+
+        public function getDefaultValue(array $attribute) {
+            return array();
         }
     }
 
@@ -242,7 +249,6 @@ namespace Lysine\DataMapper\Types {
     class PgsqlArray extends Mixed {
         public function normalizeAttribute(array $attribute) {
             return array_merge(array(
-                'default' => array(),
                 'strict' => true,
             ), $attribute);
         }
@@ -270,12 +276,15 @@ namespace Lysine\DataMapper\Types {
 
             return \Lysine\Service\DB\Adapter\Pgsql::decodeArray($value);
         }
+
+        public function getDefaultValue(array $attribute) {
+            return array();
+        }
     }
 
     class PgsqlHstore extends Mixed {
         public function normalizeAttribute(array $attribute) {
             return array_merge(array(
-                'default' => array(),
                 'strict' => true,
             ), $attribute);
         }
@@ -302,6 +311,10 @@ namespace Lysine\DataMapper\Types {
             }
 
             return \Lysine\Service\DB\Adapter\Pgsql::decodeHstore($value);
+        }
+
+        public function getDefaultValue(array $attribute) {
+            return array();
         }
     }
 }
