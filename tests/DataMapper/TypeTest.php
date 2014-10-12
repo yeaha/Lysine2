@@ -14,6 +14,9 @@ class TypeTest extends \PHPUnit_Framework_TestCase {
         $attribute = DataMapper\Types::normalizeAttribute(array('protected' => true));
 
         $this->assertTrue($attribute['strict']);
+
+        $attribute = DataMapper\Types::normalizeAttribute(array('default' => 'foo', 'allow_null' => true));
+        $this->assertNull($attribute['default']);
     }
 
     public function testMixed() {
@@ -31,7 +34,6 @@ class TypeTest extends \PHPUnit_Framework_TestCase {
         $this->assertSame('foo', $type->toJSON('foo', array()));
 
         $this->assertSame('foo', $type->getDefaultValue(array('default' => 'foo')));
-        $this->assertNull($type->getDefaultValue(array('default' => 'foo', 'allow_null' => true)));
     }
 
     public function testNumeric() {

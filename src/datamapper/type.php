@@ -58,6 +58,10 @@ namespace Lysine\DataMapper {
                 self::factory($type)->normalizeAttribute($attribute)
             );
 
+            if ($attribute['allow_null']) {
+                $attribute['default'] = null;
+            }
+
             if ($attribute['primary_key']) {
                 $attribute['allow_null'] = false;
                 $attribute['refuse_update'] = true;
@@ -107,10 +111,6 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function getDefaultValue(array $attribute) {
-            if (isset($attribute['allow_null']) && $attribute['allow_null']) {
-                return null;
-            }
-
             return $attribute['default'];
         }
 
@@ -145,8 +145,12 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function normalize($value, array $attribute) {
-            if (is_array($value) || $value === null) {
+            if (is_array($value)) {
                 return $value;
+            }
+
+            if ($value === null) {
+                return array();
             }
 
             $value = json_decode($value, true);
@@ -270,6 +274,10 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function store($value, array $attribute) {
+            if ($value === array()) {
+                return null;
+            }
+
             return \Lysine\Service\DB\Adapter\Pgsql::encodeArray($value);
         }
 
@@ -306,6 +314,10 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function store($value, array $attribute) {
+            if ($value === array()) {
+                return null;
+            }
+
             return \Lysine\Service\DB\Adapter\Pgsql::encodeHstore($value);
         }
 
