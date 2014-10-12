@@ -124,8 +124,14 @@ abstract class Data {
             }
         }
 
-        if ($this->get($key) === $value) {
-            return $this;
+        if (array_key_exists($key, $this->values)) {
+            if ($this->values[$key] === $value) {
+                return $this;
+            }
+        } else {
+            if ($value === null && $attribute['allow_null']) {
+                return $this;
+            }
         }
 
         $this->change($key, $value);
