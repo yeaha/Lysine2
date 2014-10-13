@@ -522,13 +522,12 @@ abstract class CacheDBMapper extends DBMapper {
     public function __construct($class) {
         parent::__construct($class);
 
-        $this->onEvent(static::AFTER_UPDATE_EVENT, function($data) {
+        $delete_cache = function($data) {
             $this->deleteCache($data->id());
-        });
+        };
 
-        $this->onEvent(static::AFTER_DELETE_EVENT, function($data) {
-            $this->deleteCache($data->id());
-        });
+        $this->onEvent(static::AFTER_UPDATE_EVENT, $delete_cache);
+        $this->onEvent(static::AFTER_DELETE_EVENT, $delete_cache);
     }
 
     public function refresh(Data $data) {
