@@ -161,10 +161,10 @@ abstract class Data {
     }
 
     public function pick($keys = null) {
-        $attributes = static::getMapper()->getAttributes();
-
         if ($keys === null) {
+            $attributes = static::getMapper()->getAttributes();
             $keys = array();
+
             foreach ($attributes as $key => $attribute) {
                 if (!$attribute['protected']) {
                     $keys[] = $key;
@@ -185,16 +185,12 @@ abstract class Data {
     }
 
     public function toJSON() {
-        $attributes = static::getMapper()->getAttributes();
-        $type = Types::getInstance();
+        $mapper = static::getMapper();
         $json = array();
 
-        foreach ($this->values as $key => $value) {
-            $attribute = $attributes[$key];
-
-            if (!$attribute['protected']) {
-                $json[$key] = $type->get($attribute['type'])->toJSON($value, $attribute);
-            }
+        foreach ($this->pick() as $key => $value) {
+            $attribute = $mapper->getAttribute($key);
+            $json[$key] = Types::factory($attribute['type'])->toJSON($value, $attribute);
         }
 
         return $json;
