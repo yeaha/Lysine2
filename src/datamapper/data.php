@@ -152,9 +152,12 @@ abstract class Data {
             throw new \UnexpectedValueException(get_class() .": Undefined property {$key}");
         }
 
-        return array_key_exists($key, $this->values)
-             ? $this->values[$key]
-             : Types::factory($attribute['type'])->getDefaultValue($attribute);
+        if (!array_key_exists($key, $this->values)) {
+            return Types::factory($attribute['type'])->getDefaultValue($attribute);
+        }
+
+        $value = $this->values[$key];
+        return is_object($value) ? clone $value : $value;
     }
 
     public function pick($keys = null) {

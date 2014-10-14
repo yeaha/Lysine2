@@ -167,6 +167,16 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $data->foo;
     }
 
+    public function testGetObjectValue() {
+        $this->setAttributes(array(
+            'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
+            'time' => array('type' => 'datetime', 'default' => 'now')
+        ));
+
+        $data = new $this->class;
+        $this->assertNotSame($data->time, $data->time);
+    }
+
     public function testPick() {
         $this->setAttributes(array(
             'id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
