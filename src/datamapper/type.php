@@ -43,6 +43,7 @@ namespace Lysine\DataMapper {
                 'allow_null' => false,
                 'auto_generate' => false,
                 'default' => null,
+                'deprecated' => false,
                 'pattern' => null,
                 'primary_key' => false,
                 'protected' => false,

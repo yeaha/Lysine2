@@ -62,8 +62,18 @@ abstract class Mapper {
              : false;
     }
 
-    public function getAttributes() {
-        return $this->getOption('attributes');
+    public function getAttributes($without_deprecated = true) {
+        $attributes = $this->getOption('attributes');
+
+        if ($without_deprecated) {
+            foreach ($attributes as $key => $attribute) {
+                if ($attribute['deprecated']) {
+                    unset($attributes[$key]);
+                }
+            }
+        }
+
+        return $attributes;
     }
 
     public function hasAttribute($key) {
@@ -79,7 +89,9 @@ abstract class Mapper {
         $values = array();
 
         foreach ($record as $key => $value) {
-            if ($attribute = $this->getAttribute($key)) {
+            $attribute = $this->getAttribute($key);
+
+            if ($attribute && !$attribute['deprecated']) {
                 $values[$key] = $types->get($attribute['type'])->restore($value, $attribute);
             }
         }
@@ -289,7 +301,7 @@ abstract class Mapper {
                 $attribute['strict'] = $options['strict'];
             }
 
-            if ($attribute['primary_key']) {
+            if ($attribute['primary_key'] && !$attribute['deprecated']) {
                 $primary_key[] = $key;
             }
 
@@ -425,6 +437,8 @@ class DBMapper extends \Lysine\DataMapper\Mapper {
             $select = new \Lysine\Service\DB\Select($service, $collection);
         }
 
+        $select->setCols(array_keys($this->getAttributes()));
+
         $mapper = $this;
         $select->setProcessor(function($record) use ($mapper) {
             return $record ? $mapper->pack($record) : false;
@@ -436,6 +450,7 @@ class DBMapper extends \Lysine\DataMapper\Mapper {
     protected function doFind($id, \Lysine\Service\IService $service = null, $collection = null) {
         $service = $service ?: $this->getService();
         $collection = $collection ?: $this->getCollection();
+
         $select = $this->select($service, $collection);
 
         list($where, $params) = $this->whereID($service, $id);

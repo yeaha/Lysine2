@@ -96,6 +96,14 @@ abstract class Data {
             return $this;
         }
 
+        if ($attribute['deprecated']) {
+            if ($options['strict']) {
+                throw new \RuntimeException(get_class() .": Property {$key} is deprecated");
+            }
+
+            return $this;
+        }
+
         if ($attribute['strict'] && !$options['strict']) {
             return $this;
         }
@@ -150,6 +158,10 @@ abstract class Data {
     public function get($key) {
         if (!$attribute = static::getMapper()->getAttribute($key)) {
             throw new \UnexpectedValueException(get_class() .": Undefined property {$key}");
+        }
+
+        if ($attribute['deprecated']) {
+            throw new \RuntimeException(get_class() .": Property {$key} is deprecated");
         }
 
         if (!array_key_exists($key, $this->values)) {
