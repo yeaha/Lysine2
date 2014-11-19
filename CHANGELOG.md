@@ -35,3 +35,8 @@ Exceptions
 - remove lots of custom exceptions
 - rename HTTP\Error to HTTP\Exception
 - rename Service\ConnectionError to Service\ConnectionException
+
+## 2014-11-19
+
+DataMapper
+- add attribute "deprecated"
