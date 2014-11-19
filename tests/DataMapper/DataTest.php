@@ -238,6 +238,33 @@ class DataTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($bar_options['collection'], 'bar.collection');
         $this->assertEquals(count($bar_options['attributes']), 3);
     }
+
+    public function testDeprecatedPrimaryKey() {
+        $this->setExpectedExceptionRegExp('\RuntimeException', '/primary key/');
+
+        $this->setAttributes(array(
+            'id' => array('type' => 'string', 'primary_key' => true, 'deprecated' => true),
+        ));
+    }
+
+    public function testDeprecatedAttribute() {
+        $this->setAttributes(array(
+            'id' => array('type' => 'string', 'primary_key' => true),
+            'bar' => array('type' => 'string', 'deprecated' => true),
+        ));
+
+        $class = $this->class;
+        $mapper = $class::getMapper();
+
+        $attributes = $mapper->getAttributes();
+        $this->assertArrayNotHasKey('bar', $attributes);
+
+        $this->assertFalse($mapper->hasAttribute('bar'));
+
+        $this->setExpectedExceptionRegExp('\RuntimeException', '/deprecated/');
+        $data = new $class;
+        $bar = $data->bar;
+    }
 }
 
 namespace Test\Mock\DataMapper;
