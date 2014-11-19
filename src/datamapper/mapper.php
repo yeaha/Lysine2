@@ -77,7 +77,8 @@ abstract class Mapper {
     }
 
     public function hasAttribute($key) {
-        return isset($this->options['attributes'][$key]);
+        $attribute = $this->getAttribute($key);
+        return $attribute ? !$attribute['deprecated'] : false;
     }
 
     public function isReadonly() {
