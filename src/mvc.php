@@ -211,7 +211,7 @@ class View {
     protected $block_stack = array();
     protected $block_content = array();
 
-    protected $include_views = array();
+    protected $included_views = array();
 
     public function __construct($view_dir) {
         if (!$dir = realpath($view_dir))
@@ -239,7 +239,7 @@ class View {
         $this->vars = array();
         $this->block_stack = array();
         $this->block_content = array();
-        $this->include_views = array();
+        $this->included_views = array();
 
         return $this;
     }
@@ -262,16 +262,18 @@ class View {
 
     //////////////////// protected method ////////////////////
 
-    protected function includes($view, array $vars = array(), $return_content = false) {
+    protected function includes($view, array $vars = array()) {
         $view_file = $this->dir.$view.'.php';
 
-        if (!$file = realpath($view_file))
+        if (!$file = realpath($view_file)) {
             throw new \RuntimeException('View file '.$view_file.' not exist!');
+        }
 
-        if (strpos($file, $this->dir) !== 0)
+        if (strpos($file, $this->dir) !== 0) {
             throw new \RuntimeException('Invalid view file '. $file);
+        }
 
-        $this->include_views[$view] = 1;
+        $this->included_views[$view] = true;
 
         $vars = $vars ? array_merge($this->vars, $vars) : $this->vars;
 
@@ -283,33 +285,31 @@ class View {
             require $file;
         } catch (\Exception $ex) {
             // 外面可能已经调用过ob_start()，所以这里不能全部删除干净
-            while (ob_get_level() > $ob_level)
+            while (ob_get_level() > $ob_level) {
                 ob_end_clean();
+            }
 
             throw $ex;
         }
 
-        $output = ob_get_clean();
-
-        if ($return_content)
-            return $output;
-
-        echo $output;
+        echo ob_get_clean();
     }
 
     protected function includeOnce($view) {
-        if (!isset($this->include_views[$view]))
+        if (!isset($this->included_views[$view])) {
             $this->includes($view);
+        }
     }
 
-    protected function block($name, $method = null) {
+    protected function beginBlock($name, $method = null) {
         $this->block_stack[] = array($name, $method ?: self::BLOCK_REPLACE);
         ob_start();
     }
 
     protected function endBlock() {
-        if (!$this->block_stack)
-            return false;
+        if (!$this->block_stack) {
+            return;
+        }
 
         list($block_name, $block_method) = array_pop($this->block_stack);
         $output = ob_get_clean();
@@ -333,14 +333,48 @@ class View {
     }
 
     protected function showBlock($name) {
-        if (!isset($this->block_content[$name]))
-            return false;
+        if (isset($this->block_content[$name])) {
+            echo $this->block_content[$name];
+            unset($this->block_content[$name]);
+        }
+    }
 
-        echo $this->block_content[$name];
-        unset($this->block_content[$name]);
+    protected function getBlock($name) {
+        return isset($this->block_content[$name])
+             ? $this->block_content[$name]
+             : '';
     }
 
     protected function extend($view) {
         $this->extend = $view;
+    }
+
+    protected function showElement($tag, array $properties) {
+        echo $this->element($tag, $attributes);
+    }
+
+    protected function element($tag, array $properties) {
+        $self_close = array(
+            'input' => true,
+            'link' => true,
+            'meta' => true,
+        );
+
+        $props = array();
+        foreach ($properties as $key => $value) {
+            $props[] = $key.'="'.$value.'"';
+        }
+        $props = $props ? ' '.implode(' ', $props) : '';
+
+        return isset($self_close[$tag])
+             ? sprintf('<%s%s/>', $tag, $props)
+             : sprintf('<%s%s></%s>', $tag, $props, $tag);
+    }
+
+    /**
+     * @deprecated
+     */
+    protected function block($name, $method = null) {
+        return $this->beginBlock($name, $method);
     }
 }
