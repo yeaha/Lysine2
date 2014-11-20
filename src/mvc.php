@@ -245,16 +245,19 @@ class View {
     }
 
     public function render($view, array $vars = array()) {
-        if ($vars)
+        if ($vars) {
             $this->vars = array_merge($this->vars, $vars);
+        }
 
         $output = $this->includes($view, array(), true);
 
-        while ($this->block_stack)
+        while ($this->block_stack) {
             $this->endBlock();
+        }
 
-        if (!$extend = $this->extend)
+        if (!$extend = $this->extend) {
             return $output;
+        }
 
         $this->extend = null;
         return $this->render($extend);
@@ -262,7 +265,7 @@ class View {
 
     //////////////////// protected method ////////////////////
 
-    protected function includes($view, array $vars = array()) {
+    protected function includes($view, array $vars = array(), $return_content = false) {
         $view_file = $this->dir.$view.'.php';
 
         if (!$file = realpath($view_file)) {
@@ -292,7 +295,13 @@ class View {
             throw $ex;
         }
 
-        echo ob_get_clean();
+        $output = ob_get_clean();
+
+        if ($return_content) {
+            return $output;
+        }
+
+        echo $output;
     }
 
     protected function includeOnce($view) {
