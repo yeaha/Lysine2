@@ -1,13 +1,31 @@
 <?php
 namespace Lysine\DataMapper {
+    /**
+     * 数据类型管理
+     */
     class Types {
         use \Lysine\Traits\Singleton;
 
-        // type实例
+        /**
+         * 数据类型helper实例缓存
+         *
+         * @var array
+         */
         protected $types = array();
 
+        /**
+         * 数据类型对应类名数组
+         *
+         * @var array
+         */
         protected $type_classes = array();
 
+        /**
+         * 根据数据类型名字获得对应的数据类型helper
+         *
+         * @param string $type
+         * @return object 数据类型helper实例
+         */
         public function get($type) {
             $type = strtolower($type);
 
@@ -27,6 +45,13 @@ namespace Lysine\DataMapper {
             return $this->types[$type] = new $class;
         }
 
+        /**
+         * 注册一个新的数据类型helper
+         *
+         * @param string $type 数据类型名字
+         * @param string $class helper类名
+         * @return $this
+         */
         public function register($type, $class) {
             $type = strtolower($type);
             $this->type_classes[$type] = $class;
@@ -34,21 +59,56 @@ namespace Lysine\DataMapper {
             return $this;
         }
 
+        /**
+         * 工厂方法
+         *
+         * @param string $name
+         * @return object
+         */
         static public function factory($name) {
             return static::getInstance()->get($name);
         }
 
+        /**
+         * 格式化并补全属性定义数组
+         *
+         * @param array $attribute
+         * @return array
+         */
         static public function normalizeAttribute(array $attribute) {
             $defaults = array(
+                // 是否允许为空
                 'allow_null' => false,
+
+                // 是否自动生成属性值，例如mysql里面的auto increase
                 'auto_generate' => false,
+
+                // 默认值
                 'default' => null,
+
+                // 标记为“废弃”属性
                 'deprecated' => false,
+
+                // 正则表达式检查
                 'pattern' => null,
+
+                // 是否主键
                 'primary_key' => false,
+
+                // 安全特性
+                // 标记为protected的属性会在输出时被自动忽略
+                // 避免不小心把敏感数据泄漏到客户端
                 'protected' => false,
+
+                // 保存之后不允许修改
                 'refuse_update' => false,
+
+                // 安全特性
+                // 标记为strict的属性只能在严格开关被打开的情况下才能够赋值
+                // 避免不小心被误修改到
                 'strict' => null,
+
+                // 数据类型
                 'type' => null,
             );
 
@@ -90,19 +150,50 @@ namespace Lysine\DataMapper {
 }
 
 namespace Lysine\DataMapper\Types {
+    /**
+     * 默认数据类型
+     */
     class Mixed {
+        /**
+         * 格式化属性定义
+         *
+         * @param array $attribute
+         * @return array
+         */
         public function normalizeAttribute(array $attribute) {
             return $attribute;
         }
 
+        /**
+         * 格式化属性值
+         *
+         * @see \Lysine\DataMapper\Data::set()
+         * @param mixed $value
+         * @param array $attribute
+         * @return mixed
+         */
         public function normalize($value, array $attribute) {
             return $value;
         }
 
+        /**
+         * 把值转换为存储格式
+         *
+         * @param mixed $value
+         * @param array $attribute
+         * @return mixed
+         */
         public function store($value, array $attribute) {
             return $value;
         }
 
+        /**
+         * 把存储格式的值转换为属性值
+         *
+         * @param mixed $value
+         * @param array $attribute
+         * @return mixed
+         */
         public function restore($value, array $attribute) {
             if ($value === null) {
                 return null;
@@ -111,33 +202,58 @@ namespace Lysine\DataMapper\Types {
             return $this->normalize($value, $attribute);
         }
 
+        /**
+         * 获取默认值
+         *
+         * @param array $attribute
+         * @return mixed
+         */
         public function getDefaultValue(array $attribute) {
             return $attribute['default'];
         }
 
+        /**
+         * 转换为对json_encode友好的格式
+         *
+         * @param mixed $value
+         * @param array $attribute
+         * @return mixed
+         */
         public function toJSON($value, array $attribute) {
             return $value;
         }
     }
 
+    /**
+     * 数字类型
+     */
     class Numeric extends Mixed {
         public function normalize($value, array $attribute) {
             return $value * 1;
         }
     }
 
+    /**
+     * 整数类型
+     */
     class Integer extends Numeric {
         public function normalize($value, array $attribute) {
             return (int)$value;
         }
     }
 
+    /**
+     * 字符串类型
+     */
     class String extends Mixed {
         public function normalize($value, array $attribute) {
             return (string)$value;
         }
     }
 
+    /**
+     * JSON类型
+     */
     class Json extends Mixed {
         public function normalizeAttribute(array $attribute) {
             return array_merge(array(
@@ -184,6 +300,9 @@ namespace Lysine\DataMapper\Types {
         }
     }
 
+    /**
+     * 时间类型
+     */
     class Datetime extends Mixed {
         public function normalize($value, array $attribute) {
             if ($value instanceof \DateTime) {
@@ -217,6 +336,9 @@ namespace Lysine\DataMapper\Types {
         }
     }
 
+    /**
+     * UUID字符串类型
+     */
     class UUID extends Mixed {
         public function normalizeAttribute(array $attribute) {
             $attribute = array_merge(array(
@@ -255,6 +377,9 @@ namespace Lysine\DataMapper\Types {
         }
     }
 
+    /**
+     * PostgreSQL数组类型
+     */
     class PgsqlArray extends Mixed {
         public function normalizeAttribute(array $attribute) {
             return array_merge(array(
@@ -295,6 +420,9 @@ namespace Lysine\DataMapper\Types {
         }
     }
 
+    /**
+     * PostgreSQL hstore类型
+     */
     class PgsqlHstore extends Mixed {
         public function normalizeAttribute(array $attribute) {
             return array_merge(array(
