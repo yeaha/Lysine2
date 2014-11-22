@@ -4,13 +4,13 @@ require __DIR__.'/../src/loader.php';
 \Lysine\Service\Manager::getInstance()->importConfig(array(
     'master' => array(
         'class' => '\Lysine\Service\DB\Mysql',
-        'dsn' => 'pgsql:host=192.168.1.2;dbname=foo',
+        'dsn' => 'mysql:host=192.168.1.2;dbname=foo',
         'user' => 'dev',
         'password' => 'abc',
     ),
     'slave' => array(
         'class' => '\Lysine\Service\DB\Mysql',
-        'dsn' => 'pgsql:host=192.168.1.3;dbname=foo',
+        'dsn' => 'mysql:host=192.168.1.3;dbname=foo',
         'user' => 'dev',
         'password' => 'abc',
     ),
