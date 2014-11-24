@@ -15,7 +15,7 @@ class AMQP implements \Lysine\Service\IService {
     protected $channel;
     protected $config;
 
-    public function __construct(array $config) {
+    public function __construct(array $config=array()) {
         $this->config = self::prepareConfig($config);
     }
 
