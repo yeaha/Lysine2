@@ -1,8 +1,6 @@
 <?php
 namespace Lysine\Traits;
 
-use Lysine\RuntimeError;
-
 // 事件方法
 trait Event {
     public function onEvent($event, $callback) {
@@ -29,7 +27,7 @@ trait Singleton {
     protected function __construct() {}
 
     public function __clone() {
-        throw new RuntimeError('Cloning '. __CLASS__ .' is not allowed');
+        throw new \RuntimeException('Cloning '. __CLASS__ .' is not allowed');
     }
 
     static public function getInstance() {
@@ -42,37 +40,38 @@ trait Context {
     protected $context_handler;
 
     public function setContext($key, $val) {
-        return $this->getContextHandler()->set($key, $val);
+        return $this->getContextHandler(true)->set($key, $val);
     }
 
     public function getContext($key = null) {
-        return $this->getContextHandler()->get($key);
+        return $this->getContextHandler(true)->get($key);
     }
 
     public function hasContext($key) {
-        return $this->getContextHandler()->has($key);
+        return $this->getContextHandler(true)->has($key);
     }
 
     public function removeContext($key) {
-        return $this->getContextHandler()->remove($key);
+        return $this->getContextHandler(true)->remove($key);
     }
 
     public function clearContext() {
-        return $this->getContextHandler()->clear();
+        return $this->getContextHandler(true)->clear();
     }
 
     public function saveContext() {
-        return $this->getContextHandler()->save();
+        return $this->getContextHandler(true)->save();
     }
 
-    protected function setContextHandler(\Lysine\ContextHandler $handler) {
+    public function setContextHandler(\Lysine\ContextHandler $handler) {
         $this->context_handler = $handler;
     }
 
-    protected function getContextHandler() {
-        if (!$this->context_handler)
-            throw new RuntimeError('Please set context handler before use');
+    public function getContextHandler($throw_exception = false) {
+        if (!$this->context_handler && $throw_exception) {
+            throw new \RuntimeException('Please set context handler before use');
+        }
 
-        return $this->context_handler;
+        return $this->context_handler ?: false;
     }
 }

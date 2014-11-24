@@ -8,7 +8,7 @@ use \AMQPExchange;
 use \AMQPQueue;
 
 if (!extension_loaded('amqp'))
-    throw new \Lysine\Service\RuntimeError('Require amqp extension');
+    throw new \RuntimeException('Require amqp extension');
 
 class AMQP implements \Lysine\Service\IService {
     protected $connection;
@@ -45,7 +45,7 @@ class AMQP implements \Lysine\Service\IService {
         $connection = $this->connection();
 
         if (!$connection->isConnected() && !$connection->connect())
-            throw new \Lysine\Service\ConnectionError('Cannot connect to the broker');
+            throw new \Lysine\Service\ConnectionException('Cannot connect to the broker');
 
         if ($new || !$this->channel)
             $this->channel = new AMQPChannel($connection);

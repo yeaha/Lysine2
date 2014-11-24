@@ -35,7 +35,7 @@ class Application {
     public function execute($uri = null, $method = null) {
         $method = $method ?: req()->method();
         if (!in_array($method, self::$support_methods))
-            throw HTTP\Error::factory(HTTP::NOT_IMPLEMENTED);
+            throw HTTP\Exception::factory(HTTP::NOT_IMPLEMENTED);
 
         $uri = $uri ?: req()->requestUri();
 
@@ -110,7 +110,7 @@ class Router {
         if ($method == 'HEAD') $method = 'GET';
 
         if (!is_callable(array($controller, $method)))
-            throw HTTP\Error::factory(HTTP::METHOD_NOT_ALLOWED);
+            throw HTTP\Exception::factory(HTTP::METHOD_NOT_ALLOWED);
 
         $response = $params
                   ? call_user_func_array(array($controller, $method), $params)
@@ -152,7 +152,7 @@ class Router {
             return $result;
         } while (false);
 
-        $exception = HTTP\Error::factory(HTTP::NOT_FOUND);
+        $exception = HTTP\Exception::factory(HTTP::NOT_FOUND);
         $exception->setMore($exception_more);
         throw $exception;
     }
@@ -211,11 +211,11 @@ class View {
     protected $block_stack = array();
     protected $block_content = array();
 
-    protected $include_views = array();
+    protected $included_views = array();
 
     public function __construct($view_dir) {
         if (!$dir = realpath($view_dir))
-            throw new \Lysine\RuntimeError('View directory '.$view_dir.' not exist!');
+            throw new \RuntimeException('View directory '.$view_dir.' not exist!');
 
         $this->dir = $dir.DIRECTORY_SEPARATOR;
     }
@@ -239,22 +239,25 @@ class View {
         $this->vars = array();
         $this->block_stack = array();
         $this->block_content = array();
-        $this->include_views = array();
+        $this->included_views = array();
 
         return $this;
     }
 
     public function render($view, array $vars = array()) {
-        if ($vars)
+        if ($vars) {
             $this->vars = array_merge($this->vars, $vars);
+        }
 
         $output = $this->includes($view, array(), true);
 
-        while ($this->block_stack)
+        while ($this->block_stack) {
             $this->endBlock();
+        }
 
-        if (!$extend = $this->extend)
+        if (!$extend = $this->extend) {
             return $output;
+        }
 
         $this->extend = null;
         return $this->render($extend);
@@ -265,13 +268,15 @@ class View {
     protected function includes($view, array $vars = array(), $return_content = false) {
         $view_file = $this->dir.$view.'.php';
 
-        if (!$file = realpath($view_file))
-            throw new \Lysine\RuntimeError('View file '.$view_file.' not exist!');
+        if (!$file = realpath($view_file)) {
+            throw new \RuntimeException('View file '.$view_file.' not exist!');
+        }
 
-        if (strpos($file, $this->dir) !== 0)
-            throw new \Lysine\RuntimeError('Invalid view file '. $file);
+        if (strpos($file, $this->dir) !== 0) {
+            throw new \RuntimeException('Invalid view file '. $file);
+        }
 
-        $this->include_views[$view] = 1;
+        $this->included_views[$view] = true;
 
         $vars = $vars ? array_merge($this->vars, $vars) : $this->vars;
 
@@ -283,33 +288,37 @@ class View {
             require $file;
         } catch (\Exception $ex) {
             // 外面可能已经调用过ob_start()，所以这里不能全部删除干净
-            while (ob_get_level() > $ob_level)
+            while (ob_get_level() > $ob_level) {
                 ob_end_clean();
+            }
 
             throw $ex;
         }
 
         $output = ob_get_clean();
 
-        if ($return_content)
+        if ($return_content) {
             return $output;
+        }
 
         echo $output;
     }
 
     protected function includeOnce($view) {
-        if (!isset($this->include_views[$view]))
+        if (!isset($this->included_views[$view])) {
             $this->includes($view);
+        }
     }
 
-    protected function block($name, $method = null) {
+    protected function beginBlock($name, $method = null) {
         $this->block_stack[] = array($name, $method ?: self::BLOCK_REPLACE);
         ob_start();
     }
 
     protected function endBlock() {
-        if (!$this->block_stack)
-            return false;
+        if (!$this->block_stack) {
+            return;
+        }
 
         list($block_name, $block_method) = array_pop($this->block_stack);
         $output = ob_get_clean();
@@ -333,14 +342,48 @@ class View {
     }
 
     protected function showBlock($name) {
-        if (!isset($this->block_content[$name]))
-            return false;
+        if (isset($this->block_content[$name])) {
+            echo $this->block_content[$name];
+            unset($this->block_content[$name]);
+        }
+    }
 
-        echo $this->block_content[$name];
-        unset($this->block_content[$name]);
+    protected function getBlock($name) {
+        return isset($this->block_content[$name])
+             ? $this->block_content[$name]
+             : '';
     }
 
     protected function extend($view) {
         $this->extend = $view;
+    }
+
+    protected function showElement($tag, array $properties) {
+        echo $this->element($tag, $attributes);
+    }
+
+    protected function element($tag, array $properties) {
+        $self_close = array(
+            'input' => true,
+            'link' => true,
+            'meta' => true,
+        );
+
+        $props = array();
+        foreach ($properties as $key => $value) {
+            $props[] = $key.'="'.$value.'"';
+        }
+        $props = $props ? ' '.implode(' ', $props) : '';
+
+        return isset($self_close[$tag])
+             ? sprintf('<%s%s/>', $tag, $props)
+             : sprintf('<%s%s></%s>', $tag, $props, $tag);
+    }
+
+    /**
+     * @deprecated
+     */
+    protected function block($name, $method = null) {
+        return $this->beginBlock($name, $method);
     }
 }

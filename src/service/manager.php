@@ -96,7 +96,7 @@ class Manager {
                   : call_user_func_array($callback, $args);
 
             if (!$name)
-                throw new \Lysine\Service\RuntimeError('Service dispatcher ['.$dispatcher_name.'] MUST return a service name');
+                throw new \RuntimeException('Service dispatcher ['.$dispatcher_name.'] MUST return a service name');
 
             if ($name instanceof IService)
                 return $name;
@@ -138,7 +138,7 @@ class Manager {
      */
     protected function getConfig($name) {
         if (!isset($this->config[$name]))
-            throw new \Lysine\Service\RuntimeError('Undefined Service: '. $name);
+            throw new \UnexpectedValueException('Undefined Service: '. $name);
 
         $config = $this->config[$name];
         if (!isset($config['__IMPORT__']))

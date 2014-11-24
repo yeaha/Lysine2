@@ -57,7 +57,7 @@ class Logging {
         foreach (explode("\n", $exception->getTraceAsString()) as $trace)
             $messages[] = $trace;
 
-        if ($exception instanceof \Lysine\Error && ($more = $exception->getMore()))
+        if ($exception instanceof \Lysine\Exception && ($more = $exception->getMore()))
             $message[] = 'More: '. serialize($more);
 
         foreach ($messages as $message)
@@ -135,7 +135,7 @@ class FileHandler implements Handler {
             $this->buffer_max_size = $options['buffer_max_size'];
 
         if (!isset($options['file_name']))
-            throw new \Lysine\RuntimeError('Need log file name');
+            throw new \RuntimeException('Need log file name');
 
         $this->file_name = strftime($options['file_name'], time());
     }
@@ -190,7 +190,7 @@ class FirePHPHandler implements Handler {
 
     public function __construct() {
         if (!class_exists('FirePHP'))
-            throw new \Lysine\RuntimeError('Require FirePHP library');
+            throw new \RuntimeException('Require FirePHP library');
         $this->handler = \FirePHP::getInstance(true);
     }
 
@@ -220,7 +220,7 @@ class FireLoggerHandler implements Handler {
 
     public function __construct() {
         if (!class_exists('FireLogger'))
-            throw new \Lysine\RuntimeError('Require FireLogger library');
+            throw new \RuntimeException('Require FireLogger library');
 
         defined('FIRELOGGER_NO_CONFLICT') or define('FIRELOGGER_NO_CONFLICT', true);
         defined('FIRELOGGER_NO_DEFAULT_LOGGER') or define('FIRELOGGER_NO_DEFAULT_LOGGER', true);
@@ -255,7 +255,7 @@ class FireLoggerHandler implements Handler {
 class ChromePHPHandler implements Handler {
     public function __construct() {
         if (!class_exists('ChromePHP'))
-            throw new \Lysine\RuntimeError('Require ChromePHP library');
+            throw new \RuntimeException('Require ChromePHP library');
     }
 
     public function emit(array $record) {

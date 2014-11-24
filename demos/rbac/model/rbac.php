@@ -29,7 +29,7 @@ class Rbac {
             } while ($pos !== false);
 
             $this->execute($rules['__default__']);
-        } catch (HTTP\Error $ex) {
+        } catch (HTTP\Exception $ex) {
             $ex->class = $class;
             $ex->path = $path;
 
@@ -39,8 +39,8 @@ class Rbac {
 
     protected function halt() {
         throw User::current()->hasRole(ROLE_ANONYMOUS)  // login?
-            ? HTTP\Error::factory(401)                  // 401
-            : HTTP\Error::factory(403);                 // 403
+            ? HTTP\Exception::factory(401)                  // 401
+            : HTTP\Exception::factory(403);                 // 403
     }
 
     protected function execute($rule) {

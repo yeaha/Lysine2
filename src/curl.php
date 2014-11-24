@@ -7,7 +7,7 @@ class Curl {
 
     public function __construct() {
         if (!extension_loaded('curl'))
-            throw new \Lysine\RuntimeError('Require curl extension');
+            throw new \RuntimeException('Require curl extension');
     }
 
     public function __destruct() {
@@ -42,7 +42,7 @@ class Curl {
 
         $result = curl_exec($handler);
         if ($result === false)
-            throw new \Lysine\RuntimeError('Curl Error: '. curl_error($handler), curl_errno($handler));
+            throw new \RuntimeException('Curl Error: '. curl_error($handler), curl_errno($handler));
 
         $this->handler = $handler;
 

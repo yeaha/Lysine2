@@ -25,7 +25,7 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
 
         try {
             return $router->dispatch($uri);
-        } catch (\Lysine\HTTP\Error $error) {
+        } catch (\Lysine\HTTP\Exception $error) {
             if (!$controller = $error->getMore('controller'))
                 throw $error;
 
@@ -65,7 +65,7 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
     }
 
     /**
-     * @expectedException \Lysine\HTTP\Error
+     * @expectedException \Lysine\HTTP\Exception
      * @expectedExceptionCode 404
      */
     public function testBaseUriException() {
@@ -111,7 +111,7 @@ class RouterTest extends \PHPUnit_Framework_TestCase {
     }
 
     /**
-     * @expectedException \Lysine\HTTP\Error
+     * @expectedException \Lysine\HTTP\Exception
      * @expectedExceptionCode 405
      */
     public function testMethodNotAllowedException() {

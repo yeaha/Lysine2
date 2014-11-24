@@ -4,7 +4,7 @@ namespace Lysine\Service\DB\Adapter;
 use Lysine\Service\DB\Expr;
 
 if (!extension_loaded('pdo_mysql'))
-    throw new \Lysine\Service\RuntimeError('Require pdo_mysql extension!');
+    throw new \RuntimeException('Require pdo_mysql extension!');
 
 class Mysql extends \Lysine\Service\DB\Adapter {
     public function quoteTable($table) {

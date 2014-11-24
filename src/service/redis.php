@@ -2,7 +2,7 @@
 namespace Lysine\Service;
 
 if (!extension_loaded('redis'))
-    throw new \Lysine\Service\RuntimeError('Require redis extension!');
+    throw new \RuntimeException('Require redis extension!');
 
 class Redis implements \Lysine\Service\IService {
     protected $config = array(
@@ -63,13 +63,13 @@ class Redis implements \Lysine\Service\IService {
         }
 
         if (!$conn)
-            throw new \Lysine\Service\ConnectionError('Cannot connect redis');
+            throw new \Lysine\Service\ConnectionException('Cannot connect redis');
 
         if ($config['password'] && !$handler->auth($config['password']))
-            throw new \Lysine\Service\ConnectionError('Invalid redis password');
+            throw new \Lysine\Service\ConnectionException('Invalid redis password');
 
         if ($config['database'] && !$handler->select($config['database']))
-            throw new \Lysine\Service\ConnectionError('Select redis database['.$config['database'].'] failed');
+            throw new \Lysine\Service\ConnectionException('Select redis database['.$config['database'].'] failed');
 
         if (isset($config['prefix']))
             $handler->setOption(\Redis::OPT_PREFIX, $config['prefix']);

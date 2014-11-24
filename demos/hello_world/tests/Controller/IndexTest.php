@@ -13,7 +13,7 @@ class IndexTest extends \Test\Controller {
 
     /**
      * @group controller
-     * @expectedException \Lysine\HTTP\Error
+     * @expectedException \Lysine\HTTP\Exception
      * @expectedExceptionCode 405
      */
     public function testPost() {

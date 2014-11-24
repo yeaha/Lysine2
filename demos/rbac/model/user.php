@@ -4,12 +4,14 @@ namespace Model;
 class User extends \Lysine\DataMapper\DBData {
     static protected $current;
     static protected $remember_ttl = 604800; // 3600 * 24 * 7
-    static protected $storage = 'db';
+    // 去掉注释就可以使用redis缓存user数据
+    //static protected $mapper = '\Model\UserMapper';
+    static protected $service = 'db';
     static protected $collection = 'rbac.users';
-    static protected $props_meta = array(
-        'user_id' => array('type' => 'integer', 'primary_key' => true, 'auto_increase' => true),
+    static protected $attributes = array(
+        'user_id' => array('type' => 'integer', 'primary_key' => true, 'auto_generate' => true),
         'email' => array('type' => 'string', 'refuse_update' => true, 'pattern' => '/^([a-z0-9_\-\.])+\@([a-z0-9_\-\.])+\.([a-z]{2,4})$/i'),
-        'passwd' => array('type' => 'string', 'strict' => true),
+        'passwd' => array('type' => 'string', 'protected' => true),
         'create_time' => array('type' => 'datetime', 'refuse_update' => true, 'default' => 'now'),
     );
 
@@ -53,16 +55,17 @@ class User extends \Lysine\DataMapper\DBData {
         return md5($passwd .'@'. $this->create_time->format('Y-m-d H:i:s'));
     }
 
-    protected function formatProp($val, array $prop_meta) {
-        $val = parent::formatProp($val, $prop_meta);
+    protected function normalize($key, $value, array $attribute = null) {
+        $value = parent::normalize($key, $value, $attribute);
 
-        if ($prop_meta['name'] == 'passwd') {
-            $val = $this->encodePasswd($val);
-        } elseif ($prop_meta['name'] == 'email') {
-            $val = strtolower($val);
+        if ($key == 'passwd') {
+            $value = $this->encodePasswd($value);
+        } elseif ($key == 'email') {
+            $value = strtolower($email);
         }
 
-        return $val;
+        return $value;
+
     }
 
     //////////////////// static methods ////////////////////
@@ -149,11 +152,6 @@ class User extends \Lysine\DataMapper\DBData {
 
         return $handler;
     }
-
-    // 去掉注释就可以使用redis缓存user数据
-    //static public function getMapper() {
-    //    return UserMapper::factory(get_called_class());
-    //}
 }
 
 class UserMapper extends \Lysine\DataMapper\CacheDBMapper {

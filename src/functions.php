@@ -221,7 +221,7 @@ namespace Lysine {
 
         $loaded = extension_loaded('bcmath');
         if ($use_bcmath && !$loaded)
-            throw new \Lysine\RuntimeError('Require bcmath extension!');
+            throw new \RuntimeException('Require bcmath extension!');
 
         $use_bcmath = $loaded;
 
