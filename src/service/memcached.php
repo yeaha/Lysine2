@@ -8,7 +8,7 @@ class Memcached implements \Lysine\Service\IService {
     protected $handler;
     protected $config;
 
-    public function __construct(array $config) {
+    public function __construct(array $config=array()) {
         $this->config = $config;
     }
 
