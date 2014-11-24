@@ -12,6 +12,9 @@ abstract class Adapter implements \Lysine\Service\IService {
     abstract public function quoteColumn($column);
     abstract public function lastId($table = null, $column = null);
 
+    /**
+     * @param array [$config]
+     */
     public function __construct(array $config = array()) {
         $this->config = static::prepareConfig($config);
     }
@@ -25,16 +28,32 @@ abstract class Adapter implements \Lysine\Service\IService {
         return array('config');
     }
 
+    /**
+     * @magic
+     * @param string $method
+     * @param array $args
+     * @return mixed
+     */
     public function __call($method, array $args) {
         return $args
              ? call_user_func_array(array($this->connect(), $method), $args)
              : $this->connect()->$method();
     }
 
+    /**
+     * 检查是否连接到了数据库
+     * @return boolean
+     */
     public function isConnected() {
         return $this->handler instanceof \PDO;
     }
 
+    /**
+     * 创建数据库连接，如果已经创建就直接返回创建好的连接
+     *
+     * @return \PDO
+     * @throws \Lysine\Service\ConnectionError 数据库连接失败
+     */
     public function connect() {
         if ($this->isConnected())
             return $this->handler;
@@ -54,6 +73,11 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $this->handler = $handler;
     }
 
+    /**
+     * 断开数据库连接
+     *
+     * @return $this
+     */
     public function disconnect() {
         if ($this->isConnected()) {
             $max = 9;   // 最多9次，避免死循环
@@ -66,6 +90,11 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $this;
     }
 
+    /**
+     * 开始事务
+     *
+     * @return boolean
+     */
     public function begin() {
         if ($result = $this->connect()->beginTransaction())
             $this->transaction_counter++;
@@ -73,6 +102,11 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $result;
     }
 
+    /**
+     * 提交事务
+     *
+     * @return boolean
+     */
     public function commit() {
         if (!$this->transaction_counter)
             return false;
@@ -83,6 +117,11 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $result;
     }
 
+    /**
+     * 回滚事务
+     *
+     * @return boolean
+     */
     public function rollback() {
         if (!$this->transaction_counter)
             return false;
@@ -93,10 +132,27 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $result;
     }
 
+    /**
+     * 是否处于事务中
+     *
+     * @return boolean
+     */
     public function inTransaction() {
         return (bool)$this->transaction_counter;
     }
 
+    /**
+     * 执行sql语句
+     *
+     * @param string $sql
+     * @param mixed... [$params]
+     * @return \Lysine\Service\DB\Statement
+     *
+     * @example
+     * $db->execute('select * from foobar');
+     * $db->execute('select * from foobar where foo = ? and bar = ?', $foo, $bar);
+     * $db->execute('select * from foobar where foo = ? and bar = ?', array($foo, $bar));
+     */
     public function execute($sql, $params = null) {
         $params = $params === null
                 ? array()
@@ -123,6 +179,12 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $sth;
     }
 
+    /**
+     * 对数据的异常字符串进行“引用”处理
+     *
+     * @param mixed $val
+     * @return mixed
+     */
     public function quote($val) {
         if (is_array($val)) {
             foreach ($val as $k => $v)
@@ -142,10 +204,23 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $this->connect()->quote($val);
     }
 
+    /**
+     * 返回指定数据表的查询对象
+     *
+     * @param string|Expr $table
+     * @param \Lysine\Service\DB\Select
+     */
     public function select($table) {
         return new \Lysine\Service\DB\Select($this, $table);
     }
 
+    /**
+     * 插入一条数据到表
+     *
+     * @param string $table
+     * @param array $row
+     * @return integer      affected row count
+     */
     public function insert($table, array $row) {
         $params = array();
         foreach ($row as $val) {
@@ -157,6 +232,20 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $this->execute($sth, $params)->rowCount();
     }
 
+    /**
+     * 更新表内的数据，可以指定条件
+     *
+     * @param string $table
+     * @param array $row
+     * @param string [$where]
+     * @param mixed [$params]
+     * @return integer          affected row count
+     *
+     * @example
+     * $db->update('foobar', array('foo' => 1));
+     * $db->update('foobar', array('foo' => 1), 'bar = ? and baz = ?', 2, 3);
+     * $db->update('foobar', array('foo' => 1), 'bar = ? and baz = ?', array(2, 3));
+     */
     public function update($table, array $row, $where = null, $params = null) {
         $where_params = ($where === null || $params === null)
                       ? array()
@@ -173,6 +262,19 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $this->execute($sth, $params)->rowCount();
     }
 
+    /**
+     * 删除表内的数据，允许指定条件
+     *
+     * @param string $table
+     * @param string [$where]
+     * @param mixed [$params]
+     * @return integer          affected row count
+     *
+     * @example
+     * $db->delete('foobar');
+     * $db->delete('foobar', 'foo = ? and bar = ?', 1, 2);
+     * $db->delete('foobar', 'foo = ? and bar = ?', array(1, 2));
+     */
     public function delete($table, $where = null, $params = null) {
         $params = ($where === null || $params === null)
                 ? array()
@@ -182,6 +284,26 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $this->execute($sth, $params)->rowCount();
     }
 
+    /**
+     * 返回一条insert语句的prepare结果
+     *
+     * @param string $table
+     * @param array $cols   字段
+     * @return \Lysine\Service\DB\Statement
+     *
+     * @example
+     * $sth = $db->prepareInsert('foobar', array('foo', 'bar'));
+     * // or
+     * $sth = $db->prepareInsert('foobar', array('foo' => 1, 'bar' => 2));
+     *
+     * // insert foobar (foo, bar) values (1, 2)
+     *
+     * $db->execute($sth, 1, 2);
+     * // or
+     * $db->execute($sth, array(1, 2));
+     * // or
+     * $sth->execute(array(1, 2));
+     */
     public function prepareInsert($table, array $cols) {
         $vals = array_values($cols);
 
@@ -205,6 +327,23 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $this->prepare($sql);
     }
 
+    /**
+     * 返回一条update语句的prepare结果
+     *
+     * @param string $table
+     * @param array $cols
+     * @param string [$where]
+     * @return \Lysine\Service\DB\Statement
+     *
+     * @example
+     * $sth = $db->prepareUpdate('foobar', array('foo', 'bar'), 'foo = ?');
+     *
+     * // update foobar set foo = 1, bar = 2 where foo = 3
+     *
+     * $db->execute($sth, array(1, 2, 3));
+     * // or
+     * $sth->execute(array(1, 2, 3));
+     */
     public function prepareUpdate($table, array $cols, $where = null) {
         $only_col = (array_values($cols) === $cols);
 
@@ -224,6 +363,22 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $this->prepare($sql);
     }
 
+    /**
+     * 返回一条delete语句的prepare结果
+     *
+     * @param string $table
+     * @param string [$where]
+     * @return \Lysine\Service\DB\Statement
+     *
+     * @example
+     * $sth = $db->prepareDelete('foobar', 'foo = ?');
+     *
+     * // delete foobar where foo = 1
+     *
+     * $db->execute($sth, 1);
+     * // or
+     * $sth->execute(array(1));
+     */
     public function prepareDelete($table, $where = null) {
         $table = $this->quoteTable($table);
 
@@ -234,6 +389,13 @@ abstract class Adapter implements \Lysine\Service\IService {
         return $this->prepare($sql);
     }
 
+    /**
+     * 格式化配置信息
+     *
+     * @param array $config
+     * @return array
+     * @throws \InvalidArgumentException "dsn"配置不存在时
+     */
     static protected function prepareConfig(array $config) {
         if (!isset($config['dsn']))
             throw new \InvalidArgumentException('Invalid database config, need "dsn" key');
@@ -247,6 +409,12 @@ abstract class Adapter implements \Lysine\Service\IService {
     }
 }
 
+/**
+ * sql表达式封装
+ * 被包装为Expr的表达式字符串内容不会被当作异常字符处理
+ * 不正确的使用方法可能导致sql注入漏洞等
+ * 比如，直接把客户端提交的数据不经过任何处理就包装为Expr
+ */
 class Expr {
     private $expr;
 
@@ -259,23 +427,56 @@ class Expr {
     }
 }
 
+/**
+ * sql语句执行结果
+ *
+ * @see \PDOStatement
+ */
 class Statement extends \PDOStatement {
+    /**
+     * 返回用于执行的sql语句
+     *
+     * @return string
+     */
     public function __toString() {
         return $this->queryString;
     }
 
+    /**
+     * 从查询结果提取下一行
+     *
+     * @return array
+     */
     public function getRow() {
         return $this->fetch();
     }
 
+    /**
+     * 从下一行行中获取指定列的数据
+     *
+     * @param integer $col_number   列序号
+     * @return mixed
+     */
     public function getCol($col_number = 0) {
         return $this->fetch(\PDO::FETCH_COLUMN, $col_number);
     }
 
+    /**
+     * 获取查询结果内指定列的所有结果
+     *
+     * @param integer $col_number   列序号
+     * @return array
+     */
     public function getCols($col_number = 0) {
         return $this->fetchAll(\PDO::FETCH_COLUMN, $col_number);
     }
 
+    /**
+     * 返回所有的查询结果，允许以指定的字段内容为返回数组的key
+     *
+     * @param string $col
+     * @return array
+     */
     public function getAll($col = null) {
         if (!$col) return $this->fetchAll();
 
@@ -286,17 +487,72 @@ class Statement extends \PDOStatement {
     }
 }
 
+/**
+ * 数据库查询对象
+ * 这个类主要是做字符串处理
+ */
 class Select {
+    /**
+     * 数据库连接
+     * @var $adapter
+     */
     protected $adapter;
+
+    /**
+     * 被查询的表或关系
+     * @var $table
+     */
     protected $table;
+
+    /**
+     * 查询条件表达式
+     * @var $where
+     */
     protected $where = array();
+
+    /**
+     * 查询结果字段
+     * @var array
+     */
     protected $cols = array();
+
+    /**
+     * group by 语句
+     * @var array
+     */
     protected $group_by;
+
+    /**
+     * order by 语句
+     * @var array
+     */
     protected $order_by;
+
+    /**
+     * limit 语句参数
+     * @var integer
+     */
     protected $limit = 0;
+
+    /**
+     * offset 语句参数
+     * @var integer
+     */
     protected $offset = 0;
+
+    /**
+     * 预处理函数
+     * 每条返回的结果都会被预处理函数处理一次
+     *
+     * @see Select::get()
+     * @var Callable
+     */
     protected $processor;
 
+    /**
+     * @param \Lysine\Service\DB\Adapter $adapter
+     * @param string|Expr|Select $table
+     */
     public function __construct(Adapter $adapter, $table) {
         $this->adapter = $adapter;
         $this->table = $table;
@@ -306,20 +562,54 @@ class Select {
         $this->adapter = null;
     }
 
+    /**
+     * 返回select语句
+     *
+     * @return string
+     */
     public function __toString() {
         list($sql,) = $this->compile();
         return $sql;
     }
 
+    /**
+     * 获取数据库连接
+     *
+     * @return \Lysine\Service\DB\Adapter
+     */
     public function getAdapter() {
         return $this->adapter;
     }
 
+    /**
+     * 设置查询的字段
+     *
+     * @param string|array $cols
+     * @return $this
+     *
+     * @example
+     * $select->setCols('foo', 'bar');
+     * $select->setCols(array('foo', 'bar'));
+     * $select->setCols('foo', 'bar', new DB\Expr('foo + bar'));
+     */
     public function setCols($cols) {
         $this->cols = is_array($cols) ? $cols : func_get_args();
         return $this;
     }
 
+    /**
+     * 设置查询条件
+     * 通过where()方法设置的多条条件之间的关系都是AND
+     * OR关系必须写到同一个where条件内
+     *
+     * @param string $where
+     * @param mixed... [$params]
+     * @return $this
+     *
+     * @example
+     * $select->where('foo = ?', 1)->where('bar = ?', 2);
+     * $select->where('foo = ? or bar = ?', 1, 2);
+     */
     public function where($where, $params = null) {
         $params = $params === null
                 ? array()
@@ -329,14 +619,50 @@ class Select {
         return $this;
     }
 
+    /**
+     * in 子查询
+     *
+     * @param string $col
+     * @param array|Select $relation
+     * @return $this
+     *
+     * @example
+     * // select * from foobar where foo in (1, 2, 3)
+     * $select->whereIn('foo', array(1, 2, 3));
+     *
+     * // select * from foo where id in (select foo_id from bar where bar > 1)
+     * $foo_select = $db->select('foo');
+     * $bar_select = $db->select('bar');
+     *
+     * $foo_select->whereIn('id', $bar_select->setCols('foo_id')->where('bar > 1'));
+     */
     public function whereIn($col, $relation) {
         return $this->whereSub($col, $relation, true);
     }
 
+    /**
+     * not in 子查询
+     *
+     * @param string $col
+     * @param array|Select $relation
+     * @return $this
+     */
     public function whereNotIn($col, $relation) {
         return $this->whereSub($col, $relation, false);
     }
 
+    /**
+     * group by 条件
+     *
+     * @param array $cols
+     * @param string [$having]
+     * @param mixed... [$having_params]
+     * @return $this
+     *
+     * @example
+     * // select foo, count(1) from foobar group by foo having count(1) > 2
+     * $select->setCols('foo', new Expr('count(1) as count'))->group('foo', 'count(1) > ?', 2);
+     */
     public function group($cols, $having = null, $having_params = null) {
         $having_params = ($having === null || $having_params === null)
                        ? array()
@@ -346,26 +672,62 @@ class Select {
         return $this;
     }
 
+    /**
+     * order by 语句
+     *
+     * @param string|Expr
+     * @return $this
+     *
+     * @example
+     * $select->order('foo');
+     * $select->order(new Expr('foo desc'));
+     */
     public function order($cols) {
         $this->order_by = $cols;
         return $this;
     }
 
+    /**
+     * limit语句
+     *
+     * @param integer $count
+     * @return $this
+     */
     public function limit($count) {
         $this->limit = abs((int)$count);
         return $this;
     }
 
+    /**
+     * offset语句
+     *
+     * @param integer $count
+     * @param $this
+     */
     public function offset($count) {
         $this->offset = abs((int)$count);
         return $this;
     }
 
-    public function execute(array $params = null) {
+    /**
+     * 执行查询，返回查询结果句柄对象
+     *
+     * @return \Lysine\Service\DB\Statement
+     */
+    public function execute() {
         list($sql, $params) = $this->compile();
         return $this->adapter->execute($sql, $params);
     }
 
+    /**
+     * 根据当前查询对象的各项参数，编译为具体的select语句及查询参数
+     *
+     * @return
+     * array(
+     *     (string),    // select语句
+     *     (array)      // 查询参数值
+     * )
+     */
     public function compile() {
         $adapter = $this->adapter;
         $sql = 'SELECT ';
@@ -404,6 +766,11 @@ class Select {
         return array($sql, $params);
     }
 
+    /**
+     * 查询当前查询条件在表内的行数
+     *
+     * @return integer
+     */
     public function count() {
         $cols = $this->cols;
         $this->cols = array(new Expr('count(1)'));
@@ -414,15 +781,54 @@ class Select {
         return $count;
     }
 
+    /**
+     * 分页，把查询结果限定在指定的页
+     *
+     * @param integer $page
+     * @param integer $size
+     * @return $this
+     *
+     * @example
+     * $select->setPage(2, 10)->get();
+     */
     public function setPage($page, $size) {
         $this->limit($size)->offset( ($page - 1) * $size );
         return $this;
     }
 
+    /**
+     * 分页，直接返回指定页的结果
+     *
+     * @param integer $page
+     * @param integer $size
+     * @return array
+     *
+     * @example
+     * $select->getPage(2, 10);
+     */
     public function getPage($page, $size) {
         return $this->setPage($page, $size)->get();
     }
 
+    /**
+     * 查询数据库数量，计算分页信息
+     *
+     * @param integer $current  当前页
+     * @param integer $size     每页多少条
+     * @param integer [$total]  一共有多少条，不指定就到数据库内查询
+     * @return
+     * array(
+     *  'total' => (integer),       // 一共有多少条数据
+     *  'size' => (integer),        // 每页多少条
+     *  'from' => (integer),        // 本页开始的序号
+     *  'to' => (integer),          // 本页结束的序号
+     *  'first' => 1,               // 第一页
+     *  'prev' => (integer|null),   // 上一页，null说明没有上一页
+     *  'current' => (integer),     // 本页页码
+     *  'next' => (integer|null),   // 下一页，null说明没有下一页
+     *  'last' => (integer),        // 最后一页
+     * )
+     */
     public function getPageInfo($current, $size, $total = null) {
         if ($total === null) {
             $limit = $this->limit;
@@ -439,6 +845,12 @@ class Select {
         return \Lysine\cal_page($total, $size, $current);
     }
 
+    /**
+     * 设置预处理函数
+     *
+     * @param Callable $processor
+     * @return $this
+     */
     public function setProcessor($processor) {
         if ($processor && !is_callable($processor))
             throw new \Lysine\UnexpectedValueError('Select processor is not callable');
@@ -447,12 +859,24 @@ class Select {
         return $this;
     }
 
+    /**
+     * 用预处理函数处理查询到的行
+     *
+     * @param array $row
+     * @return mixed
+     */
     public function process(array $row) {
         return $this->processor
              ? call_user_func($this->processor, $row)
              : $row;
     }
 
+    /**
+     * 获得所有的查询结果
+     *
+     * @param integer [$limit]
+     * @return array
+     */
     public function get($limit = null) {
         if ($limit !== null)
             $this->limit($limit);
@@ -470,28 +894,40 @@ class Select {
         return $records;
     }
 
+    /**
+     * 只查询返回第一行数据
+     *
+     * @return mixed
+     */
     public function getOne() {
         $records = $this->get(1);
         return array_shift($records);
     }
 
-    // 注意：直接利用select删除数据可能不是你想要的结果
-    // <code>
-    // // 找出符合条件的前5条
-    // // select * from "users" where id > 100 order by create_time desc limit 5
-    // $select = $adapter->select('users')->where('id > ?', 100)->order('create_time desc')->limit(5);
-    //
-    // // 因为DELETE语句不支持order by / limit / offset
-    // // 删除符合条件的，不仅仅是前5条
-    // // delete from "users" where id > 100
-    // $select->delete()
-    //
-    // // 如果要删除符合条件的前5条
-    // // delete from "users" where id in (select id from "users" where id > 100 order by create_time desc limit 5)
-    // $adapter->select('users')->whereIn('id', $select->setCols('id'))->delete();
-    // </code>
-    // 这里很容易犯错，考虑是否不提供delete()和update()方法
-    // 或者发现定义了limit / offset就抛出异常中止
+
+    /**
+     * 根据当前的条件，删除相应的数据
+     *
+     * 注意：直接利用select删除数据可能不是你想要的结果
+     * <code>
+     * // 找出符合条件的前5条
+     * // select * from "users" where id > 100 order by create_time desc limit 5
+     * $select = $adapter->select('users')->where('id > ?', 100)->order('create_time desc')->limit(5);
+     *
+     * // 因为DELETE语句不支持order by / limit / offset
+     * // 删除符合条件的，不仅仅是前5条
+     * // delete from "users" where id > 100
+     * $select->delete()
+     *
+     * // 如果要删除符合条件的前5条
+     * // delete from "users" where id in (select id from "users" where id > 100 order by create_time desc limit 5)
+     * $adapter->select('users')->whereIn('id', $select->setCols('id'))->delete();
+     * </code>
+     * 这里很容易犯错，考虑是否不提供delete()和update()方法
+     * 或者发现定义了limit / offset就抛出异常中止
+     *
+     * @return integer      affected row count
+     */
     public function delete() {
         list($where, $params) = $this->compileWhere();
 
@@ -506,6 +942,12 @@ class Select {
         return $this->adapter->delete($this->table, $where, $params);
     }
 
+    /**
+     * 根据当前查询语句的条件参数更新数据
+     *
+     * @param array $row
+     * @return integer      affected row count
+     */
     public function update(array $row) {
         list($where, $params) = $this->compileWhere();
 
@@ -520,12 +962,26 @@ class Select {
         return $this->adapter->update($this->table, $row, $where, $params);
     }
 
+    /**
+     * 以iterator的形式返回查询结果
+     * 通过遍历iterator的方式处理查询结果，避免过大的内存占用
+     *
+     * @return \Lysine\Service\DB\SelectIterator
+     */
     public function iterator() {
         return new \NoRewindIterator(new SelectIterator($this));
     }
 
     //////////////////// protected method ////////////////////
 
+    /**
+     * where in 子查询语句
+     *
+     * @param string $col
+     * @param array|Select $relation
+     * @param boolean $in
+     * @return $this
+     */
     protected function whereSub($col, $relation, $in) {
         $col = $this->adapter->quoteColumn($col);
         $params = array();
@@ -545,6 +1001,15 @@ class Select {
         return $this;
     }
 
+    /**
+     * 把from参数编译为select 子句
+     *
+     * @return
+     * array(
+     *     (string),    // from 子句
+     *     (array),     // 查询参数
+     * )
+     */
     protected function compileFrom() {
         $params = array();
 
@@ -560,6 +1025,15 @@ class Select {
         return array($table, $params);
     }
 
+    /**
+     * 把查询条件参数编译为where子句
+     *
+     * @return
+     * array(
+     *     (string),    // where 子句
+     *     (array),     // 查询参数
+     * )
+     */
     protected function compileWhere() {
         if (!$this->where)
             return array('', array());
@@ -576,6 +1050,15 @@ class Select {
         return array($where, $params);
     }
 
+    /**
+     * 编译group by 子句
+     *
+     * @return
+     * array(
+     *     (string),    // group by 子句
+     *     (array),     // 查询参数
+     * )
+     */
     protected function compileGroupBy() {
         if (!$this->group_by)
             return array('', array());
@@ -594,6 +1077,16 @@ class Select {
     }
 }
 
+/**
+ * select查询结果迭代器
+ * 使用迭代器就可以避免把一个巨大的查询结果放到数组内再处理
+ * 直接用foreach对迭代器进行遍历，每次只处理一行
+ *
+ * @example
+ * foreach ($select->iterator() as $row) {
+ *     // ...
+ * }
+ */
 class SelectIterator implements \Iterator {
     private $sth;
     private $select;
