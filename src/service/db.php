@@ -6,7 +6,7 @@ use Lysine\Service;
 abstract class Adapter implements \Lysine\Service\IService {
     protected $config;
     protected $handler;
-    protected $indentifier_symbol = '`';
+    protected $identifier_symbol = '`';
 
     protected $support_savepoint = true;
     protected $savepoints = array();
@@ -240,7 +240,7 @@ abstract class Adapter implements \Lysine\Service\IService {
             return $identifier;
         }
 
-        $symbol = $this->indentifier_symbol;
+        $symbol = $this->identifier_symbol;
         $identifier = str_replace(array('"', "'", ';', $symbol), '', $identifier);
 
         $result = array();

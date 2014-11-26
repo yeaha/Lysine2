@@ -7,7 +7,7 @@ if (!extension_loaded('pdo_pgsql'))
     throw new \RuntimeException('Require pdo_pgsql extension!');
 
 class Pgsql extends \Lysine\Service\DB\Adapter {
-    protected $indentifier_symbol = '"';
+    protected $identifier_symbol = '"';
 
     public function lastId($table = null, $column = null) {
         $sql = ($table && $column)
