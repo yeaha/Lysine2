@@ -41,4 +41,38 @@ class DBTest extends \PHPUnit_Framework_TestCase {
             $this->assertEquals($expect, $db->quoteIdentifier($identifier));
         }
     }
+
+    public function testTransaction() {
+        $db = new \Test\Mock\Service\DB\Adapter(array(
+            'dsn' => 'fake:host=127.0.0.1;dbname=foobar'
+        ));
+
+        $this->assertFalse($db->inTransaction());
+
+        $db->begin();
+        $this->assertTrue($db->inTransaction());
+        $this->assertEquals('BEGIN', $db->getLastStatement());
+
+        $db->begin();   // savepoint
+        $db->begin();   // savepoint
+        $this->assertRegExp('/^SAVEPOINT /', $db->getLastStatement());
+        $this->assertTrue($db->inTransaction());
+
+        $db->rollback();
+        $this->assertRegExp('/^ROLLBACK TO SAVEPOINT /', $db->getLastStatement());
+        $this->assertTrue($db->inTransaction());
+
+        $db->commit();
+        $this->assertRegExp('/^RELEASE SAVEPOINT /', $db->getLastStatement());
+        $this->assertTrue($db->inTransaction());
+
+        $db->commit();
+        $this->assertEquals('COMMIT', $db->getLastStatement());
+        $this->assertFalse($db->inTransaction());
+
+        $db->begin();
+        $db->rollback();
+        $this->assertEquals('ROLLBACK', $db->getLastStatement());
+        $this->assertFalse($db->inTransaction());
+    }
 }

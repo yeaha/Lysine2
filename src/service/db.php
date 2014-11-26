@@ -6,8 +6,11 @@ use Lysine\Service;
 abstract class Adapter implements \Lysine\Service\IService {
     protected $config;
     protected $handler;
-    protected $transaction_counter = 0;
     protected $indentifier_symbol = '`';
+
+    protected $support_savepoint = true;
+    protected $savepoints = array();
+    protected $in_transaction = false;
 
     abstract public function lastId($table = null, $column = null);
 
@@ -80,8 +83,9 @@ abstract class Adapter implements \Lysine\Service\IService {
     public function disconnect() {
         if ($this->isConnected()) {
             $max = 9;   // 最多9次，避免死循环
-            while ($this->transaction_counter && $max-- > 0)
+            while ($this->in_transaction && $max-- > 0) {
                 $this->rollback();
+            }
 
             $this->handler = null;
         }
@@ -95,10 +99,20 @@ abstract class Adapter implements \Lysine\Service\IService {
      * @return boolean
      */
     public function begin() {
-        if ($result = $this->connect()->beginTransaction())
-            $this->transaction_counter++;
+        if ($this->in_transaction) {
+            if (!$this->support_savepoint) {
+                throw new \LogicException(get_class().' unsupport savepoint');
+            }
 
-        return $result;
+            $savepoint = $this->quoteIdentifier(uniqid('savepoint_'));
+            $this->execute('SAVEPOINT '.$savepoint);
+            $this->savepoints[] = $savepoint;
+        } else {
+            $this->execute('BEGIN');
+            $this->in_transaction = true;
+        }
+
+        return true;
     }
 
     /**
@@ -107,13 +121,17 @@ abstract class Adapter implements \Lysine\Service\IService {
      * @return boolean
      */
     public function commit() {
-        if (!$this->transaction_counter)
-            return false;
+        if ($this->in_transaction) {
+            if ($this->savepoints) {
+                $savepoint = array_pop($this->savepoints);
+                $this->execute('RELEASE SAVEPOINT '.$savepoint);
+            } else {
+                $this->execute('COMMIT');
+                $this->in_transaction = false;
+            }
+        }
 
-        if ($result = $this->connect()->commit())
-            $this->transaction_counter--;
-
-        return $result;
+        return true;
     }
 
     /**
@@ -122,13 +140,17 @@ abstract class Adapter implements \Lysine\Service\IService {
      * @return boolean
      */
     public function rollback() {
-        if (!$this->transaction_counter)
-            return false;
+        if ($this->in_transaction) {
+            if ($this->savepoints) {
+                $savepoint = array_pop($this->savepoints);
+                $this->execute('ROLLBACK TO SAVEPOINT '.$savepoint);
+            } else {
+                $this->execute('ROLLBACK');
+                $this->in_transaction = false;
+            }
+        }
 
-        if ($result = $this->connect()->rollback())
-            $this->transaction_counter--;
-
-        return $result;
+        return true;
     }
 
     /**
@@ -137,7 +159,7 @@ abstract class Adapter implements \Lysine\Service\IService {
      * @return boolean
      */
     public function inTransaction() {
-        return (bool)$this->transaction_counter;
+        return $this->in_transaction;
     }
 
     /**

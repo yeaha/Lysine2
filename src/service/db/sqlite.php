@@ -8,53 +8,6 @@ if (!extension_loaded('pdo_sqlite'))
 
 class Sqlite extends \Lysine\Service\DB\Adapter {
     protected $indentifier_symbol = '`';
-    protected $savepoint = array();
-
-    public function begin() {
-        if ($this->transaction_counter) {
-            $savepoint = 'SAVEPOINT_'. $this->transaction_counter;
-            $this->savepoint[] = $savepoint;
-
-            $this->execute('SAVEPOINT '. $savepoint);
-        } else {
-            $this->execute('BEGIN');
-        }
-
-        $this->transaction_counter++;
-        return true;
-    }
-
-    public function commit() {
-        if (!$this->transaction_counter)
-            return false;
-
-        if ($this->savepoint) {
-            $savepoint = array_pop($this->savepoint);
-
-            $this->execute('RELEASE SAVEPOINT '. $savepoint);
-        } else {
-            $this->execute('COMMIT');
-        }
-
-        $this->transaction_counter--;
-        return true;
-    }
-
-    public function rollback() {
-        if (!$this->transaction_counter)
-            return false;
-
-        if ($this->savepoint) {
-            $savepoint = array_pop($this->savepoint);
-
-            $this->execute('ROLLBACK TO SAVEPOINT '. $savepoint);
-        } else {
-            $this->execute('ROLLBACK');
-        }
-
-        $this->transaction_counter--;
-        return true;
-    }
 
     public function lastId($table = null, $column = null) {
         return $this->execute('SELECT last_insert_rowid()')->getCol();
