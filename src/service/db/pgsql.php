@@ -7,28 +7,8 @@ if (!extension_loaded('pdo_pgsql'))
     throw new \RuntimeException('Require pdo_pgsql extension!');
 
 class Pgsql extends \Lysine\Service\DB\Adapter {
+    protected $indentifier_symbol = '"';
     protected $savepoint = array();
-
-    public function quoteTable($table) {
-        return $this->quoteColumn($table);
-    }
-
-    public function quoteColumn($column) {
-        if (is_array($column)) {
-            foreach ($column as $k => $c)
-                $column[$k] = $this->quoteColumn($c);
-            return $column;
-        }
-
-        if ($column instanceof Expr)
-            return $column;
-
-        $parts = explode('.', str_replace(array('"', "'", ';'), '', $column));
-        foreach ($parts as $k => $p)
-            $parts[$k] = '"'. $p .'"';
-
-        return new Expr(implode('.', $parts));
-    }
 
     public function begin() {
         if ($this->transaction_counter) {
@@ -98,7 +78,7 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
         if ($schema)
             $sequence = $schema .'.'. $sequence;
 
-        return $this->quoteColumn($sequence);
+        return $this->quoteIdentifier($sequence);
     }
 
     protected function parseTableName($table) {

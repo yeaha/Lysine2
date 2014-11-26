@@ -1,3 +1,14 @@
+## 2014-11-26
+
+Service\DB
+- remove quoteTable() quoteColumn()
+- add quoteIdentifier()
+
+## 2014-11-19
+
+DataMapper
+- add attribute "deprecated"
+
 ## 2014-10-10
 
 DataMapper\Data
@@ -35,8 +46,3 @@ Exceptions
 - remove lots of custom exceptions
 - rename HTTP\Error to HTTP\Exception
 - rename Service\ConnectionError to Service\ConnectionException
-
-## 2014-11-19
-
-DataMapper
-- add attribute "deprecated"

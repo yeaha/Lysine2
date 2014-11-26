@@ -7,9 +7,8 @@ abstract class Adapter implements \Lysine\Service\IService {
     protected $config;
     protected $handler;
     protected $transaction_counter = 0;
+    protected $indentifier_symbol = '`';
 
-    abstract public function quoteTable($table);
-    abstract public function quoteColumn($column);
     abstract public function lastId($table = null, $column = null);
 
     /**
@@ -205,6 +204,32 @@ abstract class Adapter implements \Lysine\Service\IService {
     }
 
     /**
+     * 对数据库字段名、表名进行“引用”处理，逃逸敏感字符
+     *
+     * @param string $identifier
+     * @return \Lysine\Service\DB\Expr
+     */
+    public function quoteIdentifier($identifier) {
+        if (is_array($identifier)) {
+            return array_map(array($this, 'quoteIdentifier'), $identifier);
+        }
+
+        if ($identifier instanceof Expr) {
+            return $identifier;
+        }
+
+        $symbol = $this->indentifier_symbol;
+        $identifier = str_replace(array('"', "'", ';', $symbol), '', $identifier);
+
+        $result = array();
+        foreach (explode('.', $identifier) as $s) {
+            $result[] = $symbol.$s.$symbol;
+        }
+
+        return new Expr(implode('.', $result));
+    }
+
+    /**
      * 返回指定数据表的查询对象
      *
      * @param string|Expr $table
@@ -319,8 +344,8 @@ abstract class Adapter implements \Lysine\Service\IService {
 
         $sql = sprintf(
             'INSERT INTO %s (%s) VALUES (%s)',
-            $this->quoteTable($table),
-            implode(',', $this->quoteColumn($cols)),
+            $this->quoteIdentifier($table),
+            implode(',', $this->quoteIdentifier($cols)),
             implode(',', $vals)
         );
 
@@ -350,14 +375,14 @@ abstract class Adapter implements \Lysine\Service\IService {
         $set = array();
         foreach ($cols as $col => $val) {
             if ($only_col) {
-                $set[] = $this->quoteColumn($val) .' = ?';
+                $set[] = $this->quoteIdentifier($val) .' = ?';
             } else {
                 $val = ($val instanceof Expr) ? $val : '?';
-                $set[] = $this->quoteColumn($col) .' = '. $val;
+                $set[] = $this->quoteIdentifier($col) .' = '. $val;
             }
         }
 
-        $sql = sprintf('UPDATE %s SET %s', $this->quoteTable($table), implode(',', $set));
+        $sql = sprintf('UPDATE %s SET %s', $this->quoteIdentifier($table), implode(',', $set));
         if ($where) $sql .= ' WHERE '. $where;
 
         return $this->prepare($sql);
@@ -380,7 +405,7 @@ abstract class Adapter implements \Lysine\Service\IService {
      * $sth->execute(array(1));
      */
     public function prepareDelete($table, $where = null) {
-        $table = $this->quoteTable($table);
+        $table = $this->quoteIdentifier($table);
 
         $sql = sprintf('DELETE FROM %s', $table);
         if ($where)
@@ -734,7 +759,7 @@ class Select {
         $params = array();
 
         $sql .= $this->cols
-              ? implode(', ', $adapter->quoteColumn($this->cols))
+              ? implode(', ', $adapter->quoteIdentifier($this->cols))
               : '*';
 
         list($table, $table_params) = $this->compileFrom();
@@ -984,7 +1009,7 @@ class Select {
      * @return $this
      */
     protected function whereSub($col, $relation, $in) {
-        $col = $this->adapter->quoteColumn($col);
+        $col = $this->adapter->quoteIdentifier($col);
         $params = array();
 
         if ($relation instanceof Select) {
@@ -1016,11 +1041,11 @@ class Select {
 
         if ($this->table instanceof Select) {
             list($sql, $params) = $this->table->compile();
-            $table = sprintf('(%s) AS %s', $sql, $this->adapter->quoteTable(uniqid()));
+            $table = sprintf('(%s) AS %s', $sql, $this->adapter->quoteIdentifier(uniqid()));
         } elseif ($this->table instanceof Expr) {
             $table = (string)$this->table;
         } else {
-            $table = $this->adapter->quoteTable($this->table);
+            $table = $this->adapter->quoteIdentifier($this->table);
         }
 
         return array($table, $params);
@@ -1066,7 +1091,7 @@ class Select {
 
         list($group_cols, $having, $having_params) = $this->group_by;
 
-        $group_cols = $this->adapter->quoteColumn($group_cols);
+        $group_cols = $this->adapter->quoteIdentifier($group_cols);
         if (is_array($group_cols))
             $group_cols = implode(',', $group_cols);
 

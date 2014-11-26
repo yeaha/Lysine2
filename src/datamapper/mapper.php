@@ -781,7 +781,7 @@ class DBMapper extends \Lysine\DataMapper\Mapper {
 
         $where = $params = array();
         foreach ($primary_key as $key) {
-            $where[] = $service->quoteColumn($key) .' = ?';
+            $where[] = $service->quoteIdentifier($key) .' = ?';
 
             if (!isset($id[$key])) {
                 throw new \Exception("{$this->class}: Illegal id value");

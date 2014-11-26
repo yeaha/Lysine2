@@ -7,26 +7,8 @@ if (!extension_loaded('pdo_sqlite'))
     throw new \RuntimeException('Require pdo_sqlite extension!');
 
 class Sqlite extends \Lysine\Service\DB\Adapter {
+    protected $indentifier_symbol = '`';
     protected $savepoint = array();
-
-    public function quoteTable($table) {
-        return $this->quoteColumn($table);
-    }
-
-    public function quoteColumn($column) {
-        if (is_array($column)) {
-            foreach ($column as $k => $c)
-                $column[$k] = $this->quoteColumn($c);
-            return $column;
-        }
-
-        if ($column instanceof Expr)
-            return $column;
-
-        $column = '"'. trim($column, '"') .'"';
-
-        return new Expr($column);
-    }
 
     public function begin() {
         if ($this->transaction_counter) {
