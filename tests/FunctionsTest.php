@@ -12,6 +12,9 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase {
             '/?a=1' => array('/', array('a' => 1, 'b' => null)),
             '?a=1&b=2' => array('?', array('a' => 1, 'b' => 2)),
             '?a=1&b=2' => array('', array('a' => 1, 'b' => 2)),
+            'http://www.example.com/foo?bar=1' => array('http://www.example.com/foo', array('bar' => 1)),
+            'https://www.example.com/foo?bar=1' => array('https://www.example.com/foo', array('bar' => 1)),
+            'https://www.example.com:8080/foo?bar=1' => array('https://www.example.com:8080/foo', array('bar' => 1)),
         );
 
         foreach ($test as $expected => $args)

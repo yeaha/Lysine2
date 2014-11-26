@@ -191,6 +191,8 @@ namespace Lysine {
         }
 
         if (isset($url['host'])) $result .= $url['host'];
+        if (isset($url['port'])) $result .= ':'.$url['port'];
+
         $result .= $url['path'];
 
         if ($query) $result .= '?'.http_build_query($query);
