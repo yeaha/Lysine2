@@ -116,8 +116,12 @@ class Router {
                   ? call_user_func_array(array($controller, $method), $params)
                   : $controller->$method();
 
-        if (method_exists($controller, '__after_run'))
-            $controller->__after_run($response);
+        if (method_exists($controller, '__after_run')) {
+            $result = $controller->__after_run($response);
+            if ($result !== null) {
+                $response = $result;
+            }
+        }
 
         $this->fireEvent(self::AFTER_DISPATCH_EVENT, array($class, $response));
 
