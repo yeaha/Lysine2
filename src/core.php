@@ -47,7 +47,7 @@ class Event {
     public function fire($object, $event, array $args = null) {
         $fire = 0;  // 回调次数
 
-        if (!$this->listen)
+        if (!$this->listen && !$this->subscribe)
             return $fire;
 
         $key = $this->keyOf($object);
