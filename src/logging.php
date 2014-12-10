@@ -141,7 +141,7 @@ class FileHandler implements Handler {
     }
 
     public function __destruct() {
-        $this->flush(true);
+        $this->flush();
     }
 
     public function emit(array $record) {
@@ -162,24 +162,22 @@ class FileHandler implements Handler {
         $this->buffer_size += strlen($line);
 
         if ($this->buffer_size >= $this->buffer_max_size)
-            $this->flush(false);
+            $this->flush();
     }
 
-    protected function flush($block) {
-        if (!$this->buffer_size)
+    protected function flush() {
+        if (!$this->buffer_size) {
             return false;
-
-        if (!$fp = @fopen($this->file_name, 'a'))
-            return false;
-
-        $flag = $block ? LOCK_EX : (LOCK_EX|LOCK_NB);
-
-        if (flock($fp, $flag)) {
-            fwrite($fp, implode("\n", $this->buffer) ."\n");
-            flock($fp, LOCK_UN);
-            $this->buffer = array();
-            $this->buffer_size = 0;
         }
+
+        if (!$fp = @fopen($this->file_name, 'a')) {
+            return false;
+        }
+
+        fwrite($fp, implode("\n", $this->buffer) ."\n");
+
+        $this->buffer = array();
+        $this->buffer_size = 0;
 
         return fclose($fp);
     }
