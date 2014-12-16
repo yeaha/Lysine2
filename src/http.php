@@ -96,24 +96,27 @@ class Request {
     private $method;
     private $request_uri;
 
-    public function header($key) {
+    public function getHeader($key) {
         $key = 'http_'. str_replace('-', '_', $key);
         return server($key);
     }
 
-    public function requestUri() {
-        if ($this->request_uri)
+    public function getRequestURI() {
+        if ($this->request_uri) {
             return $this->request_uri;
+        }
 
-        if ($uri = server('request_uri'))
+        if ($uri = server('request_uri')) {
             return $this->request_uri = $uri;
+        }
 
         throw new \RuntimeException('Unknown request URI');
     }
 
-    public function method() {
-        if ($this->method)
+    public function getMethod() {
+        if ($this->method) {
             return $this->method;
+        }
 
         $method = strtoupper($this->header('x-http-method-override') ?: server('request_method'));
         if ($method != 'POST') return $this->method = $method;
@@ -124,7 +127,7 @@ class Request {
         return $this->method = strtoupper($method);
     }
 
-    public function extension() {
+    public function getExtension() {
         $path = parse_url($this->requestUri(), PHP_URL_PATH);
         return strtolower(pathinfo($path, PATHINFO_EXTENSION))
             ?: 'html';
@@ -154,11 +157,11 @@ class Request {
         return strtolower($this->header('X_REQUESTED_WITH')) == 'xmlhttprequest';
     }
 
-    public function referer() {
+    public function getReferer() {
         return server('http_referer');
     }
 
-    public function ip($proxy = null) {
+    public function getIP($proxy = null) {
         $ip = $proxy
             ? server('http_x_forwarded_for') ?: server('remote_addr')
             : server('remote_addr');
@@ -255,6 +258,48 @@ class Request {
 
     protected function isAccept($find, array $accept) {
         return in_array(strtolower($find), $accept, true);
+    }
+
+    /**
+     * @deprecated
+     */
+    public function ip($proxy = null) {
+        return $this->getIP($proxy);
+    }
+
+    /**
+     * @deprecated
+     */
+    public function referer() {
+        return $this->getReferer();
+    }
+
+    /**
+     * @deprecated
+     */
+    public function method() {
+        return $this->getMethod();
+    }
+
+    /**
+     * @deprecated
+     */
+    public function extension() {
+        return $this->getExtension();
+    }
+
+    /**
+     * @deprecated
+     */
+    public function requestUri() {
+        return $this->getRequestURI();
+    }
+
+    /**
+     * @deprecated
+     */
+    public function header($key) {
+        return $this->getHeader($key);
     }
 }
 

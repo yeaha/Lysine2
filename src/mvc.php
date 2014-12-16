@@ -33,11 +33,11 @@ class Application {
     }
 
     public function execute($uri = null, $method = null) {
-        $method = $method ?: req()->method();
+        $method = $method ?: req()->getMethod();
         if (!in_array($method, self::$support_methods))
             throw HTTP\Exception::factory(HTTP::NOT_IMPLEMENTED);
 
-        $uri = $uri ?: req()->requestUri();
+        $uri = $uri ?: req()->getRequestURI();
 
         \Lysine\logger()->debug($method .' '. $uri);
         if (!req()->isGET() && ($params = post() ?: put()))
@@ -106,7 +106,7 @@ class Router {
                 return $response;
         }
 
-        $method = $method ?: req()->method();
+        $method = $method ?: req()->getMethod();
         if ($method == 'HEAD') $method = 'GET';
 
         if (!is_callable(array($controller, $method)))
