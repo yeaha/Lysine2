@@ -22,7 +22,7 @@ trait Event {
 
 // 单例模式
 trait Singleton {
-    static protected $instance;
+    static protected $__instances__ = array();
 
     protected function __construct() {}
 
@@ -31,7 +31,13 @@ trait Singleton {
     }
 
     static public function getInstance() {
-        return static::$instance ?: (static::$instance = new static);
+        $class = get_called_class();
+
+        if (!isset(static::$__instances__[$class])) {
+            static::$__instances__[$class] = new static;
+        }
+
+        return static::$__instances__[$class];
     }
 }
 
