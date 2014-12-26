@@ -240,6 +240,11 @@ class Request {
         return $this->isAccept($encoding, $this->getAcceptEncoding());
     }
 
+    public function reset() {
+        $this->method = null;
+        $this->request_uri = null;
+    }
+
     //////////////////// protected method ////////////////////
     protected function getAccept($header_key) {
         if (!$accept = server($header_key))
