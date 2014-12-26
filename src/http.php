@@ -93,8 +93,8 @@ namespace Lysine\HTTP;
 class Request {
     use \Lysine\Traits\Singleton;
 
-    private $method;
-    private $request_uri;
+    protected $method;
+    protected $request_uri;
 
     public function getHeader($key) {
         $key = 'http_'. str_replace('-', '_', $key);
