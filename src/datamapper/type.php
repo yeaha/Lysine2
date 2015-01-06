@@ -280,7 +280,7 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function store($value, array $attribute) {
-            if ($value === array() || $value === null) {
+            if ($value === array()) {
                 return null;
             }
 
@@ -400,7 +400,7 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function store($value, array $attribute) {
-            if ($value === array() || $value === null) {
+            if ($value === array()) {
                 return null;
             }
 
@@ -443,7 +443,7 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function store($value, array $attribute) {
-            if ($value === array() || $value === null) {
+            if ($value === array()) {
                 return null;
             }
 
