@@ -280,7 +280,7 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function store($value, array $attribute) {
-            if ($value === array()) {
+            if ($value === array() || $value === null) {
                 return null;
             }
 
@@ -296,7 +296,7 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function getDefaultValue(array $attribute) {
-            return array();
+            return $attribute['default'] ?: array();
         }
     }
 
@@ -400,7 +400,7 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function store($value, array $attribute) {
-            if ($value === array()) {
+            if ($value === array() || $value === null) {
                 return null;
             }
 
@@ -416,7 +416,7 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function getDefaultValue(array $attribute) {
-            return array();
+            return $attribute['default'] ?: array();
         }
     }
 
@@ -443,7 +443,7 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function store($value, array $attribute) {
-            if ($value === array()) {
+            if ($value === array() || $value === null) {
                 return null;
             }
 
@@ -459,7 +459,7 @@ namespace Lysine\DataMapper\Types {
         }
 
         public function getDefaultValue(array $attribute) {
-            return array();
+            return $attribute['default'] ?: array();
         }
     }
 }
