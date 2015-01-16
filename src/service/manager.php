@@ -47,11 +47,6 @@ class Manager {
      */
     protected $config = array();
 
-    public function __destruct() {
-        $this->instances = array();
-        $this->dispatcher = array();
-    }
-
     /**
      * 导入服务配置信息
      *
