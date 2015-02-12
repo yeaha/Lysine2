@@ -1017,7 +1017,11 @@ class Select {
      * @return \Lysine\Service\DB\SelectIterator
      */
     public function iterator() {
-        return new \NoRewindIterator(new SelectIterator($this));
+        $res = $this->execute();
+
+        while ($row = $res->fetch()) {
+            yield $this->process($row);
+        }
     }
 
     //////////////////// protected method ////////////////////
@@ -1122,49 +1126,5 @@ class Select {
             $sql .= ' HAVING '. $having;
 
         return array($sql, $having_params);
-    }
-}
-
-/**
- * select查询结果迭代器
- * 使用迭代器就可以避免把一个巨大的查询结果放到数组内再处理
- * 直接用foreach对迭代器进行遍历，每次只处理一行
- *
- * @example
- * foreach ($select->iterator() as $row) {
- *     // ...
- * }
- */
-class SelectIterator implements \Iterator {
-    private $sth;
-    private $select;
-    private $row_count;
-    private $pos = 0;
-
-    public function __construct(Select $select) {
-        $this->sth = $select->execute();
-        $this->row_count = $this->sth->rowCount();
-        $this->select = $select;
-    }
-
-    public function current() {
-        return $this->select->process( $this->sth->fetch() );
-    }
-
-    public function key() {
-        return $this->pos;
-    }
-
-    public function next() {
-        $this->pos++;
-    }
-
-    public function rewind() {
-        $this->sth->closeCursor();
-        $this->pos = 0;
-    }
-
-    public function valid() {
-        return $this->pos < $this->row_count;
     }
 }
