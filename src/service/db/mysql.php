@@ -13,14 +13,13 @@ class Mysql extends \Lysine\Service\DB\Adapter {
         return $this->execute('SELECT last_insert_id()')->getCol();
     }
 
-    static protected function prepareConfig(array $config) {
-        list($dsn, $user, $password, $options) = parent::prepareConfig($config);
+    public function enableBufferedQuery() {
+        $this->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
+        return $this;
+    }
 
-        // 默认禁用buffered query特性
-        if (!isset($options[\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY])) {
-            $options[\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY] = false;
-        }
-
-        return array($dsn, $user, $password, $options);
+    public function disableBufferedQuery() {
+        $this->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
+        return $this;
     }
 }
