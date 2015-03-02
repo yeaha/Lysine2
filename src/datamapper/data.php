@@ -474,7 +474,7 @@ abstract class Data {
      *     'strict' => (boolean),
      * )
      */
-    final static public function getOptions() {
+    static public function getOptions() {
         $options = array(
             'service' => static::$service,
             'collection' => static::$collection,
