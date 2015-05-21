@@ -1,3 +1,5 @@
+**Lysine不再更新，新框架在 https://github.com/yeaha/owl**
+
 Lysine
 ======
 
