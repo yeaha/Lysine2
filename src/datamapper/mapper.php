@@ -321,9 +321,10 @@ abstract class Mapper {
 
         $this->triggerEvent(self::BEFORE_SAVE_EVENT, $data);
 
-        $result = $is_fresh ? $this->insert($data) : $this->update($data);
-        if (!$result) {
-            throw new \RuntimeException($this->class.' save failed');
+        if ($is_fresh) {
+            $this->insert($data);
+        } else {
+            $this->update($data);
         }
 
         $this->triggerEvent(self::AFTER_SAVE_EVENT, $data);
@@ -369,9 +370,7 @@ abstract class Mapper {
         $this->triggerEvent(self::BEFORE_INSERT_EVENT, $data);
         $this->validateData($data);
 
-        if (!is_array($id = $this->doInsert($data))) {
-            return false;
-        }
+        $id = $this->doInsert($data);
 
         $this->pack($id, $data);
         $this->triggerEvent(self::AFTER_INSERT_EVENT, $data);
@@ -389,9 +388,7 @@ abstract class Mapper {
         $this->triggerEvent(self::BEFORE_UPDATE_EVENT, $data);
         $this->validateData($data);
 
-        if (!$this->doUpdate($data)) {
-            return false;
-        }
+        $this->doUpdate($data);
 
         $this->pack(array(), $data);
         $this->triggerEvent(self::AFTER_UPDATE_EVENT, $data);
