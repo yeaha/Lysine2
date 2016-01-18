@@ -1,2 +1,2 @@
-<phpunit bootstrap="./BootStrap.php" colors="true">
+<phpunit bootstrap="./tests/BootStrap.php" colors="true">
 </phpunit>
