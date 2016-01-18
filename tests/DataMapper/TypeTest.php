@@ -19,12 +19,12 @@ class TypeTest extends \PHPUnit_Framework_TestCase {
         $this->assertNull($attribute['default']);
     }
 
-    public function testMixed() {
+    public function testCommon() {
         $type = $this->getType(null);
-        $this->assertInstanceOf('\Lysine\DataMapper\Types\Mixed', $type);
+        $this->assertInstanceOf('\Lysine\DataMapper\Types\Common', $type);
 
         $type = $this->getType('undefined type name');
-        $this->assertInstanceOf('\Lysine\DataMapper\Types\Mixed', $type);
+        $this->assertInstanceOf('\Lysine\DataMapper\Types\Common', $type);
 
         $attribute = array('foo' => 'bar');
         $this->assertSame($attribute, $type->normalizeAttribute($attribute));
@@ -38,8 +38,8 @@ class TypeTest extends \PHPUnit_Framework_TestCase {
 
     public function testNumeric() {
         $type = $this->getType('numeric');
-        $this->assertInstanceOf('\Lysine\DataMapper\Types\Numeric', $type);
-        $this->assertInstanceOf('\Lysine\DataMapper\Types\Mixed', $type);
+        $this->assertInstanceOf('\Lysine\DataMapper\Types\Number', $type);
+        $this->assertInstanceOf('\Lysine\DataMapper\Types\Common', $type);
 
         $this->assertSame(1.11, $type->normalize('1.11', array()));
     }
@@ -47,15 +47,15 @@ class TypeTest extends \PHPUnit_Framework_TestCase {
     public function testInteger() {
         $type = $this->getType('integer');
         $this->assertInstanceOf('\Lysine\DataMapper\Types\Integer', $type);
-        $this->assertInstanceOf('\Lysine\DataMapper\Types\Mixed', $type);
+        $this->assertInstanceOf('\Lysine\DataMapper\Types\Common', $type);
 
         $this->assertSame(1, $type->normalize('1.11', array()));
     }
 
     public function testString() {
         $type = $this->getType('string');
-        $this->assertInstanceOf('\Lysine\DataMapper\Types\String', $type);
-        $this->assertInstanceOf('\Lysine\DataMapper\Types\Mixed', $type);
+        $this->assertInstanceOf('\Lysine\DataMapper\Types\Text', $type);
+        $this->assertInstanceOf('\Lysine\DataMapper\Types\Common', $type);
 
         $this->assertSame('1.11', $type->normalize(1.11, array()));
     }
@@ -63,7 +63,7 @@ class TypeTest extends \PHPUnit_Framework_TestCase {
     public function testUUID() {
         $type = $this->getType('uuid');
         $this->assertInstanceOf('\Lysine\DataMapper\Types\UUID', $type);
-        $this->assertInstanceOf('\Lysine\DataMapper\Types\Mixed', $type);
+        $this->assertInstanceOf('\Lysine\DataMapper\Types\Common', $type);
 
         $attribute = $type->normalizeAttribute(array('primary_key' => true));
         $this->assertTrue($attribute['auto_generate']);
@@ -76,7 +76,7 @@ class TypeTest extends \PHPUnit_Framework_TestCase {
     public function testDateTime() {
         $type = $this->getType('datetime');
         $this->assertInstanceOf('\Lysine\DataMapper\Types\Datetime', $type);
-        $this->assertInstanceOf('\Lysine\DataMapper\Types\Mixed', $type);
+        $this->assertInstanceOf('\Lysine\DataMapper\Types\Common', $type);
 
         $now = new \Datetime;
         $this->assertSame($now, $type->normalize($now, array()));
@@ -106,7 +106,7 @@ class TypeTest extends \PHPUnit_Framework_TestCase {
 
         $type = $this->getType('json');
         $this->assertInstanceOf('\Lysine\DataMapper\Types\JSON', $type);
-        $this->assertInstanceOf('\Lysine\DataMapper\Types\Mixed', $type);
+        $this->assertInstanceOf('\Lysine\DataMapper\Types\Common', $type);
 
         $json = array('foo' => 'bar');
         $this->assertEquals($json, $type->normalize($json, array()));
@@ -124,7 +124,7 @@ class TypeTest extends \PHPUnit_Framework_TestCase {
 
     public function testRestoreNull() {
         $expect = array(
-            'mixed' => null,
+            'common' => null,
             'string' => null,
             'integer' => null,
             'numerci' => null,

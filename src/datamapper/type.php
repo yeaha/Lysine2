@@ -33,13 +33,17 @@ namespace Lysine\DataMapper {
                 $type = 'integer';
             } elseif ($type == 'text') {
                 $type = 'string';
+            } elseif ($type == 'numeric') {
+                $type = 'number';
             }
 
-            if (!isset($this->type_classes[$type]))
-                $type = 'mixed';
+            if (!isset($this->type_classes[$type])) {
+                $type = 'common';
+            }
 
-            if (isset($this->types[$type]))
+            if (isset($this->types[$type])) {
                 return $this->types[$type];
+            }
 
             $class = $this->type_classes[$type];
             return $this->types[$type] = new $class;
@@ -138,14 +142,14 @@ namespace Lysine\DataMapper {
     }
 
     \Lysine\DataMapper\Types::getInstance()
-        ->register('mixed', '\Lysine\DataMapper\Types\Mixed')
+        ->register('common', '\Lysine\DataMapper\Types\Common')
         ->register('datetime', '\Lysine\DataMapper\Types\DateTime')
         ->register('integer', '\Lysine\DataMapper\Types\Integer')
         ->register('json', '\Lysine\DataMapper\Types\Json')
-        ->register('numeric', '\Lysine\DataMapper\Types\Numeric')
+        ->register('number', '\Lysine\DataMapper\Types\Number')
         ->register('pg_array', '\Lysine\DataMapper\Types\PgsqlArray')
         ->register('pg_hstore', '\Lysine\DataMapper\Types\PgsqlHstore')
-        ->register('string', '\Lysine\DataMapper\Types\String')
+        ->register('string', '\Lysine\DataMapper\Types\Text')
         ->register('uuid', '\Lysine\DataMapper\Types\UUID');
 }
 
@@ -153,7 +157,7 @@ namespace Lysine\DataMapper\Types {
     /**
      * 默认数据类型
      */
-    class Mixed {
+    class Common {
         /**
          * 格式化属性定义
          *
@@ -227,7 +231,7 @@ namespace Lysine\DataMapper\Types {
     /**
      * 数字类型
      */
-    class Numeric extends Mixed {
+    class Number extends Common {
         public function normalize($value, array $attribute) {
             return $value * 1;
         }
@@ -236,7 +240,7 @@ namespace Lysine\DataMapper\Types {
     /**
      * 整数类型
      */
-    class Integer extends Numeric {
+    class Integer extends Number {
         public function normalize($value, array $attribute) {
             return (int)$value;
         }
@@ -245,7 +249,7 @@ namespace Lysine\DataMapper\Types {
     /**
      * 字符串类型
      */
-    class String extends Mixed {
+    class Text extends Common {
         public function normalize($value, array $attribute) {
             return (string)$value;
         }
@@ -254,7 +258,7 @@ namespace Lysine\DataMapper\Types {
     /**
      * JSON类型
      */
-    class Json extends Mixed {
+    class Json extends Common {
         public function normalizeAttribute(array $attribute) {
             return array_merge(array(
                 'strict' => true,
@@ -303,7 +307,7 @@ namespace Lysine\DataMapper\Types {
     /**
      * 时间类型
      */
-    class Datetime extends Mixed {
+    class Datetime extends Common {
         public function normalize($value, array $attribute) {
             if ($value instanceof \DateTime) {
                 return $value;
@@ -339,7 +343,7 @@ namespace Lysine\DataMapper\Types {
     /**
      * UUID字符串类型
      */
-    class UUID extends Mixed {
+    class UUID extends Common {
         public function normalizeAttribute(array $attribute) {
             $attribute = array_merge(array(
                 'upper' => false,
@@ -380,7 +384,7 @@ namespace Lysine\DataMapper\Types {
     /**
      * PostgreSQL数组类型
      */
-    class PgsqlArray extends Mixed {
+    class PgsqlArray extends Common {
         public function normalizeAttribute(array $attribute) {
             return array_merge(array(
                 'strict' => true,
@@ -423,7 +427,7 @@ namespace Lysine\DataMapper\Types {
     /**
      * PostgreSQL hstore类型
      */
-    class PgsqlHstore extends Mixed {
+    class PgsqlHstore extends Common {
         public function normalizeAttribute(array $attribute) {
             return array_merge(array(
                 'strict' => true,
