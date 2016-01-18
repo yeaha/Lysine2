@@ -1,0 +1,27 @@
+{
+    "name": "yeaha/lysine",
+    "description": "RESTFul Web Framework",
+    "keywords": ["framework", "mvc", "swoole", "restful", "orm", "datamapper"],
+    "homepage": "https://github.com/yeaha/Lysine2",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "YangYi",
+            "email": "yangyi.cn.gz@gmail.com",
+            "homepage": "https://github.com/yeaha"
+        }
+    ],
+    "require": {
+        "php": ">=5.5.0"
+    },
+    "suggest": {
+        "monolog/monolog": "Allows more advanced logging of the application flow"
+    },
+    "archive": {
+        "exclude": ["/examples", "/tests"]
+    },
+    "autoload": {
+        "psr-4": {"Test\\": "./tests"},
+        "files": ["src/loader.php"]
+    }
+}
