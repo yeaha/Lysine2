@@ -56,7 +56,7 @@ class Logging
         return $this->log($message, self::DEBUG);
     }
 
-    public function exception(\Exception $exception)
+    public function exception($exception)
     {
         if ($previous = $exception->getPrevious()) {
             $this->exception($previous);
