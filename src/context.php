@@ -1,8 +1,10 @@
 <?php
+
 namespace Lysine;
 
 // 会话之间的上下文数据封装
-abstract class ContextHandler {
+abstract class ContextHandler
+{
     protected $config;
 
     abstract public function set($key, $val);
@@ -11,38 +13,45 @@ abstract class ContextHandler {
     abstract public function remove($key);
     abstract public function clear();
 
-    public function __construct(array $config) {
+    public function __construct(array $config)
+    {
         $this->config = $config;
     }
 
-    public function setConfig($key, $val) {
+    public function setConfig($key, $val)
+    {
         $this->config[$key] = $val;
     }
 
-    public function getConfig($key = null) {
+    public function getConfig($key = null)
+    {
         return ($key === null)
              ? $this->config
              : isset($this->config[$key]) ? $this->config[$key] : null;
     }
 
-    public function getToken() {
-        if (!$token = $this->getConfig('token'))
+    public function getToken()
+    {
+        if (!$token = $this->getConfig('token')) {
             throw new \UnexpectedValueException('Undefined context save token');
+        }
 
         return $token;
     }
 
     // 保存上下文数据，根据需要重载
-    public function save() {
+    public function save()
+    {
     }
 
-    static public function factory($type, array $config) {
+    public static function factory($type, array $config)
+    {
         switch (strtolower($type)) {
             case 'session': return new SessionContextHandler($config);
             case 'cookie': return new CookieContextHandler($config);
             case 'redis': return new RedisContextHandler($config);
             default:
-                throw new \UnexpectedValueException('Unknown context handler type: '. $type);
+                throw new \UnexpectedValueException('Unknown context handler type: '.$type);
         }
     }
 }
@@ -53,14 +62,17 @@ abstract class ContextHandler {
 //
 // $handler = ContextHandler::factory('session', $config);
 // $handler = new SessionContextHandler($config);
-class SessionContextHandler extends ContextHandler {
-    public function set($key, $val) {
+class SessionContextHandler extends ContextHandler
+{
+    public function set($key, $val)
+    {
         $token = $this->getToken();
 
         $_SESSION[$token][$key] = $val;
     }
 
-    public function get($key = null) {
+    public function get($key = null)
+    {
         $token = $this->getToken();
         $context = isset($_SESSION[$token]) ? $_SESSION[$token] : array();
 
@@ -69,19 +81,22 @@ class SessionContextHandler extends ContextHandler {
              : (isset($context[$key]) ? $context[$key] : null);
     }
 
-    public function has($key) {
+    public function has($key)
+    {
         $token = $this->getToken();
 
         return isset($_SESSION[$token][$key]);
     }
 
-    public function remove($key) {
+    public function remove($key)
+    {
         $token = $this->getToken();
 
         unset($_SESSION[$token][$key]);
     }
 
-    public function clear() {
+    public function clear()
+    {
         $token = $this->getToken();
 
         unset($_SESSION[$token]);
@@ -110,17 +125,20 @@ class SessionContextHandler extends ContextHandler {
 //
 // $handler = ContextHandler::factory('cookie', $config);
 // $handler = new CookieContextHandler($config);
-class CookieContextHandler extends ContextHandler {
+class CookieContextHandler extends ContextHandler
+{
     protected $data;
 
-    public function set($key, $val) {
+    public function set($key, $val)
+    {
         $this->restore();
 
         $this->data[$key] = $val;
         $this->save();
     }
 
-    public function get($key = null) {
+    public function get($key = null)
+    {
         $data = $this->restore();
 
         return ($key === null)
@@ -128,35 +146,41 @@ class CookieContextHandler extends ContextHandler {
              : (isset($data[$key]) ? $data[$key] : null);
     }
 
-    public function has($key) {
+    public function has($key)
+    {
         $data = $this->restore();
 
         return isset($data[$key]);
     }
 
-    public function remove($key) {
+    public function remove($key)
+    {
         $this->restore();
 
         unset($this->data[$key]);
         $this->save();
     }
 
-    public function clear() {
+    public function clear()
+    {
         $this->data = array();
         $this->save();
     }
 
-    public function reset() {
+    public function reset()
+    {
         $this->data = null;
         $this->salt = null;
     }
 
     // 保存到cookie
-    public function save() {
+    public function save()
+    {
         $token = $this->getToken();
         $data = $this->data ? $this->encode($this->data) : '';
-        if (!$expire = (int)$this->getConfig('expire_at'))
-            $expire = ($ttl = (int)$this->getConfig('ttl')) ? (time() + $ttl) : 0;
+        if (!$expire = (int) $this->getConfig('expire_at')) {
+            $expire = ($ttl = (int) $this->getConfig('ttl')) ? (time() + $ttl) : 0;
+        }
         $path = $this->getConfig('path') ?: '/';
         $domain = $this->getConfig('domain');
 
@@ -166,16 +190,20 @@ class CookieContextHandler extends ContextHandler {
     }
 
     // 从cookie恢复数据
-    protected function restore() {
-        if ($this->data !== null)
+    protected function restore()
+    {
+        if ($this->data !== null) {
             return $this->data;
+        }
 
         do {
-            if (!$data = cookie($this->getToken()))
+            if (!$data = cookie($this->getToken())) {
                 break;
+            }
 
-            if (!$data = $this->decode($data))
+            if (!$data = $this->decode($data)) {
                 break;
+            }
 
             return $this->data = $data;
         } while (false);
@@ -185,18 +213,19 @@ class CookieContextHandler extends ContextHandler {
 
     // 把上下文数据编码为字符串
     // return string
-    protected function encode($data) {
+    protected function encode($data)
+    {
         $data = json_encode($data);
 
         // 添加数字签名
-        $data = $data . $this->getSign($data);
+        $data = $data.$this->getSign($data);
 
         if ($this->getConfig('encrypt')) {      // 加密，加密数据不需要压缩
             $data = $this->encrypt($data);
         } elseif ($this->getConfig('zip')) {    // 压缩
             // 压缩文本最前面有'_'，用于判断是否压缩数据
             // 否则在运行期间切换压缩配置时，错误的数据格式会导致gzcompress()报错
-            $data = '_'. gzcompress($data, 9);
+            $data = '_'.gzcompress($data, 9);
         }
 
         return base64_encode($data);
@@ -204,10 +233,12 @@ class CookieContextHandler extends ContextHandler {
 
     // 把保存为字符串的上下文数据恢复为数组
     // return array('c' => (array), 't' => (integer));
-    protected function decode($string) {
+    protected function decode($string)
+    {
         $string = base64_decode($string, true);
-        if ($string === false)
+        if ($string === false) {
             return array();
+        }
 
         if ($this->getConfig('encrypt')) {      // 解密
             $string = $this->decrypt($string);
@@ -222,14 +253,16 @@ class CookieContextHandler extends ContextHandler {
 
         // 数字签名校验
         do {
-            if (!$string || strlen($string) <= $hash_length)
+            if (!$string || strlen($string) <= $hash_length) {
                 break;
+            }
 
             $hash = substr($string, $hash_length * -1);
             $string = substr($string, 0, strlen($string) - $hash_length);
 
-            if ($this->getSign($string) !== $hash)
+            if ($this->getSign($string) !== $hash) {
                 break;
+            }
 
             return json_decode($string, true) ?: array();
         } while (false);
@@ -238,7 +271,8 @@ class CookieContextHandler extends ContextHandler {
     }
 
     // 加密字符串
-    protected function encrypt($string) {
+    protected function encrypt($string)
+    {
         list($salt, $cipher, $mode, $device) = $this->getEncryptConfig();
 
         $iv_size = mcrypt_get_iv_size($cipher, $mode);
@@ -251,11 +285,12 @@ class CookieContextHandler extends ContextHandler {
         $encrypted = mcrypt_encrypt($cipher, $salt, $string, $mode, $iv);
 
         // 把iv保存和加密字符串在一起输出，解密的时候需要相同的iv
-        return $iv . $encrypted;
+        return $iv.$encrypted;
     }
 
     // 解密字符串
-    protected function decrypt($string) {
+    protected function decrypt($string)
+    {
         list($salt, $cipher, $mode, $device) = $this->getEncryptConfig();
 
         $iv_size = mcrypt_get_iv_size($cipher, $mode);
@@ -271,21 +306,25 @@ class CookieContextHandler extends ContextHandler {
     }
 
     // 获得加密配置
-    protected function getEncryptConfig() {
+    protected function getEncryptConfig()
+    {
         $config = $this->getConfig('encrypt') ?: array();
 
-        if (!isset($config[0]) || !$config[0])
+        if (!isset($config[0]) || !$config[0]) {
             throw new \RuntimeException('Require encrypt salt string');
+        }
         $salt = $config[0];
 
         $cipher = isset($config[1]) ? $config[1] : MCRYPT_RIJNDAEL_256;
 
-        if (!in_array($cipher, mcrypt_list_algorithms()))
-            throw new \RuntimeException('Unsupport encrypt cipher: '. $cipher);
+        if (!in_array($cipher, mcrypt_list_algorithms())) {
+            throw new \RuntimeException('Unsupport encrypt cipher: '.$cipher);
+        }
 
         $mode = isset($config[2]) ? $config[2] : MCRYPT_MODE_CBC;
-        if (!in_array($mode, mcrypt_list_modes()))
-            throw new \RuntimeException('Unsupport encrypt mode: '. $mode);
+        if (!in_array($mode, mcrypt_list_modes())) {
+            throw new \RuntimeException('Unsupport encrypt mode: '.$mode);
+        }
 
         if (isset($config[3])) {
             $device = $config[3];
@@ -302,18 +341,22 @@ class CookieContextHandler extends ContextHandler {
     }
 
     // 用PKCS7兼容字符串补全加密块
-    protected function pad($string, $block = 32) {
+    protected function pad($string, $block = 32)
+    {
         $pad = $block - (strlen($string) % $block);
-        return $string . str_repeat(chr($pad), $pad);
+
+        return $string.str_repeat(chr($pad), $pad);
     }
 
     // 去掉填充的PKCS7兼容字符串
-    protected function unpad($string, $block = 32) {
+    protected function unpad($string, $block = 32)
+    {
         $pad = ord(substr($string, -1));
 
         if ($pad and $pad < $block) {
-            if (!preg_match('/'.chr($pad).'{'.$pad.'}$/', $string))
+            if (!preg_match('/'.chr($pad).'{'.$pad.'}$/', $string)) {
                 return false;
+            }
 
             return substr($string, 0, strlen($string) - $pad);
         }
@@ -322,18 +365,23 @@ class CookieContextHandler extends ContextHandler {
     }
 
     // 生成数字签名
-    protected function getSign($string) {
+    protected function getSign($string)
+    {
         $salt = $this->getSignSalt($string);
-        return sha1($string . $salt, true);
+
+        return sha1($string.$salt, true);
     }
 
     // 获得计算数字签名的salt字符串
-    protected function getSignSalt($string) {
-        if (($salt = $this->getConfig('sign_salt')) === null)
+    protected function getSignSalt($string)
+    {
+        if (($salt = $this->getConfig('sign_salt')) === null) {
             throw new \RuntimeException('Require signature salt');
+        }
 
-        if (is_callable($salt) && (!$salt = call_user_func($salt, $string)))
+        if (is_callable($salt) && (!$salt = call_user_func($salt, $string))) {
             throw new \RuntimeException('Salt function return noting');
+        }
 
         if ($this->getConfig('bind_ip')) {
             $ip = req()->ip();
@@ -352,12 +400,14 @@ class CookieContextHandler extends ContextHandler {
 //
 // $handler = ContextHandler::factory('redis', $config);
 // $handler = new RedisContextHandler($config);
-class RedisContextHandler extends ContextHandler {
+class RedisContextHandler extends ContextHandler
+{
     protected $data;
     protected $saved_keys;
     protected $dirty = false;
 
-    public function __construct(array $config) {
+    public function __construct(array $config)
+    {
         parent::__construct($config);
 
         $redis = $this->getService();
@@ -367,52 +417,64 @@ class RedisContextHandler extends ContextHandler {
         $this->saved_keys = array_keys($this->data);
     }
 
-    public function __destruct() {
+    public function __destruct()
+    {
         $this->save();
     }
 
-    public function set($key, $val) {
-        if (isset($this->data[$key]) && $this->data[$key] === $val)
+    public function set($key, $val)
+    {
+        if (isset($this->data[$key]) && $this->data[$key] === $val) {
             return true;
+        }
 
         $this->data[$key] = $val;
         $this->dirty = true;
     }
 
-    public function get($key = null) {
-        if ($key === null)
+    public function get($key = null)
+    {
+        if ($key === null) {
             return $this->data;
+        }
 
         return isset($this->data[$key]) ? $this->data[$key] : null;
     }
 
-    public function has($key) {
+    public function has($key)
+    {
         return isset($this->data[$key]);
     }
 
-    public function remove($key) {
-        if (!isset($this->data[$key]))
+    public function remove($key)
+    {
+        if (!isset($this->data[$key])) {
             return false;
+        }
 
         unset($this->data[$key]);
         $this->dirty = true;
     }
 
-    public function clear() {
+    public function clear()
+    {
         $this->data = array();
         $this->dirty = true;
     }
 
-    public function setTimeout($ttl) {
+    public function setTimeout($ttl)
+    {
         $redis = $this->getService();
         $token = $this->getToken();
 
         return $redis->setTimeout($token, $ttl);
     }
 
-    public function save() {
-        if (!$this->dirty)
+    public function save()
+    {
+        if (!$this->dirty) {
             return true;
+        }
 
         $this->dirty = false;
 
@@ -422,6 +484,7 @@ class RedisContextHandler extends ContextHandler {
         if (!$data = $this->data) {
             $redis->delete($token);
             $this->saved_keys = array();
+
             return true;
         }
 
@@ -429,26 +492,32 @@ class RedisContextHandler extends ContextHandler {
 
         $redis->multi(\Redis::PIPELINE);
 
-        foreach ($removed_keys as $key)
+        foreach ($removed_keys as $key) {
             $redis->hDel($token, $key);
+        }
 
         $redis->hMSet($token, $data);
 
-        if ($ttl = (int)$this->getConfig('ttl'))
+        if ($ttl = (int) $this->getConfig('ttl')) {
             $redis->setTimeout($token, $ttl);
+        }
 
         $redis->exec();
 
         $this->saved_keys = array_keys($data);
+
         return true;
     }
 
-    protected function getService() {
-        if (!$service = $this->getConfig('service'))
+    protected function getService()
+    {
+        if (!$service = $this->getConfig('service')) {
             throw new \RuntimeException('Require redis service for context');
+        }
 
-        if ($service instanceof \Lysine\Service\Redis)
+        if ($service instanceof \Lysine\Service\Redis) {
             return $service;
+        }
 
         return service($service);
     }

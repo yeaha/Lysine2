@@ -1,11 +1,13 @@
 <?php
-namespace Lysine\Service;
+
+namespace Lysine\service;
 
 if (!extension_loaded('memcached')) {
     throw new \RuntimeException('Require memcached extension');
 }
 
-class Memcached implements \Lysine\Service\IService {
+class memcached implements \Lysine\Service\IService
+{
     protected $handler;
     protected $config;
 
@@ -25,26 +27,30 @@ class Memcached implements \Lysine\Service\IService {
      *     ),
      * ));
      */
-    public function __construct(array $config = array()) {
+    public function __construct(array $config = array())
+    {
         $this->config = $config;
     }
 
-    public function __destruct() {
+    public function __destruct()
+    {
         $this->disconnect();
     }
 
-    public function __call($fn, $args) {
+    public function __call($fn, $args)
+    {
         return $args
              ? call_user_func_array(array($this->connect(), $fn), $args)
              : $this->connect()->$fn();
     }
 
     /**
-     * 连接memcached
+     * 连接memcached.
      *
      * @return \Memcached
      */
-    public function connect() {
+    public function connect()
+    {
         if ($this->handler) {
             return $this->handler;
         }
@@ -53,7 +59,7 @@ class Memcached implements \Lysine\Service\IService {
                  ? $this->config['servers']
                  : array(array('127.0.0.1', 11211));
 
-        $handler = new \Memcached;
+        $handler = new \Memcached();
         if (!$handler->addServers($servers)) {
             throw new \Lysine\Service\ConnectionException('Cannot connect memcached');
         }
@@ -66,11 +72,12 @@ class Memcached implements \Lysine\Service\IService {
     }
 
     /**
-     * 断开连接
+     * 断开连接.
      *
      * @return $this
      */
-    public function disconnect() {
+    public function disconnect()
+    {
         if ($this->handler) {
             $this->handler->quit();
             $this->handler = null;

@@ -1,21 +1,35 @@
 <?php
+
 namespace {
-    function get($key = null) {
-        if ($key === null) return $_GET;
+    function get($key = null)
+    {
+        if ($key === null) {
+            return $_GET;
+        }
+
         return isset($_GET[$key]) ? $_GET[$key] : null;
     }
 
-    function post($key = null) {
-        if ($key === null) return $_POST;
+    function post($key = null)
+    {
+        if ($key === null) {
+            return $_POST;
+        }
+
         return isset($_POST[$key]) ? $_POST[$key] : null;
     }
 
-    function cookie($key = null) {
-        if ($key === null) return $_COOKIE;
+    function cookie($key = null)
+    {
+        if ($key === null) {
+            return $_COOKIE;
+        }
+
         return isset($_COOKIE[$key]) ? $_COOKIE[$key] : null;
     }
 
-    function put($key = null) {
+    function put($key = null)
+    {
         static $_PUT = null;
 
         if ($_PUT === null) {
@@ -23,74 +37,102 @@ namespace {
                 if (strtoupper(server('request_method')) == 'PUT') {
                     parse_str(file_get_contents('php://input'), $_PUT);
                 } else {
-                    $_PUT =& $_POST;
+                    $_PUT = &$_POST;
                 }
             } else {
                 $_PUT = array();
             }
         }
 
-        if ($key === null) return $_PUT;
+        if ($key === null) {
+            return $_PUT;
+        }
+
         return isset($_PUT[$key]) ? $_PUT[$key] : null;
     }
 
-    function request($key = null) {
-        if ($key === null) return array_merge(put(), $_REQUEST);
+    function request($key = null)
+    {
+        if ($key === null) {
+            return array_merge(put(), $_REQUEST);
+        }
+
         return isset($_REQUEST[$key]) ? $_REQUEST[$key] : put($key);
     }
 
-    function has_get($key) {
+    function has_get($key)
+    {
         return array_key_exists($key, $_GET);
     }
 
-    function has_post($key) {
+    function has_post($key)
+    {
         return array_key_exists($key, $_POST);
     }
 
-    function has_put($key) {
+    function has_put($key)
+    {
         return array_key_exists($key, put());
     }
 
-    function has_request($key) {
+    function has_request($key)
+    {
         return array_key_exists($key, $_REQUEST);
     }
 
-    function env($key = null) {
-        if ($key === null) return $_ENV;
+    function env($key = null)
+    {
+        if ($key === null) {
+            return $_ENV;
+        }
         $key = strtoupper($key);
+
         return isset($_ENV[$key]) ? $_ENV[$key] : false;
     }
 
-    function server($key = null) {
-        if ($key === null) return $_SERVER;
+    function server($key = null)
+    {
+        if ($key === null) {
+            return $_SERVER;
+        }
         $key = strtoupper($key);
+
         return isset($_SERVER[$key]) ? $_SERVER[$key] : false;
     }
 
-    function service($name, $args = null) {
-        if ($args !== null)
+    function service($name, $args = null)
+    {
+        if ($args !== null) {
             $args = array_slice(func_get_args(), 1);
+        }
 
         return \Lysine\Service\Manager::getInstance()->get($name, $args);
     }
 
-    function req() {
-        if (!defined('LYSINE_REQUEST_CLASS'))
+    function req()
+    {
+        if (!defined('LYSINE_REQUEST_CLASS')) {
             return \Lysine\HTTP\Request::getInstance();
+        }
 
         $class = LYSINE_REQUEST_CLASS;
+
         return $class::getInstance();
     }
 
-    function resp() {
-        if (!defined('LYSINE_RESPONSE_CLASS'))
+    function resp()
+    {
+        if (!defined('LYSINE_RESPONSE_CLASS')) {
             return \Lysine\HTTP\Response::getInstance();
+        }
 
         $class = LYSINE_RESPONSE_CLASS;
+
         return $class::getInstance();
     }
 
-    function cfg($keys = null) {
+    function cfg($keys = null)
+    {
         $keys = $keys === null
               ? null
               : is_array($keys) ? $keys : func_get_args();
@@ -101,10 +143,11 @@ namespace {
 
 namespace Lysine {
     // 计算分页 calculate page
-    function cal_page($total, $page_size, $current_page = 1) {
-        $total = (int)$total;
-        $page_size = (int)$page_size;
-        $current_page = (int)$current_page;
+    function cal_page($total, $page_size, $current_page = 1)
+    {
+        $total = (int) $total;
+        $page_size = (int) $page_size;
+        $current_page = (int) $current_page;
 
         $page_count = ceil($total / $page_size) ?: 1;
 
@@ -126,11 +169,13 @@ namespace Lysine {
             'last' => $page_count,
         );
 
-        if ($current_page > $page['first'])
+        if ($current_page > $page['first']) {
             $page['prev'] = $current_page - 1;
+        }
 
-        if ($current_page < $page['last'])
+        if ($current_page < $page['last']) {
             $page['next'] = $current_page + 1;
+        }
 
         if ($total) {
             $page['from'] = ($current_page - 1) * $page_size + 1;
@@ -143,12 +188,15 @@ namespace Lysine {
     }
 
     // 是关联数组还是普通数组
-    function is_assoc_array($array) {
+    function is_assoc_array($array)
+    {
         $keys = array_keys($array);
+
         return array_keys($keys) !== $keys;
     }
 
-    function logger($name = null) {
+    function logger($name = null)
+    {
         return \Lysine\Logging::factory($name ?: '__LYSINE__');
     }
 
@@ -159,18 +207,23 @@ namespace Lysine {
     // /?a=1&b=2
     // url('/', array('a' => 1, 'b' => 2, 'c' => 3), array('c' => 4));
     // /?a=1&b=2&c=4
-    function url($url, $args = null) {
+    function url($url, $args = null)
+    {
         $url = parse_url($url);
-        if (!isset($url['path']) || !$url['path'])
+        if (!isset($url['path']) || !$url['path']) {
             $url['path'] = '';
+        }
 
         $query = array();
-        if (isset($url['query']))
+        if (isset($url['query'])) {
             parse_str($url['query'], $query);
+        }
 
         if ($args !== null) {
             foreach (array_slice(func_get_args(), 1) as $args) {
-                if (!is_array($args)) continue;
+                if (!is_array($args)) {
+                    continue;
+                }
 
                 foreach ($args as $k => $v) {
                     if ($v === false) {
@@ -183,31 +236,45 @@ namespace Lysine {
         }
 
         $result = '';
-        if (isset($url['scheme'])) $result .= $url['scheme'].'://';
+        if (isset($url['scheme'])) {
+            $result .= $url['scheme'].'://';
+        }
         if (isset($url['user'])) {
             $result .= $url['user'];
-            if (isset($url['pass'])) $result .= ':'.$url['pass'];
+            if (isset($url['pass'])) {
+                $result .= ':'.$url['pass'];
+            }
             $result .= '@';
         }
 
-        if (isset($url['host'])) $result .= $url['host'];
-        if (isset($url['port'])) $result .= ':'.$url['port'];
+        if (isset($url['host'])) {
+            $result .= $url['host'];
+        }
+        if (isset($url['port'])) {
+            $result .= ':'.$url['port'];
+        }
 
         $result .= $url['path'];
 
-        if ($query) $result .= '?'.http_build_query($query);
-        if (isset($url['fragment'])) $result .= '#'.$url['fragment'];
+        if ($query) {
+            $result .= '?'.http_build_query($query);
+        }
+        if (isset($url['fragment'])) {
+            $result .= '#'.$url['fragment'];
+        }
 
         return $result;
     }
 
-    function array_pick(array $data, $key1/*[, $key2[, $key3]]*/) {
+    function array_pick(array $data, $key1/*[, $key2[, $key3]]*/)
+    {
         $keys = array_slice(func_get_args(), 1);
         $result = array();
 
         foreach ($keys as $key) {
-            if (isset($data[$key]))
+            if (isset($data[$key])) {
                 $result[$key] = $data[$key];
+            }
         }
 
         return $result;
@@ -218,29 +285,33 @@ namespace Lysine {
     // $from: 本来的进制
     // $to: 转换到进制
     // $use_bcmath: 是否使用bcmath模块处理超大数字
-    function base_convert($number, $from, $to, $use_bcmath = null) {
+    function base_convert($number, $from, $to, $use_bcmath = null)
+    {
         $base = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
         $loaded = extension_loaded('bcmath');
-        if ($use_bcmath && !$loaded)
+        if ($use_bcmath && !$loaded) {
             throw new \RuntimeException('Require bcmath extension!');
+        }
 
         $use_bcmath = $loaded;
 
         // 任意进制转换为十进制
-        $any2dec = function($number, $from) use ($base, $use_bcmath) {
-            if ($from === 10)
+        $any2dec = function ($number, $from) use ($base, $use_bcmath) {
+            if ($from === 10) {
                 return $number;
+            }
 
             $base = substr($base, 0, $from);
             $dec = 0;
-            $number = (string)$number;
+            $number = (string) $number;
 
-            for ($i = 0, $len = strlen($number); $i < $len; $i++) {
-                $c = substr($number, $i , 1);
+            for ($i = 0, $len = strlen($number); $i < $len; ++$i) {
+                $c = substr($number, $i, 1);
                 $n = strpos($base, $c);
-                if ($n === false)   // 出现了当前进制不支持的数字
-                    trigger_error('Unexpected base character: '. $c, E_USER_ERROR);
+                if ($n === false) {   // 出现了当前进制不支持的数字
+                    trigger_error('Unexpected base character: '.$c, E_USER_ERROR);
+                }
 
                 $pos = $len - $i - 1;
 
@@ -255,9 +326,10 @@ namespace Lysine {
         };
 
         // 十进制转换为任意进制
-        $dec2any = function($number, $to) use ($base, $use_bcmath) {
-            if ($to === 10)
+        $dec2any = function ($number, $to) use ($base, $use_bcmath) {
+            if ($to === 10) {
                 return $number;
+            }
 
             $base = substr($base, 0, $to);
             $any = '';
@@ -266,30 +338,34 @@ namespace Lysine {
                 if ($use_bcmath) {
                     list($number, $c) = array(bcdiv($number, $to), bcmod($number, $to));
                 } else {
-                    list($number, $c) = array((int)($number / $to), $number % $to);
+                    list($number, $c) = array((int) ($number / $to), $number % $to);
                 }
-                $any = substr($base, $c, 1) . $any;
+                $any = substr($base, $c, 1).$any;
             }
 
-            $any = substr($base, $number, 1) . $any;
+            $any = substr($base, $number, 1).$any;
+
             return $any;
         };
 
         ////////////////////////////////////////////////////////////////////////////////
-        $from = (int)$from;
-        $to = (int)$to;
+        $from = (int) $from;
+        $to = (int) $to;
 
         $min_base = 2;
         $max_base = strlen($base);
 
-        if ($from < $min_base || $from > $max_base || $to < $min_base || $to > $max_base)
+        if ($from < $min_base || $from > $max_base || $to < $min_base || $to > $max_base) {
             trigger_error("Only support base between {$min_base} and {$max_base}", E_USER_ERROR);
+        }
 
-        if ($from === $to)
+        if ($from === $to) {
             return $number;
+        }
 
         // 转换为10进制
         $dec = ($from === 10) ? $number : $any2dec($number, $from);
+
         return $dec2any($dec, $to);
     }
 }

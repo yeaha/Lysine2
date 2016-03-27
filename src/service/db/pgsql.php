@@ -1,15 +1,19 @@
 <?php
+
 namespace Lysine\Service\DB\Adapter;
 
 use Lysine\Service\DB\Expr;
 
-if (!extension_loaded('pdo_pgsql'))
+if (!extension_loaded('pdo_pgsql')) {
     throw new \RuntimeException('Require pdo_pgsql extension!');
+}
 
-class Pgsql extends \Lysine\Service\DB\Adapter {
+class pgsql extends \Lysine\Service\DB\Adapter
+{
     protected $identifier_symbol = '"';
 
-    public function lastId($table = null, $column = null) {
+    public function lastId($table = null, $column = null)
+    {
         $sql = ($table && $column)
              ? sprintf("SELECT CURRVAL('%s')", $this->sequenceName($table, $column))
              : 'SELECT LASTVAL()';
@@ -17,29 +21,35 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
         return $this->execute($sql)->getCol();
     }
 
-    public function nextId($table, $column) {
+    public function nextId($table, $column)
+    {
         $sql = sprintf("SELECT NEXTVAL('%s')", $this->sequenceName($table, $column));
+
         return $this->execute($sql)->getCol();
     }
 
     //////////////////// protected method ////////////////////
 
-    protected function sequenceName($table, $column) {
+    protected function sequenceName($table, $column)
+    {
         list($schema, $table) = $this->parseTableName($table);
 
         $sequence = sprintf('%s_%s_seq', $table, $column);
-        if ($schema)
-            $sequence = $schema .'.'. $sequence;
+        if ($schema) {
+            $sequence = $schema.'.'.$sequence;
+        }
 
         return $this->quoteIdentifier($sequence);
     }
 
-    protected function parseTableName($table) {
+    protected function parseTableName($table)
+    {
         $table = str_replace('"', '', $table);
         $pos = strpos($table, '.');
 
         if ($pos) {
             list($schema, $table) = explode('.', $table, 2);
+
             return array($schema, $table);
         } else {
             return array(null, $table);
@@ -49,9 +59,11 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
     //////////////////// static method ////////////////////
 
     // postgresql array -> php array
-    static public function decodeArray($pg_array) {
-        if (!$pg_array)
+    public static function decodeArray($pg_array)
+    {
+        if (!$pg_array) {
             return array();
+        }
 
         $pg_array = trim($pg_array, '{}');
 
@@ -59,8 +71,9 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
         if (strpos($pg_array, '"') === false) {
             $array = explode(',', $pg_array);
             foreach ($array as $key => $val) {
-                if ($val === 'NULL')
-                    $array[$key] = NULL;
+                if ($val === 'NULL') {
+                    $array[$key] = null;
+                }
             }
 
             return $array;
@@ -76,11 +89,12 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
         // 不用"包含的元素比较简单，直接找到最近的","来确定元素
         do {
             if (substr($pg_array, 0, 1) === '"') {
-                if (!preg_match('/^"(.*)(?<!\\\)",?/U', $pg_array, $match))
+                if (!preg_match('/^"(.*)(?<!\\\)",?/U', $pg_array, $match)) {
                     break;
+                }
 
                 $array[] = $match[1];
-                $pg_array = substr($pg_array, strlen($match[0])+1);
+                $pg_array = substr($pg_array, strlen($match[0]) + 1);
             } else {
                 $pos = strpos($pg_array, ',');
                 if ($pos === false) {
@@ -88,21 +102,22 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
                     $pg_array = '';
                 } else {
                     $val = substr($pg_array, 0, $pos);
-                    $pg_array = substr($pg_array, $pos+1);
+                    $pg_array = substr($pg_array, $pos + 1);
                 }
 
-                if ($val === 'NULL')
-                    $val = NULL;
+                if ($val === 'NULL') {
+                    $val = null;
+                }
 
                 $array[] = $val;
             }
-        } while($pg_array);
+        } while ($pg_array);
 
         foreach ($array as $key => $val) {
-            if ($val !== NULL) {
+            if ($val !== null) {
                 $search = array('\"', '\\\\');
                 $replace = array('"', '\\');
-                $array[$key] = str_replace($search, $replace , $val);
+                $array[$key] = str_replace($search, $replace, $val);
             }
         }
 
@@ -110,16 +125,19 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
     }
 
     // php array -> postgresql array
-    static public function encodeArray($array) {
-        if (!$array)
-            return NULL;
+    public static function encodeArray($array)
+    {
+        if (!$array) {
+            return;
+        }
 
-        if (!is_array($array))
+        if (!is_array($array)) {
             return $array;
+        }
 
         // 过滤掉会导致解析或保存失败的异常字符
         foreach ($array as $key => $val) {
-            if ($val === NULL) {
+            if ($val === null) {
                 $val = 'NULL';
             } else {
                 $val = rtrim($val, '\\');       // 以\结尾的字符串，在decode时会导致正则表达式无法解析
@@ -136,9 +154,11 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
     }
 
     // postgresql hstore -> php array
-    static public function decodeHstore($hstore) {
-        if (!$hstore || !preg_match_all('/"(.+)(?<!\\\)"=>(NULL|""|".+(?<!\\\)"),?/Us', $hstore, $match, PREG_SET_ORDER))
+    public static function decodeHstore($hstore)
+    {
+        if (!$hstore || !preg_match_all('/"(.+)(?<!\\\)"=>(NULL|""|".+(?<!\\\)"),?/Us', $hstore, $match, PREG_SET_ORDER)) {
             return array();
+        }
 
         $array = array();
 
@@ -146,15 +166,16 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
             list(, $k, $v) = $set;
 
             $v = $v === 'NULL'
-               ? NULL
+               ? null
                : substr($v, 1, -1);
 
             $search = array('\"', '\\\\');
             $replace = array('"', '\\');
 
             $k = str_replace($search, $replace, $k);
-            if ($v !== NULL)
+            if ($v !== null) {
                 $v = str_replace($search, $replace, $v);
+            }
 
             $array[$k] = $v;
         }
@@ -163,12 +184,15 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
     }
 
     // php array -> postgresql hstore
-    static public function encodeHstore($array) {
-        if (!$array)
-            return NULL;
+    public static function encodeHstore($array)
+    {
+        if (!$array) {
+            return;
+        }
 
-        if (!is_array($array))
+        if (!is_array($array)) {
             return $array;
+        }
 
         $expr = array();
 
@@ -178,7 +202,7 @@ class Pgsql extends \Lysine\Service\DB\Adapter {
 
             $key = str_replace($search, $replace, $key);
 
-            if ($val === NULL) {
+            if ($val === null) {
                 $val = 'NULL';
             } else {
                 $val = rtrim($val, '\\');       // 以\结尾的字符串，无法用正则表达式解析
