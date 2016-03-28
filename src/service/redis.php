@@ -1,10 +1,13 @@
 <?php
-namespace Lysine\Service;
 
-if (!extension_loaded('redis'))
+namespace Lysine\service;
+
+if (!extension_loaded('redis')) {
     throw new \RuntimeException('Require redis extension!');
+}
 
-class Redis implements \Lysine\Service\IService {
+class redis implements \Lysine\Service\IService
+{
     protected $config = array(
         'host' => '127.0.0.1',
         'port' => 6379,
@@ -18,37 +21,46 @@ class Redis implements \Lysine\Service\IService {
 
     protected $handler;
 
-    public function __construct(array $config = array()) {
-        if ($config)
+    public function __construct(array $config = array())
+    {
+        if ($config) {
             $this->config = array_merge($this->config, $config);
+        }
     }
 
-    public function getConfig($key = null) {
-        if ($key === null)
+    public function getConfig($key = null)
+    {
+        if ($key === null) {
             return $this->config;
+        }
 
         return isset($this->config[$key])
              ? $this->config[$key]
              : false;
     }
 
-    public function __destruct() {
-        if (!$this->isPersistent())
+    public function __destruct()
+    {
+        if (!$this->isPersistent()) {
             $this->disconnect();
+        }
     }
 
-    public function __call($fn, array $args) {
+    public function __call($fn, array $args)
+    {
         return $args
              ? call_user_func_array(array($this->connect(), $fn), $args)
              : $this->connect()->$fn();
     }
 
-    public function connect() {
-        if ($this->handler)
+    public function connect()
+    {
+        if ($this->handler) {
             return $this->handler;
+        }
 
         $config = $this->config;
-        $handler = new \Redis;
+        $handler = new \Redis();
 
         // 优先使用unix socket
         $conn_args = $config['unix_socket']
@@ -62,22 +74,27 @@ class Redis implements \Lysine\Service\IService {
             $conn = call_user_func_array(array($handler, 'connect'), $conn_args);
         }
 
-        if (!$conn)
+        if (!$conn) {
             throw new \Lysine\Service\ConnectionException('Cannot connect redis');
+        }
 
-        if ($config['password'] && !$handler->auth($config['password']))
+        if ($config['password'] && !$handler->auth($config['password'])) {
             throw new \Lysine\Service\ConnectionException('Invalid redis password');
+        }
 
-        if ($config['database'] && !$handler->select($config['database']))
+        if ($config['database'] && !$handler->select($config['database'])) {
             throw new \Lysine\Service\ConnectionException('Select redis database['.$config['database'].'] failed');
+        }
 
-        if (isset($config['prefix']))
+        if (isset($config['prefix'])) {
             $handler->setOption(\Redis::OPT_PREFIX, $config['prefix']);
+        }
 
         return $this->handler = $handler;
     }
 
-    public function disconnect() {
+    public function disconnect()
+    {
         if ($this->handler instanceof \Redis) {
             $this->handler->close();
             $this->handler = null;
@@ -86,8 +103,10 @@ class Redis implements \Lysine\Service\IService {
         return $this;
     }
 
-    protected function isPersistent() {
+    protected function isPersistent()
+    {
         $config = $this->config;
+
         return $config['persistent_id'] && !$config['unix_socket'];
     }
 }

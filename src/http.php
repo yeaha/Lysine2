@@ -1,7 +1,9 @@
 <?php
+
 namespace Lysine;
 
-class HTTP {
+class HTTP
+{
     const OK = 200;
     const CREATED = 201;
     const ACCEPTED = 202;
@@ -32,7 +34,7 @@ class HTTP {
     const SERVICE_UNAVAILABLE = 503;
     const GATEWAY_TIMEOUT = 504;
 
-    static protected $status = array(
+    protected static $status = array(
         100 => 'Continue',
         101 => 'Switching Protocols',
         200 => 'OK',
@@ -74,11 +76,13 @@ class HTTP {
         504 => 'Gateway Time-out',
     );
 
-    static public function getStatusMessage($code) {
+    public static function getStatusMessage($code)
+    {
         return self::$status[$code];
     }
 
-    static public function getStatusHeader($code) {
+    public static function getStatusHeader($code)
+    {
         $message = self::$status[$code];
 
         return strpos(PHP_SAPI, 'cgi') === 0
@@ -90,18 +94,22 @@ class HTTP {
 ////////////////////////////////////////////////////////////////////////////////
 namespace Lysine\HTTP;
 
-class Request {
+class Request
+{
     use \Lysine\Traits\Singleton;
 
     protected $method;
     protected $request_uri;
 
-    public function getHeader($key) {
-        $key = 'http_'. str_replace('-', '_', $key);
+    public function getHeader($key)
+    {
+        $key = 'http_'.str_replace('-', '_', $key);
+
         return server($key);
     }
 
-    public function getRequestURI() {
+    public function getRequestURI()
+    {
         if ($this->request_uri) {
             return $this->request_uri;
         }
@@ -113,61 +121,76 @@ class Request {
         throw new \RuntimeException('Unknown request URI');
     }
 
-    public function getMethod() {
+    public function getMethod()
+    {
         if ($this->method) {
             return $this->method;
         }
 
         $method = strtoupper($this->header('x-http-method-override') ?: server('request_method'));
-        if ($method != 'POST') return $this->method = $method;
+        if ($method != 'POST') {
+            return $this->method = $method;
+        }
 
         // 某些js库的ajax封装使用这种方式
         $method = post('_method') ?: $method;
         unset($_POST['_method']);
+
         return $this->method = strtoupper($method);
     }
 
-    public function getExtension() {
+    public function getExtension()
+    {
         $path = parse_url($this->requestUri(), PHP_URL_PATH);
+
         return strtolower(pathinfo($path, PATHINFO_EXTENSION))
             ?: 'html';
     }
 
-    public function isGET() {
+    public function isGET()
+    {
         return ($this->method() === 'GET') ?: $this->isHEAD();
     }
 
-    public function isPOST() {
+    public function isPOST()
+    {
         return $this->method() === 'POST';
     }
 
-    public function isPUT() {
+    public function isPUT()
+    {
         return $this->method() === 'PUT';
     }
 
-    public function isDELETE() {
+    public function isDELETE()
+    {
         return $this->method() === 'DELETE';
     }
 
-    public function isHEAD() {
+    public function isHEAD()
+    {
         return $this->method() === 'HEAD';
     }
 
-    public function isAJAX() {
+    public function isAJAX()
+    {
         return strtolower($this->header('X_REQUESTED_WITH')) == 'xmlhttprequest';
     }
 
-    public function getReferer() {
+    public function getReferer()
+    {
         return server('http_referer');
     }
 
-    public function getIP($proxy = null) {
+    public function getIP($proxy = null)
+    {
         $ip = $proxy
             ? server('http_x_forwarded_for') ?: server('remote_addr')
             : server('remote_addr');
 
-        if (strpos($ip, ',') === false)
+        if (strpos($ip, ',') === false) {
             return $ip;
+        }
 
         // private ip range, ip2long()
         $private = array(
@@ -202,113 +225,135 @@ class Request {
                 }
             }
 
-            if (!$is_private) return $ip;
+            if (!$is_private) {
+                return $ip;
+            }
         }
 
         return array_shift($ip_set) ?: '0.0.0.0';
     }
 
-    public function getAcceptTypes() {
+    public function getAcceptTypes()
+    {
         return $this->getAccept('http_accept');
     }
 
-    public function getAcceptLanguage() {
+    public function getAcceptLanguage()
+    {
         return $this->getAccept('http_accept_language');
     }
 
-    public function getAcceptCharset() {
+    public function getAcceptCharset()
+    {
         return $this->getAccept('http_accept_charset');
     }
 
-    public function getAcceptEncoding() {
+    public function getAcceptEncoding()
+    {
         return $this->getAccept('http_accept_encoding');
     }
 
-    public function isAcceptType($type) {
+    public function isAcceptType($type)
+    {
         return $this->isAccept($type, $this->getAcceptTypes());
     }
 
-    public function isAcceptLanguage($lang) {
+    public function isAcceptLanguage($lang)
+    {
         return $this->isAccept($lang, $this->getAcceptLanguage());
     }
 
-    public function isAcceptCharset($charset) {
+    public function isAcceptCharset($charset)
+    {
         return $this->isAccept($charset, $this->getAcceptCharset());
     }
 
-    public function isAcceptEncoding($encoding) {
+    public function isAcceptEncoding($encoding)
+    {
         return $this->isAccept($encoding, $this->getAcceptEncoding());
     }
 
-    public function reset() {
+    public function reset()
+    {
         $this->method = null;
         $this->request_uri = null;
     }
 
     //////////////////// protected method ////////////////////
-    protected function getAccept($header_key) {
-        if (!$accept = server($header_key))
+    protected function getAccept($header_key)
+    {
+        if (!$accept = server($header_key)) {
             return array();
+        }
 
         $result = array();
         $accept = strtolower($accept);
         foreach (explode(',', $accept) as $accept) {
-            if (($pos = strpos($accept, ';')) !== false)
+            if (($pos = strpos($accept, ';')) !== false) {
                 $accept = substr($accept, 0, $pos);
+            }
             $result[] = trim($accept);
         }
 
         return $result;
     }
 
-    protected function isAccept($find, array $accept) {
+    protected function isAccept($find, array $accept)
+    {
         return in_array(strtolower($find), $accept, true);
     }
 
     /**
      * @deprecated
      */
-    public function ip($proxy = null) {
+    public function ip($proxy = null)
+    {
         return $this->getIP($proxy);
     }
 
     /**
      * @deprecated
      */
-    public function referer() {
+    public function referer()
+    {
         return $this->getReferer();
     }
 
     /**
      * @deprecated
      */
-    public function method() {
+    public function method()
+    {
         return $this->getMethod();
     }
 
     /**
      * @deprecated
      */
-    public function extension() {
+    public function extension()
+    {
         return $this->getExtension();
     }
 
     /**
      * @deprecated
      */
-    public function requestUri() {
+    public function requestUri()
+    {
         return $this->getRequestURI();
     }
 
     /**
      * @deprecated
      */
-    public function header($key) {
+    public function header($key)
+    {
         return $this->getHeader($key);
     }
 }
 
-class Response {
+class Response
+{
     use \Lysine\Traits\Singleton;
 
     protected $code = \Lysine\HTTP::OK;
@@ -316,7 +361,8 @@ class Response {
     protected $cookie = array();
     protected $body;
 
-    public function execute() {
+    public function execute()
+    {
         list($header, $body) = $this->compile();
 
         \Lysine\Session::getInstance()->commit();
@@ -339,44 +385,57 @@ class Response {
         }
     }
 
-    public function setCode($code) {
-        $this->code = (int)$code;
+    public function setCode($code)
+    {
+        $this->code = (int) $code;
+
         return $this;
     }
 
-    public function getCode() {
+    public function getCode()
+    {
         return $this->code;
     }
 
-    public function setCookie($name, $value, $expire = 0, $path = '/', $domain = null, $secure = null, $httponly = true) {
-        if ($secure === null) $secure = (bool)server('https');
+    public function setCookie($name, $value, $expire = 0, $path = '/', $domain = null, $secure = null, $httponly = true)
+    {
+        if ($secure === null) {
+            $secure = (bool) server('https');
+        }
         $key = sprintf('%s@%s:%s', $name, $domain, $path);
 
         $this->cookie[$key] = array($name, $value, $expire, $path, $domain, $secure, $httponly);
+
         return $this;
     }
 
-    public function setHeader($header) {
+    public function setHeader($header)
+    {
         if (strpos($header, ':')) {
             list($key, $val) = explode(':', $header, 2);
             $this->header[trim($key)] = trim($val);
         } else {
             $this->header[$header] = null;
         }
+
         return $this;
     }
 
-    public function setBody($body) {
+    public function setBody($body)
+    {
         $this->body = $body;
+
         return $this;
     }
 
-    public function getBody() {
+    public function getBody()
+    {
         return $this->body;
     }
 
     // return array($header, $body);
-    public function compile() {
+    public function compile()
+    {
         $body = in_array($this->getCode(), array(204, 301, 302, 303, 304))
               ? ''
               : $this->body;
@@ -387,7 +446,8 @@ class Response {
         );
     }
 
-    public function reset() {
+    public function reset()
+    {
         $this->code = \Lysine\HTTP::OK;
         $this->header = array();
         $this->cookie = array();
@@ -398,22 +458,25 @@ class Response {
         return $this;
     }
 
-    public function redirect($url, $code = 303) {
+    public function redirect($url, $code = 303)
+    {
         $this->setCode($code)
-             ->setHeader('Location: '. $url);
+             ->setHeader('Location: '.$url);
 
         return $this;
     }
 
     //////////////////// protected method ////////////////////
-    protected function compileHeader() {
+    protected function compileHeader()
+    {
         $header = array();
         $header[] = \Lysine\HTTP::getStatusHeader($this->code ?: 200);
 
-        foreach ($this->header as $key => $val)
+        foreach ($this->header as $key => $val) {
             $header[] = $val === null
                       ? $key
-                      : $key .': '. $val;
+                      : $key.': '.$val;
+        }
 
         return $header;
     }
