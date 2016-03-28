@@ -1,32 +1,36 @@
 <?php
+
 namespace Lysine\DataMapper {
     /**
-     * 数据类型管理
+     * 数据类型管理.
      */
-    class Types {
+    class Types
+    {
         use \Lysine\Traits\Singleton;
 
         /**
-         * 数据类型helper实例缓存
+         * 数据类型helper实例缓存.
          *
          * @var array
          */
         protected $types = array();
 
         /**
-         * 数据类型对应类名数组
+         * 数据类型对应类名数组.
          *
          * @var array
          */
         protected $type_classes = array();
 
         /**
-         * 根据数据类型名字获得对应的数据类型helper
+         * 根据数据类型名字获得对应的数据类型helper.
          *
          * @param string $type
+         *
          * @return object 数据类型helper实例
          */
-        public function get($type) {
+        public function get($type)
+        {
             $type = strtolower($type);
 
             if ($type == 'int') {
@@ -46,17 +50,20 @@ namespace Lysine\DataMapper {
             }
 
             $class = $this->type_classes[$type];
-            return $this->types[$type] = new $class;
+
+            return $this->types[$type] = new $class();
         }
 
         /**
-         * 注册一个新的数据类型helper
+         * 注册一个新的数据类型helper.
          *
-         * @param string $type 数据类型名字
+         * @param string $type  数据类型名字
          * @param string $class helper类名
+         *
          * @return $this
          */
-        public function register($type, $class) {
+        public function register($type, $class)
+        {
             $type = strtolower($type);
             $this->type_classes[$type] = $class;
 
@@ -64,22 +71,26 @@ namespace Lysine\DataMapper {
         }
 
         /**
-         * 工厂方法
+         * 工厂方法.
          *
          * @param string $name
+         *
          * @return object
          */
-        static public function factory($name) {
+        public static function factory($name)
+        {
             return static::getInstance()->get($name);
         }
 
         /**
-         * 格式化并补全属性定义数组
+         * 格式化并补全属性定义数组.
          *
          * @param array $attribute
+         *
          * @return array
          */
-        static public function normalizeAttribute(array $attribute) {
+        public static function normalizeAttribute(array $attribute)
+        {
             $defaults = array(
                 // 是否允许为空
                 'allow_null' => false,
@@ -155,16 +166,19 @@ namespace Lysine\DataMapper {
 
 namespace Lysine\DataMapper\Types {
     /**
-     * 默认数据类型
+     * 默认数据类型.
      */
-    class Common {
+    class Common
+    {
         /**
-         * 格式化属性定义
+         * 格式化属性定义.
          *
          * @param array $attribute
+         *
          * @return array
          */
-        public function normalizeAttribute(array $attribute) {
+        public function normalizeAttribute(array $attribute)
+        {
             return $attribute;
         }
 
@@ -172,22 +186,27 @@ namespace Lysine\DataMapper\Types {
          * 格式化属性值
          *
          * @see \Lysine\DataMapper\Data::set()
+         *
          * @param mixed $value
          * @param array $attribute
+         *
          * @return mixed
          */
-        public function normalize($value, array $attribute) {
+        public function normalize($value, array $attribute)
+        {
             return $value;
         }
 
         /**
-         * 把值转换为存储格式
+         * 把值转换为存储格式.
          *
          * @param mixed $value
          * @param array $attribute
+         *
          * @return mixed
          */
-        public function store($value, array $attribute) {
+        public function store($value, array $attribute)
+        {
             return $value;
         }
 
@@ -196,11 +215,13 @@ namespace Lysine\DataMapper\Types {
          *
          * @param mixed $value
          * @param array $attribute
+         *
          * @return mixed
          */
-        public function restore($value, array $attribute) {
+        public function restore($value, array $attribute)
+        {
             if ($value === null) {
-                return null;
+                return;
             }
 
             return $this->normalize($value, $attribute);
@@ -210,62 +231,75 @@ namespace Lysine\DataMapper\Types {
          * 获取默认值
          *
          * @param array $attribute
+         *
          * @return mixed
          */
-        public function getDefaultValue(array $attribute) {
+        public function getDefaultValue(array $attribute)
+        {
             return $attribute['default'];
         }
 
         /**
-         * 转换为对json_encode友好的格式
+         * 转换为对json_encode友好的格式.
          *
          * @param mixed $value
          * @param array $attribute
+         *
          * @return mixed
          */
-        public function toJSON($value, array $attribute) {
+        public function toJSON($value, array $attribute)
+        {
             return $value;
         }
     }
 
     /**
-     * 数字类型
+     * 数字类型.
      */
-    class Number extends Common {
-        public function normalize($value, array $attribute) {
+    class Number extends Common
+    {
+        public function normalize($value, array $attribute)
+        {
             return $value * 1;
         }
     }
 
     /**
-     * 整数类型
+     * 整数类型.
      */
-    class Integer extends Number {
-        public function normalize($value, array $attribute) {
-            return (int)$value;
+    class Integer extends Number
+    {
+        public function normalize($value, array $attribute)
+        {
+            return (int) $value;
         }
     }
 
     /**
-     * 字符串类型
+     * 字符串类型.
      */
-    class Text extends Common {
-        public function normalize($value, array $attribute) {
-            return (string)$value;
+    class Text extends Common
+    {
+        public function normalize($value, array $attribute)
+        {
+            return (string) $value;
         }
     }
 
     /**
-     * JSON类型
+     * JSON类型.
      */
-    class Json extends Common {
-        public function normalizeAttribute(array $attribute) {
+    class Json extends Common
+    {
+        public function normalizeAttribute(array $attribute)
+        {
             return array_merge(array(
                 'strict' => true,
             ), $attribute);
         }
 
-        public function normalize($value, array $attribute) {
+        public function normalize($value, array $attribute)
+        {
             if (is_array($value)) {
                 return $value;
             }
@@ -274,24 +308,20 @@ namespace Lysine\DataMapper\Types {
                 return array();
             }
 
-            $value = json_decode($value, true);
-
-            if ($value === null && json_last_error() !== JSON_ERROR_NONE) {
-                throw new \UnexpectedValueException(json_last_error_msg(), json_last_error());
-            }
-
-            return $value;
+            return \Lysine\safe_json_decode($value, true);
         }
 
-        public function store($value, array $attribute) {
+        public function store($value, array $attribute)
+        {
             if ($value === array()) {
-                return null;
+                return;
             }
 
-            return json_encode($value, JSON_UNESCAPED_UNICODE);
+            return \Lysine\safe_json_encode($value, JSON_UNESCAPED_UNICODE);
         }
 
-        public function restore($value, array $attribute) {
+        public function restore($value, array $attribute)
+        {
             if ($value === null) {
                 return array();
             }
@@ -299,16 +329,19 @@ namespace Lysine\DataMapper\Types {
             return $this->normalize($value, $attribute);
         }
 
-        public function getDefaultValue(array $attribute) {
+        public function getDefaultValue(array $attribute)
+        {
             return $attribute['default'] ?: array();
         }
     }
 
     /**
-     * 时间类型
+     * 时间类型.
      */
-    class Datetime extends Common {
-        public function normalize($value, array $attribute) {
+    class Datetime extends Common
+    {
+        public function normalize($value, array $attribute)
+        {
             if ($value instanceof \DateTime) {
                 return $value;
             }
@@ -324,7 +357,8 @@ namespace Lysine\DataMapper\Types {
             return $value;
         }
 
-        public function store($value, array $attribute) {
+        public function store($value, array $attribute)
+        {
             if ($value instanceof \DateTime) {
                 $format = isset($attribute['format']) ? $attribute['format'] : 'c'; // ISO 8601
                 $value = $value->format($format);
@@ -333,7 +367,8 @@ namespace Lysine\DataMapper\Types {
             return $value;
         }
 
-        public function getDefaultValue(array $attribute) {
+        public function getDefaultValue(array $attribute)
+        {
             return ($attribute['default'] === null)
                  ? null
                  : new \DateTime($attribute['default']);
@@ -341,10 +376,12 @@ namespace Lysine\DataMapper\Types {
     }
 
     /**
-     * UUID字符串类型
+     * UUID字符串类型.
      */
-    class UUID extends Common {
-        public function normalizeAttribute(array $attribute) {
+    class UUID extends Common
+    {
+        public function normalizeAttribute(array $attribute)
+        {
             $attribute = array_merge(array(
                 'upper' => false,
             ), $attribute);
@@ -356,7 +393,8 @@ namespace Lysine\DataMapper\Types {
             return $attribute;
         }
 
-        public function getDefaultValue(array $attribute) {
+        public function getDefaultValue(array $attribute)
+        {
             if (!$attribute['auto_generate']) {
                 return $attribute['default'];
             }
@@ -371,7 +409,8 @@ namespace Lysine\DataMapper\Types {
         }
 
         // http://php.net/manual/en/function.uniqid.php#94959
-        static public function generate() {
+        public static function generate()
+        {
             return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
                 mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff),
                 mt_rand(0, 0x0fff) | 0x4000,
@@ -382,16 +421,19 @@ namespace Lysine\DataMapper\Types {
     }
 
     /**
-     * PostgreSQL数组类型
+     * PostgreSQL数组类型.
      */
-    class PgsqlArray extends Common {
-        public function normalizeAttribute(array $attribute) {
+    class PgsqlArray extends Common
+    {
+        public function normalizeAttribute(array $attribute)
+        {
             return array_merge(array(
                 'strict' => true,
             ), $attribute);
         }
 
-        public function normalize($value, array $attribute) {
+        public function normalize($value, array $attribute)
+        {
             if ($value === null) {
                 return array();
             }
@@ -403,15 +445,17 @@ namespace Lysine\DataMapper\Types {
             return $value;
         }
 
-        public function store($value, array $attribute) {
+        public function store($value, array $attribute)
+        {
             if ($value === array()) {
-                return null;
+                return;
             }
 
             return \Lysine\Service\DB\Adapter\Pgsql::encodeArray($value);
         }
 
-        public function restore($value, array $attribute) {
+        public function restore($value, array $attribute)
+        {
             if ($value === null) {
                 return array();
             }
@@ -419,22 +463,26 @@ namespace Lysine\DataMapper\Types {
             return \Lysine\Service\DB\Adapter\Pgsql::decodeArray($value);
         }
 
-        public function getDefaultValue(array $attribute) {
+        public function getDefaultValue(array $attribute)
+        {
             return $attribute['default'] ?: array();
         }
     }
 
     /**
-     * PostgreSQL hstore类型
+     * PostgreSQL hstore类型.
      */
-    class PgsqlHstore extends Common {
-        public function normalizeAttribute(array $attribute) {
+    class PgsqlHstore extends Common
+    {
+        public function normalizeAttribute(array $attribute)
+        {
             return array_merge(array(
                 'strict' => true,
             ), $attribute);
         }
 
-        public function normalize($value, array $attribute) {
+        public function normalize($value, array $attribute)
+        {
             if ($value === null) {
                 return array();
             }
@@ -446,15 +494,17 @@ namespace Lysine\DataMapper\Types {
             return $value;
         }
 
-        public function store($value, array $attribute) {
+        public function store($value, array $attribute)
+        {
             if ($value === array()) {
-                return null;
+                return;
             }
 
             return \Lysine\Service\DB\Adapter\Pgsql::encodeHstore($value);
         }
 
-        public function restore($value, array $attribute) {
+        public function restore($value, array $attribute)
+        {
             if ($value === null) {
                 return array();
             }
@@ -462,7 +512,8 @@ namespace Lysine\DataMapper\Types {
             return \Lysine\Service\DB\Adapter\Pgsql::decodeHstore($value);
         }
 
-        public function getDefaultValue(array $attribute) {
+        public function getDefaultValue(array $attribute)
+        {
             return $attribute['default'] ?: array();
         }
     }

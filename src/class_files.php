@@ -1,4 +1,5 @@
 <?php
+
 return array(
     'lysine\config' => 'core.php',
     'lysine\contexthandler' => 'context.php',
