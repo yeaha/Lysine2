@@ -308,13 +308,7 @@ namespace Lysine\DataMapper\Types {
                 return array();
             }
 
-            $value = json_decode($value, true);
-
-            if ($value === null && json_last_error() !== JSON_ERROR_NONE) {
-                throw new \UnexpectedValueException(json_last_error_msg(), json_last_error());
-            }
-
-            return $value;
+            return \Lysine\safe_json_decode($value, true);
         }
 
         public function store($value, array $attribute)
@@ -323,7 +317,7 @@ namespace Lysine\DataMapper\Types {
                 return;
             }
 
-            return json_encode($value, JSON_UNESCAPED_UNICODE);
+            return \Lysine\safe_json_encode($value, JSON_UNESCAPED_UNICODE);
         }
 
         public function restore($value, array $attribute)

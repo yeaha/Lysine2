@@ -215,7 +215,7 @@ class CookieContextHandler extends ContextHandler
     // return string
     protected function encode($data)
     {
-        $data = json_encode($data);
+        $data = \Lysine\safe_json_encode($data);
 
         // 添加数字签名
         $data = $data.$this->getSign($data);
@@ -264,7 +264,7 @@ class CookieContextHandler extends ContextHandler
                 break;
             }
 
-            return json_decode($string, true) ?: array();
+            return \Lsyine\safe_json_decode($string, true) ?: array();
         } while (false);
 
         return array();
