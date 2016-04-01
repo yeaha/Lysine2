@@ -264,7 +264,7 @@ class CookieContextHandler extends ContextHandler
                 break;
             }
 
-            return \Lsyine\safe_json_decode($string, true) ?: array();
+            return \Lysine\safe_json_decode($string, true) ?: array();
         } while (false);
 
         return array();
