@@ -409,6 +409,11 @@ class Response
         return $this;
     }
 
+    public function getCookie()
+    {
+        return $this->cookie;
+    }
+
     public function setHeader($header)
     {
         if (strpos($header, ':')) {
@@ -419,6 +424,11 @@ class Response
         }
 
         return $this;
+    }
+
+    public function getHeader()
+    {
+        return $this->header;
     }
 
     public function setBody($body)
