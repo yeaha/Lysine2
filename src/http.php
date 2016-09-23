@@ -1,40 +1,40 @@
 <?php
-
 namespace Lysine;
 
 class HTTP
 {
-    const OK = 200;
-    const CREATED = 201;
-    const ACCEPTED = 202;
-    const NO_CONTENT = 204;
-    const RESET_CONTENT = 205;
-    const PARTIAL_CONTENT = 206;
-    const MOVED_PERMANENTLY = 301;
-    const FOUND = 302;
-    const SEE_OTHER = 303;
-    const BAD_REQUEST = 400;
-    const UNAUTHORIZED = 401;
-    const PAYMENT_REQUIRED = 402;
-    const FORBIDDEN = 403;
-    const NOT_FOUND = 404;
-    const METHOD_NOT_ALLOWED = 405;
-    const NOT_ACCEPTABLE = 406;
-    const REQUEST_TIMEOUT = 408;
-    const CONFLICT = 409;
-    const GONE = 410;
-    const LENGTH_REQUIRED = 411;
-    const PRECONDITION_FAILED = 412;
-    const REQUEST_ENTITY_TOO_LARGE = 413;
-    const UNSUPPORTED_MEDIA_TYPE = 415;
-    const EXPECTATION_FAILED = 417;
-    const INTERNAL_SERVER_ERROR = 500;
-    const NOT_IMPLEMENTED = 501;
-    const BAD_GATEWAY = 502;
-    const SERVICE_UNAVAILABLE = 503;
-    const GATEWAY_TIMEOUT = 504;
+    const OK                            = 200;
+    const CREATED                       = 201;
+    const ACCEPTED                      = 202;
+    const NO_CONTENT                    = 204;
+    const RESET_CONTENT                 = 205;
+    const PARTIAL_CONTENT               = 206;
+    const MOVED_PERMANENTLY             = 301;
+    const FOUND                         = 302;
+    const SEE_OTHER                     = 303;
+    const BAD_REQUEST                   = 400;
+    const UNAUTHORIZED                  = 401;
+    const PAYMENT_REQUIRED              = 402;
+    const FORBIDDEN                     = 403;
+    const NOT_FOUND                     = 404;
+    const METHOD_NOT_ALLOWED            = 405;
+    const NOT_ACCEPTABLE                = 406;
+    const REQUEST_TIMEOUT               = 408;
+    const CONFLICT                      = 409;
+    const GONE                          = 410;
+    const LENGTH_REQUIRED               = 411;
+    const PRECONDITION_FAILED           = 412;
+    const REQUEST_ENTITY_TOO_LARGE      = 413;
+    const UNSUPPORTED_MEDIA_TYPE        = 415;
+    const EXPECTATION_FAILED            = 417;
+    const UNAVAILABLE_FOR_LEGAL_REASONS = 451;
+    const INTERNAL_SERVER_ERROR         = 500;
+    const NOT_IMPLEMENTED               = 501;
+    const BAD_GATEWAY                   = 502;
+    const SERVICE_UNAVAILABLE           = 503;
+    const GATEWAY_TIMEOUT               = 504;
 
-    protected static $status = array(
+    protected static $status = [
         100 => 'Continue',
         101 => 'Switching Protocols',
         200 => 'OK',
@@ -69,12 +69,13 @@ class HTTP
         415 => 'Unsupported Media Type',
         416 => 'Requested range not satisfiable',
         417 => 'Expectation Failed',
+        451 => 'Unavailable For Legal Reasons',
         500 => 'Internal Server Error',
         501 => 'Not Implemented',
         502 => 'Bad Gateway',
         503 => 'Service Unavailable',
         504 => 'Gateway Time-out',
-    );
+    ];
 
     public static function getStatusMessage($code)
     {
@@ -86,8 +87,8 @@ class HTTP
         $message = self::$status[$code];
 
         return strpos(PHP_SAPI, 'cgi') === 0
-             ? sprintf('Status: %d %s', $code, $message)
-             : sprintf('HTTP/1.1 %d %s', $code, $message);
+        ? sprintf('Status: %d %s', $code, $message)
+        : sprintf('HTTP/1.1 %d %s', $code, $message);
     }
 }
 
@@ -144,7 +145,7 @@ class Request
         $path = parse_url($this->requestUri(), PHP_URL_PATH);
 
         return strtolower(pathinfo($path, PATHINFO_EXTENSION))
-            ?: 'html';
+        ?: 'html';
     }
 
     public function isGET()
@@ -185,24 +186,24 @@ class Request
     public function getIP($proxy = null)
     {
         $ip = $proxy
-            ? server('http_x_forwarded_for') ?: server('remote_addr')
-            : server('remote_addr');
+        ? server('http_x_forwarded_for') ?: server('remote_addr')
+        : server('remote_addr');
 
         if (strpos($ip, ',') === false) {
             return $ip;
         }
 
         // private ip range, ip2long()
-        $private = array(
-            array(0, 50331647),             // 0.0.0.0, 2.255.255.255
-            array(167772160, 184549375),    // 10.0.0.0, 10.255.255.255
-            array(2130706432, 2147483647),  // 127.0.0.0, 127.255.255.255
-            array(2851995648, 2852061183),  // 169.254.0.0, 169.254.255.255
-            array(2886729728, 2887778303),  // 172.16.0.0, 172.31.255.255
-            array(3221225984, 3221226239),  // 192.0.2.0, 192.0.2.255
-            array(3232235520, 3232301055),  // 192.168.0.0, 192.168.255.255
-            array(4294967040, 4294967295),  // 255.255.255.0 255.255.255.255
-        );
+        $private = [
+            [0, 50331647],            // 0.0.0.0, 2.255.255.255
+            [167772160, 184549375],   // 10.0.0.0, 10.255.255.255
+            [2130706432, 2147483647], // 127.0.0.0, 127.255.255.255
+            [2851995648, 2852061183], // 169.254.0.0, 169.254.255.255
+            [2886729728, 2887778303], // 172.16.0.0, 172.31.255.255
+            [3221225984, 3221226239], // 192.0.2.0, 192.0.2.255
+            [3232235520, 3232301055], // 192.168.0.0, 192.168.255.255
+            [4294967040, 4294967295], // 255.255.255.0 255.255.255.255
+        ];
 
         $ip_set = array_map('trim', explode(',', $ip));
 
@@ -275,7 +276,7 @@ class Request
 
     public function reset()
     {
-        $this->method = null;
+        $this->method      = null;
         $this->request_uri = null;
     }
 
@@ -283,10 +284,10 @@ class Request
     protected function getAccept($header_key)
     {
         if (!$accept = server($header_key)) {
-            return array();
+            return [];
         }
 
-        $result = array();
+        $result = [];
         $accept = strtolower($accept);
         foreach (explode(',', $accept) as $accept) {
             if (($pos = strpos($accept, ';')) !== false) {
@@ -356,9 +357,9 @@ class Response
 {
     use \Lysine\Traits\Singleton;
 
-    protected $code = \Lysine\HTTP::OK;
-    protected $header = array();
-    protected $cookie = array();
+    protected $code   = \Lysine\HTTP::OK;
+    protected $header = [];
+    protected $cookie = [];
     protected $body;
 
     public function execute()
@@ -369,13 +370,13 @@ class Response
 
         if (!headers_sent()) {
             array_map('header', $header);
-            $this->header = array();
+            $this->header = [];
 
             foreach ($this->cookie as $config) {
                 list($name, $value, $expire, $path, $domain, $secure, $httponly) = $config;
                 setCookie($name, $value, $expire, $path, $domain, $secure, $httponly);
             }
-            $this->cookie = array();
+            $this->cookie = [];
         }
 
         if ($body instanceof \Closure) {
@@ -404,7 +405,7 @@ class Response
         }
         $key = sprintf('%s@%s:%s', $name, $domain, $path);
 
-        $this->cookie[$key] = array($name, $value, $expire, $path, $domain, $secure, $httponly);
+        $this->cookie[$key] = [$name, $value, $expire, $path, $domain, $secure, $httponly];
 
         return $this;
     }
@@ -417,7 +418,7 @@ class Response
     public function setHeader($header)
     {
         if (strpos($header, ':')) {
-            list($key, $val) = explode(':', $header, 2);
+            list($key, $val)          = explode(':', $header, 2);
             $this->header[trim($key)] = trim($val);
         } else {
             $this->header[$header] = null;
@@ -446,22 +447,22 @@ class Response
     // return array($header, $body);
     public function compile()
     {
-        $body = in_array($this->getCode(), array(204, 301, 302, 303, 304))
-              ? ''
-              : $this->body;
+        $body = in_array($this->getCode(), [204, 301, 302, 303, 304])
+        ? ''
+        : $this->body;
 
-        return array(
+        return [
             $this->compileHeader(),
             $body,
-        );
+        ];
     }
 
     public function reset()
     {
-        $this->code = \Lysine\HTTP::OK;
-        $this->header = array();
-        $this->cookie = array();
-        $this->body = null;
+        $this->code   = \Lysine\HTTP::OK;
+        $this->header = [];
+        $this->cookie = [];
+        $this->body   = null;
 
         \Lysine\Session::getInstance()->reset();
 
@@ -479,13 +480,13 @@ class Response
     //////////////////// protected method ////////////////////
     protected function compileHeader()
     {
-        $header = array();
+        $header   = [];
         $header[] = \Lysine\HTTP::getStatusHeader($this->code ?: 200);
 
         foreach ($this->header as $key => $val) {
             $header[] = $val === null
-                      ? $key
-                      : $key.': '.$val;
+            ? $key
+            : $key.': '.$val;
         }
 
         return $header;
