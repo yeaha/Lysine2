@@ -11,7 +11,7 @@ abstract class Adapter implements \Lysine\Service\IService
     protected $identifier_symbol = '`';
 
     protected $support_savepoint = true;
-    protected $savepoints = array();
+    protected $savepoints = [];
     protected $in_transaction = false;
 
     abstract public function lastId($table = null, $column = null);
@@ -19,7 +19,7 @@ abstract class Adapter implements \Lysine\Service\IService
     /**
      * @param array [$config]
      */
-    public function __construct(array $config = array())
+    public function __construct(array $config = [])
     {
         $this->config = static::prepareConfig($config);
     }
@@ -33,7 +33,7 @@ abstract class Adapter implements \Lysine\Service\IService
     {
         $this->disconnect();
 
-        return array('config');
+        return ['config'];
     }
 
     /**
@@ -47,7 +47,7 @@ abstract class Adapter implements \Lysine\Service\IService
     public function __call($method, array $args)
     {
         return $args
-             ? call_user_func_array(array($this->connect(), $method), $args)
+             ? call_user_func_array([$this->connect(), $method], $args)
              : $this->connect()->$method();
     }
 
@@ -76,14 +76,14 @@ abstract class Adapter implements \Lysine\Service\IService
 
         list($dsn, $user, $password, $options) = $this->config;
         $options[\PDO::ATTR_ERRMODE] = \PDO::ERRMODE_EXCEPTION;
-        $options[\PDO::ATTR_STATEMENT_CLASS] = array('\Lysine\Service\DB\Statement');
+        $options[\PDO::ATTR_STATEMENT_CLASS] = ['\Lysine\Service\DB\Statement'];
 
         try {
             $handler = new \PDO($dsn, $user, $password, $options);
         } catch (\PDOException $ex) {
-            throw new Service\ConnectionException('Database connect failed!', 0, $ex, array(
+            throw new Service\ConnectionException('Database connect failed!', 0, $ex, [
                 'dsn' => $dsn,
-            ));
+            ]);
         }
 
         return $this->handler = $handler;
@@ -117,11 +117,11 @@ abstract class Adapter implements \Lysine\Service\IService
     {
         if ($this->in_transaction) {
             if (!$this->support_savepoint) {
-                throw new \LogicException(get_class().' unsupport savepoint');
+                throw new \LogicException(get_class() . ' unsupport savepoint');
             }
 
             $savepoint = $this->quoteIdentifier(uniqid('savepoint_'));
-            $this->execute('SAVEPOINT '.$savepoint);
+            $this->execute('SAVEPOINT ' . $savepoint);
             $this->savepoints[] = $savepoint;
         } else {
             $this->execute('BEGIN');
@@ -141,7 +141,7 @@ abstract class Adapter implements \Lysine\Service\IService
         if ($this->in_transaction) {
             if ($this->savepoints) {
                 $savepoint = array_pop($this->savepoints);
-                $this->execute('RELEASE SAVEPOINT '.$savepoint);
+                $this->execute('RELEASE SAVEPOINT ' . $savepoint);
             } else {
                 $this->execute('COMMIT');
                 $this->in_transaction = false;
@@ -161,7 +161,7 @@ abstract class Adapter implements \Lysine\Service\IService
         if ($this->in_transaction) {
             if ($this->savepoints) {
                 $savepoint = array_pop($this->savepoints);
-                $this->execute('ROLLBACK TO SAVEPOINT '.$savepoint);
+                $this->execute('ROLLBACK TO SAVEPOINT ' . $savepoint);
             } else {
                 $this->execute('ROLLBACK');
                 $this->in_transaction = false;
@@ -197,7 +197,7 @@ abstract class Adapter implements \Lysine\Service\IService
     public function execute($sql, $params = null)
     {
         $params = $params === null
-                ? array()
+                ? []
                 : is_array($params) ? $params : array_slice(func_get_args(), 1);
 
         try {
@@ -206,16 +206,16 @@ abstract class Adapter implements \Lysine\Service\IService
                  : $this->connect()->prepare($sql);
             $sth->execute($params);
         } catch (\PDOException $ex) {
-            throw new \Lysine\Exception($ex->getMessage(), $ex->errorInfo[1], $ex, array(
+            throw new \Lysine\Exception($ex->getMessage(), $ex->errorInfo[1], $ex, [
                 'sql' => (string) $sql,
                 'params' => $params,
                 'native_code' => $ex->errorInfo[0],
-            ));
+            ]);
         }
 
-        $log = 'SQL: '.$sql;
+        $log = 'SQL: ' . $sql;
         if ($params) {
-            $log .= ' ['.implode(',', $params).']';
+            $log .= ' [' . implode(',', $params) . ']';
         }
         \Lysine\logger()->debug($log);
 
@@ -266,7 +266,7 @@ abstract class Adapter implements \Lysine\Service\IService
     public function quoteIdentifier($identifier)
     {
         if (is_array($identifier)) {
-            return array_map(array($this, 'quoteIdentifier'), $identifier);
+            return array_map([$this, 'quoteIdentifier'], $identifier);
         }
 
         if ($identifier instanceof Expr) {
@@ -274,11 +274,11 @@ abstract class Adapter implements \Lysine\Service\IService
         }
 
         $symbol = $this->identifier_symbol;
-        $identifier = str_replace(array('"', "'", ';', $symbol), '', $identifier);
+        $identifier = str_replace(['"', "'", ';', $symbol], '', $identifier);
 
-        $result = array();
+        $result = [];
         foreach (explode('.', $identifier) as $s) {
-            $result[] = $symbol.$s.$symbol;
+            $result[] = $symbol . $s . $symbol;
         }
 
         return new Expr(implode('.', $result));
@@ -305,7 +305,7 @@ abstract class Adapter implements \Lysine\Service\IService
      */
     public function insert($table, array $row)
     {
-        $params = array();
+        $params = [];
         foreach ($row as $val) {
             if (!($val instanceof Expr)) {
                 $params[] = $val;
@@ -335,10 +335,10 @@ abstract class Adapter implements \Lysine\Service\IService
     public function update($table, array $row, $where = null, $params = null)
     {
         $where_params = ($where === null || $params === null)
-                      ? array()
+                      ? []
                       : is_array($params) ? $params : array_slice(func_get_args(), 3);
 
-        $params = array();
+        $params = [];
         foreach ($row as $val) {
             if (!($val instanceof Expr)) {
                 $params[] = $val;
@@ -370,7 +370,7 @@ abstract class Adapter implements \Lysine\Service\IService
     public function delete($table, $where = null, $params = null)
     {
         $params = ($where === null || $params === null)
-                ? array()
+                ? []
                 : is_array($params) ? $params : array_slice(func_get_args(), 2);
 
         $sth = $this->prepareDelete($table, $where);
@@ -447,19 +447,19 @@ abstract class Adapter implements \Lysine\Service\IService
     {
         $only_col = (array_values($cols) === $cols);
 
-        $set = array();
+        $set = [];
         foreach ($cols as $col => $val) {
             if ($only_col) {
-                $set[] = $this->quoteIdentifier($val).' = ?';
+                $set[] = $this->quoteIdentifier($val) . ' = ?';
             } else {
                 $val = ($val instanceof Expr) ? $val : '?';
-                $set[] = $this->quoteIdentifier($col).' = '.$val;
+                $set[] = $this->quoteIdentifier($col) . ' = ' . $val;
             }
         }
 
         $sql = sprintf('UPDATE %s SET %s', $this->quoteIdentifier($table), implode(',', $set));
         if ($where) {
-            $sql .= ' WHERE '.$where;
+            $sql .= ' WHERE ' . $where;
         }
 
         return $this->prepare($sql);
@@ -488,7 +488,7 @@ abstract class Adapter implements \Lysine\Service\IService
 
         $sql = sprintf('DELETE FROM %s', $table);
         if ($where) {
-            $sql .= ' WHERE '.$where;
+            $sql .= ' WHERE ' . $where;
         }
 
         return $this->prepare($sql);
@@ -509,12 +509,12 @@ abstract class Adapter implements \Lysine\Service\IService
             throw new \InvalidArgumentException('Invalid database config, need "dsn" key');
         }
 
-        return array(
+        return [
             $config['dsn'],
             isset($config['user']) ? $config['user'] : null,
             isset($config['password']) ? $config['password'] : null,
-            isset($config['options']) ? $config['options'] : array(),
-        );
+            isset($config['options']) ? $config['options'] : [],
+        ];
     }
 }
 
@@ -637,14 +637,14 @@ class Select
      *
      * @var
      */
-    protected $where = array();
+    protected $where = [];
 
     /**
      * 查询结果字段.
      *
      * @var array
      */
-    protected $cols = array();
+    protected $cols = [];
 
     /**
      * group by 语句.
@@ -757,10 +757,10 @@ class Select
     public function where($where, $params = null)
     {
         $params = $params === null
-                ? array()
+                ? []
                 : is_array($params) ? $params : array_slice(func_get_args(), 1);
 
-        $this->where[] = array($where, $params);
+        $this->where[] = [$where, $params];
 
         return $this;
     }
@@ -817,10 +817,10 @@ class Select
     public function group($cols, $having = null, $having_params = null)
     {
         $having_params = ($having === null || $having_params === null)
-                       ? array()
+                       ? []
                        : is_array($having_params) ? $having_params : array_slice(func_get_args(), 2);
 
-        $this->group_by = array($cols, $having, $having_params);
+        $this->group_by = [$cols, $having, $having_params];
 
         return $this;
     }
@@ -895,7 +895,7 @@ class Select
     {
         $adapter = $this->adapter;
         $sql = 'SELECT ';
-        $params = array();
+        $params = [];
 
         $sql .= $this->cols
               ? implode(', ', $adapter->quoteIdentifier($this->cols))
@@ -906,11 +906,11 @@ class Select
             $params = array_merge($params, $table_params);
         }
 
-        $sql .= ' FROM '.$table;
+        $sql .= ' FROM ' . $table;
 
         list($where, $where_params) = $this->compileWhere();
         if ($where) {
-            $sql .= ' WHERE '.$where;
+            $sql .= ' WHERE ' . $where;
         }
         if ($where_params) {
             $params = array_merge($params, $where_params);
@@ -918,25 +918,25 @@ class Select
 
         list($group_by, $group_params) = $this->compileGroupBy();
         if ($group_by) {
-            $sql .= ' '.$group_by;
+            $sql .= ' ' . $group_by;
         }
         if ($group_params) {
             $params = array_merge($params, $group_params);
         }
 
         if ($this->order_by) {
-            $sql .= ' ORDER BY '.$this->order_by;
+            $sql .= ' ORDER BY ' . $this->order_by;
         }
 
         if ($this->limit) {
-            $sql .= ' LIMIT '.$this->limit;
+            $sql .= ' LIMIT ' . $this->limit;
         }
 
         if ($this->offset) {
-            $sql .= ' OFFSET '.$this->offset;
+            $sql .= ' OFFSET ' . $this->offset;
         }
 
-        return array($sql, $params);
+        return [$sql, $params];
     }
 
     /**
@@ -947,7 +947,7 @@ class Select
     public function count()
     {
         $cols = $this->cols;
-        $this->cols = array(new Expr('count(1)'));
+        $this->cols = [new Expr('count(1)')];
 
         $count = $this->execute()->getCol();
 
@@ -1075,7 +1075,7 @@ class Select
         $sth = $this->execute();
         $processor = $this->processor;
 
-        $records = array();
+        $records = [];
         while ($record = $sth->getRow()) {
             $records[] = $processor
                        ? call_user_func($processor, $record)
@@ -1190,7 +1190,7 @@ class Select
     protected function whereSub($col, $relation, $in)
     {
         $col = $this->adapter->quoteIdentifier($col);
-        $params = array();
+        $params = [];
 
         if ($relation instanceof self) {
             list($sql, $params) = $relation->compile();
@@ -1203,7 +1203,7 @@ class Select
                ? sprintf('%s IN (%s)', $col, $sub)
                : sprintf('%s NOT IN (%s)', $col, $sub);
 
-        $this->where[] = array($where, $params);
+        $this->where[] = [$where, $params];
 
         return $this;
     }
@@ -1219,7 +1219,7 @@ class Select
      */
     protected function compileFrom()
     {
-        $params = array();
+        $params = [];
 
         if ($this->table instanceof self) {
             list($sql, $params) = $this->table->compile();
@@ -1230,7 +1230,7 @@ class Select
             $table = $this->adapter->quoteIdentifier($this->table);
         }
 
-        return array($table, $params);
+        return [$table, $params];
     }
 
     /**
@@ -1245,10 +1245,10 @@ class Select
     protected function compileWhere()
     {
         if (!$this->where) {
-            return array('', array());
+            return ['', []];
         }
 
-        $where = $params = array();
+        $where = $params = [];
 
         foreach ($this->where as $w) {
             list($where_sql, $where_params) = $w;
@@ -1257,9 +1257,9 @@ class Select
                 $params = array_merge($params, $where_params);
             }
         }
-        $where = '('.implode(') AND (', $where).')';
+        $where = '(' . implode(') AND (', $where) . ')';
 
-        return array($where, $params);
+        return [$where, $params];
     }
 
     /**
@@ -1274,7 +1274,7 @@ class Select
     protected function compileGroupBy()
     {
         if (!$this->group_by) {
-            return array('', array());
+            return ['', []];
         }
 
         list($group_cols, $having, $having_params) = $this->group_by;
@@ -1284,11 +1284,11 @@ class Select
             $group_cols = implode(',', $group_cols);
         }
 
-        $sql = 'GROUP BY '.$group_cols;
+        $sql = 'GROUP BY ' . $group_cols;
         if ($having) {
-            $sql .= ' HAVING '.$having;
+            $sql .= ' HAVING ' . $having;
         }
 
-        return array($sql, $having_params);
+        return [$sql, $having_params];
     }
 }
