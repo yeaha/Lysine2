@@ -61,7 +61,7 @@ class PgsqlAdapterTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($adapter->lastId($table, 'account_id'), $adapter->lastId());
 
         $res = $adapter->execute("select count(1) from {$table} where email = ? and account_name = ?", 'lisi@example.com', 'lisi');
-        $this->assertInstanceof('\PDOStatement', $res);
+        $this->assertInstanceof('Lysine\Service\DB\Statement', $res);
         $this->assertEquals(1, $res->getCol());
 
         $affected = $adapter->update($table, ['password_hash' => md5('a') . md5('b')], 'email = ?', 'lisi@example.com');
@@ -88,7 +88,7 @@ class PgsqlAdapterTest extends \PHPUnit_Framework_TestCase
 
         $except = 'INSERT INTO "bug_tracker"."accounts" ("account_name","first_name","last_name","email","password_hash","hourly_rate","create_time") VALUES (?,?,?,?,?,?,now())';
         $sth = $adapter->prepareInsert($table, $data);
-        $this->assertInstanceof('\PDOStatement', $sth);
+        $this->assertInstanceof('Lysine\Service\DB\Statement', $sth);
         $this->assertEquals($except, (string) $sth);
 
         $except = 'INSERT INTO "bug_tracker"."accounts" ("account_name","first_name","last_name","email","password_hash","hourly_rate","create_time") VALUES (?,?,?,?,?,?,?)';
@@ -97,7 +97,7 @@ class PgsqlAdapterTest extends \PHPUnit_Framework_TestCase
 
         $except = 'UPDATE "bug_tracker"."accounts" SET "account_name" = ?,"first_name" = ?,"last_name" = ?,"email" = ?,"password_hash" = ?,"hourly_rate" = ?,"create_time" = now() WHERE account_id = ?';
         $sth = $adapter->prepareUpdate($table, $data, 'account_id = ?');
-        $this->assertInstanceof('\PDOStatement', $sth);
+        $this->assertInstanceof('Lysine\Service\DB\Statement', $sth);
         $this->assertEquals($except, (string) $sth);
 
         $except = 'UPDATE "bug_tracker"."accounts" SET "account_name" = ?,"first_name" = ?,"last_name" = ?,"email" = ?,"password_hash" = ?,"hourly_rate" = ?,"create_time" = ? WHERE account_id = ?';
@@ -106,7 +106,7 @@ class PgsqlAdapterTest extends \PHPUnit_Framework_TestCase
 
         $except = 'DELETE FROM "bug_tracker"."accounts" WHERE account_id = ?';
         $sth = $adapter->prepareDelete($table, 'account_id = ?');
-        $this->assertInstanceof('\PDOStatement', $sth);
+        $this->assertInstanceof('Lysine\Service\DB\Statement', $sth);
         $this->assertEquals($except, (string) $sth);
     }
 

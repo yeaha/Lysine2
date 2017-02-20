@@ -76,7 +76,6 @@ abstract class Adapter implements \Lysine\Service\IService
 
         list($dsn, $user, $password, $options) = $this->config;
         $options[\PDO::ATTR_ERRMODE] = \PDO::ERRMODE_EXCEPTION;
-        $options[\PDO::ATTR_STATEMENT_CLASS] = ['\Lysine\Service\DB\Statement'];
 
         try {
             $handler = new \PDO($dsn, $user, $password, $options);
@@ -201,10 +200,15 @@ abstract class Adapter implements \Lysine\Service\IService
                 : is_array($params) ? $params : array_slice(func_get_args(), 1);
 
         try {
-            $sth = $sql instanceof \PDOStatement
-                 ? $sql
-                 : $this->connect()->prepare($sql);
-            $sth->execute($params);
+            if ($sql instanceof \PDOStatement || $sql instanceof Statement) {
+                $sth = $sql;
+                $sth->execute($params);
+            } elseif ($params) {
+                $sth = $this->connect()->prepare($sql);
+                $sth->execute($params);
+            } else {
+                $sth = $this->connect()->query($sql);
+            }
         } catch (\PDOException $ex) {
             throw new \Lysine\Exception($ex->getMessage(), $ex->errorInfo[1], $ex, [
                 'sql' => (string) $sql,
@@ -221,7 +225,14 @@ abstract class Adapter implements \Lysine\Service\IService
 
         $sth->setFetchMode(\PDO::FETCH_ASSOC);
 
-        return $sth;
+        return Statement::factory($sth);
+    }
+
+    public function prepare($sql, array $options = [])
+    {
+        $statement = $this->connect()->prepare($sql, $options);
+
+        return Statement::factory($statement);
     }
 
     /**
@@ -544,8 +555,25 @@ class Expr
  *
  * @see \PDOStatement
  */
-class Statement extends \PDOStatement
+class Statement
 {
+    protected $statement;
+
+    public function __construct(\PDOStatement $statement)
+    {
+        $this->statement = $statement;
+    }
+
+    public function __get($key)
+    {
+        return $this->statement->$key;
+    }
+
+    public function __call($method, array $args)
+    {
+        return call_user_func_array([$this->statement, $method], $args);
+    }
+
     /**
      * 返回用于执行的sql语句.
      *
@@ -553,7 +581,7 @@ class Statement extends \PDOStatement
      */
     public function __toString()
     {
-        return $this->queryString;
+        return $this->statement->queryString;
     }
 
     /**
@@ -563,7 +591,7 @@ class Statement extends \PDOStatement
      */
     public function getRow()
     {
-        return $this->fetch();
+        return $this->statement->fetch();
     }
 
     /**
@@ -575,7 +603,7 @@ class Statement extends \PDOStatement
      */
     public function getCol($col_number = 0)
     {
-        return $this->fetch(\PDO::FETCH_COLUMN, $col_number);
+        return $this->statement->fetch(\PDO::FETCH_COLUMN, $col_number);
     }
 
     /**
@@ -587,7 +615,7 @@ class Statement extends \PDOStatement
      */
     public function getCols($col_number = 0)
     {
-        return $this->fetchAll(\PDO::FETCH_COLUMN, $col_number);
+        return $this->statement->fetchAll(\PDO::FETCH_COLUMN, $col_number);
     }
 
     /**
@@ -600,15 +628,28 @@ class Statement extends \PDOStatement
     public function getAll($col = null)
     {
         if (!$col) {
-            return $this->fetchAll();
+            return $this->statement->fetchAll();
         }
 
-        $rowset = array();
-        while ($row = $this->fetch()) {
-            $rowset[ $row[$col] ] = $row;
+        $rowset = [];
+        while ($row = $this->statement->fetch()) {
+            $rowset[$row[$col]] = $row;
         }
 
         return $rowset;
+    }
+
+    public static function factory($statement)
+    {
+        if ($statement instanceof self) {
+            return $statement;
+        }
+
+        if ($statement instanceof \PDOStatement) {
+            return new static($statement);
+        }
+
+        throw new \InvalidArgumentException('Invalid statement');
     }
 }
 
